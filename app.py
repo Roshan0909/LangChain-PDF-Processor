@@ -1,10 +1,11 @@
 import os
+import streamlit as st
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import google.generativeai as genai
-from langchain.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
@@ -39,7 +40,7 @@ def load_vector_store(embeddings):
         new_db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
         return new_db
     except FileNotFoundError:
-        print("FAISS index not found. Please create it by processing PDF files first.")
+        st.error("FAISS index not found. Please create it by processing PDF files first.")
         return None
 
 def get_conversational_chain():
@@ -59,43 +60,40 @@ def get_conversational_chain():
 
 def user_input(user_question):
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-
     new_db = load_vector_store(embeddings)
     if new_db is None:  # If the index couldn't be loaded, exit early
         return
 
     docs = new_db.similarity_search(user_question)
-
     chain = get_conversational_chain()
 
     response = chain(
         {"input_documents": docs, "question": user_question}, return_only_outputs=True
     )
 
-    print(response)
     return response["output_text"]
 
-def main():
-    # PDF upload section
-    pdf_file = input("Enter the path of your PDF file (e.g., /content/myfile.pdf): ")
+# Streamlit app starts here
+st.title("PDF Chatbot")
+st.write("Upload your PDF file and ask questions about its content.")
 
-    # Process the PDF file and create the FAISS index
-    try:
-        raw_text = get_pdf_text([pdf_file])
-        text_chunks = get_text_chunks(raw_text)
-        get_vector_store(text_chunks)
-        print("Done processing the PDF!")
+pdf_file = st.file_uploader("Choose a PDF file", type="pdf")
 
-        # Now, ask the user for questions
-        while True:
-            user_question = input("Ask a Question from the PDF Files (or type 'exit' to quit): ")
-            if user_question.lower() == 'exit':
-                break
-            answer = user_input(user_question)
-            print("Reply:", answer)
+if pdf_file:
+    with open("temp.pdf", "wb") as f:
+        f.write(pdf_file.getbuffer())
 
-    except Exception as e:
-        print(f"Error processing the PDF file: {e}")
+    if st.button("Process PDF"):
+        try:
+            raw_text = get_pdf_text(["temp.pdf"])
+            text_chunks = get_text_chunks(raw_text)
+            get_vector_store(text_chunks)
+            st.success("Done processing the PDF!")
 
-if __name__ == "__main__":
-    main()
+        except Exception as e:
+            st.error(f"Error processing the PDF file: {e}")
+
+    user_question = st.text_input("Ask a Question about the PDF:")
+    if user_question:
+        answer = user_input(user_question)
+        st.write("Reply:", answer)
