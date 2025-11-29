@@ -118,6 +118,9 @@
                         <a class="nav-link {% if request.resolver_match.url_name == 'magnify_learning' %}active{% endif %}" href="{% url 'magnify_learning' %}">
                             <i class="bi bi-search"></i> Magify Learning
                         </a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'summarizer' %}active{% endif %}" href="{% url 'summarizer' %}">
+                            <i class="bi bi-file-text"></i> Summarizer
+                        </a>
                         <a class="nav-link {% if request.resolver_match.url_name == 'quiz' %}active{% endif %}" href="{% url 'quiz' %}">
                             <i class="bi bi-question-circle"></i> Quiz
                         </a>
