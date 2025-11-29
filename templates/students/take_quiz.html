@@ -38,8 +38,19 @@
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
+    .progress-tracker {
+        position: fixed;
+        top: 160px;
+        right: 20px;
+        z-index: 1000;
+        background: white;
+        padding: 15px 25px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        min-width: 200px;
+    }
     @media (max-width: 768px) {
-        .timer {
+        .timer, .progress-tracker {
             position: relative;
             top: 0;
             right: 0;
@@ -61,6 +72,30 @@
             <div class="text-center">
                 <h4 class="mb-0" id="timer" style="color: #667eea;">{{ quiz.duration }}:00</h4>
                 <small class="text-muted">Time Remaining</small>
+            </div>
+        </div>
+        
+        <!-- Progress Tracker -->
+        <div class="progress-tracker">
+            <div class="text-center">
+                <h6 class="mb-3" style="color: #667eea;">Progress</h6>
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-success"><i class="bi bi-check-circle-fill"></i> Attempted</span>
+                        <strong id="attemptedCount" class="text-success">0</strong>
+                    </div>
+                </div>
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted"><i class="bi bi-circle"></i> Remaining</span>
+                        <strong id="remainingCount" class="text-muted">{{ quiz.questions.count }}</strong>
+                    </div>
+                </div>
+                <hr>
+                <div class="progress mt-2" style="height: 8px;">
+                    <div id="progressBar" class="progress-bar" style="width: 0%; background-color: #667eea;" role="progressbar"></div>
+                </div>
+                <small class="text-muted d-block mt-2"><span id="progressPercent">0</span>% Complete</small>
             </div>
         </div>
         
@@ -96,7 +131,7 @@
                         <div class="options">
                             {% for option in question.options %}
                                 <label class="option-label d-block mb-2">
-                                    <input type="radio" name="question_{{ question.id }}" value="{{ forloop.counter0 }}" required>
+                                    <input type="radio" name="question_{{ question.id }}" value="{{ forloop.counter0 }}" required onchange="updateProgress()">
                                     <span class="ms-2">{{ forloop.counter|upper }}. {{ option }}</span>
                                 </label>
                             {% endfor %}
@@ -142,9 +177,45 @@
     // Timer
     const duration = {{ quiz.duration }} * 60; // Convert to seconds
     let timeLeft = duration;
+    const totalQuestions = {{ quiz.questions.count }};
     
     const timerElement = document.getElementById('timer');
     const quizForm = document.getElementById('quizForm');
+    const attemptedCountElement = document.getElementById('attemptedCount');
+    const remainingCountElement = document.getElementById('remainingCount');
+    const progressBarElement = document.getElementById('progressBar');
+    const progressPercentElement = document.getElementById('progressPercent');
+    
+    // Update progress tracker
+    function updateProgress() {
+        const allRadios = document.querySelectorAll('input[type="radio"]');
+        const questionNames = new Set();
+        
+        // Get all unique question names
+        allRadios.forEach(radio => {
+            questionNames.add(radio.name);
+        });
+        
+        // Count answered questions
+        let answeredCount = 0;
+        questionNames.forEach(name => {
+            const radios = document.querySelectorAll(`input[name="${name}"]`);
+            for (let radio of radios) {
+                if (radio.checked) {
+                    answeredCount++;
+                    break;
+                }
+            }
+        });
+        
+        const remainingCount = totalQuestions - answeredCount;
+        const percentage = Math.round((answeredCount / totalQuestions) * 100);
+        
+        attemptedCountElement.textContent = answeredCount;
+        remainingCountElement.textContent = remainingCount;
+        progressBarElement.style.width = percentage + '%';
+        progressPercentElement.textContent = percentage;
+    }
     
     function updateTimer() {
         const minutes = Math.floor(timeLeft / 60);

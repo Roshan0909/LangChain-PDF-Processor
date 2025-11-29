@@ -29,67 +29,81 @@ def extract_text_from_pdf(pdf_path, max_pages=20):
 def generate_quiz_questions(pdf_text, num_questions=10):
     """Generate MCQ questions from PDF text using Gemini AI"""
     
-    prompt = f"""
-    Based on the following text, generate {num_questions} multiple choice questions (MCQs) that test understanding of the key concepts.
-    
-    For each question:
-    1. Create a clear, specific question
-    2. Provide exactly 4 options (A, B, C, D)
-    3. Mark the correct answer
-    4. Make sure questions test important concepts, not trivial details
-    
-    Format your response as a JSON array with this exact structure:
-    [
-        {{
-            "question": "Question text here?",
-            "options": ["Option A", "Option B", "Option C", "Option D"],
-            "correct_answer": 0,
-            "explanation": "Brief explanation of why this is correct"
-        }}
-    ]
-    
-    Important: 
-    - correct_answer should be the index (0-3) of the correct option
-    - Make questions challenging but fair
-    - Ensure all options are plausible
-    - Return ONLY the JSON array, no other text
-    
-    TEXT TO ANALYZE:
-    {pdf_text[:15000]}
-    
-    Generate the {num_questions} MCQ questions now in JSON format:
-    """
+    prompt = f"""You are a quiz generator. Based on the following text, generate exactly {num_questions} multiple choice questions.
+
+TEXT:
+{pdf_text[:15000]}
+
+Generate {num_questions} multiple choice questions in this EXACT JSON format (no other text):
+[
+  {{
+    "question": "What is...",
+    "options": ["Answer 1", "Answer 2", "Answer 3", "Answer 4"],
+    "correct_answer": 0
+  }}
+]
+
+Rules:
+- Each question must have exactly 4 options
+- correct_answer is the index (0, 1, 2, or 3) of the correct option
+- Questions should test key concepts from the text
+- Return ONLY valid JSON, nothing else"""
     
     try:
         response = client.models.generate_content(
             model="gemini-2.5-flash",
-            contents=prompt
+            contents=prompt,
+            config={
+                "temperature": 0.7,
+                "response_mime_type": "application/json"
+            }
         )
         
         response_text = response.text.strip()
         
-        # Extract JSON from response (handle markdown code blocks)
-        if "```json" in response_text:
-            json_start = response_text.find("```json") + 7
-            json_end = response_text.find("```", json_start)
-            response_text = response_text[json_start:json_end].strip()
-        elif "```" in response_text:
-            json_start = response_text.find("```") + 3
-            json_end = response_text.find("```", json_start)
-            response_text = response_text[json_start:json_end].strip()
+        # Try to extract JSON if wrapped in markdown
+        if "```" in response_text:
+            # Find JSON content between code blocks
+            lines = response_text.split('\n')
+            json_lines = []
+            in_code_block = False
+            
+            for line in lines:
+                if line.strip().startswith('```'):
+                    in_code_block = not in_code_block
+                    continue
+                if in_code_block or (line.strip().startswith('[') or line.strip().startswith('{')):
+                    json_lines.append(line)
+            
+            response_text = '\n'.join(json_lines).strip()
+        
+        # Remove any remaining markdown
+        response_text = response_text.replace('```json', '').replace('```', '').strip()
         
         # Parse JSON
         questions = json.loads(response_text)
         
+        if not isinstance(questions, list):
+            print(f"Response is not a list: {type(questions)}")
+            return []
+        
         # Validate and clean questions
         validated_questions = []
         for q in questions:
-            if all(key in q for key in ['question', 'options', 'correct_answer']):
-                if len(q['options']) == 4 and 0 <= q['correct_answer'] <= 3:
-                    validated_questions.append(q)
+            if isinstance(q, dict) and all(key in q for key in ['question', 'options', 'correct_answer']):
+                if isinstance(q['options'], list) and len(q['options']) == 4:
+                    if isinstance(q['correct_answer'], int) and 0 <= q['correct_answer'] <= 3:
+                        validated_questions.append(q)
+        
+        if len(validated_questions) == 0:
+            print(f"No valid questions found. Raw response: {response_text[:500]}")
         
         return validated_questions[:num_questions]
         
+    except json.JSONDecodeError as e:
+        print(f"JSON parsing error: {e}")
+        print(f"Response text: {response_text[:500]}")
+        return []
     except Exception as e:
         print(f"Error generating questions: {e}")
         return []
