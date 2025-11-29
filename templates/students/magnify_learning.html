@@ -3,13 +3,43 @@
 {% block title %}Magify Learning - Student{% endblock %}
 
 {% block student_content %}
-<div class="card shadow-lg">
-    <div class="card-header bg-info text-white">
-        <h3>Magify Learning</h3>
-    </div>
-    <div class="card-body">
-        <p class="lead">Enhance your learning experience with AI-powered tools.</p>
-        <!-- Content will be added here -->
-    </div>
+<div class="container">
+    <h2 class="mb-4">Magify Learning</h2>
+    <p class="lead text-muted mb-4">Ask questions about any PDF using AI-powered chat</p>
+    
+    {% if subjects %}
+        {% for subject in subjects %}
+            {% if subject.notes.all %}
+                <div class="card shadow-lg mb-4">
+                    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <h4 class="mb-0"><i class="bi bi-book"></i> {{ subject.name }}</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for note in subject.notes.all %}
+                                <a href="{% url 'pdf_chat' note.id %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1"><i class="bi bi-file-pdf-fill text-danger"></i> {{ note.title }}</h6>
+                                            <small class="text-muted">Uploaded on {{ note.created_at|date:"M d, Y" }}</small>
+                                        </div>
+                                        <div>
+                                            <span class="badge" style="background-color: #667eea;">
+                                                <i class="bi bi-chat-dots"></i> Start Chat
+                                            </span>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No PDFs available yet. Please wait for your teachers to upload study materials.
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

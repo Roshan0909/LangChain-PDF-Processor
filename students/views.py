@@ -1,7 +1,11 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
+from django.views.decorators.http import require_POST
 from teachers.models import Subject, PDFNote
+from .models import ChatHistory
+from .utils import get_answer_for_pdf
+import json
 
 @login_required
 def student_dashboard(request):
@@ -26,7 +30,70 @@ def magnify_learning(request):
     if not request.user.is_student():
         return HttpResponseForbidden("You don't have permission to access this page.")
     
-    return render(request, 'students/magnify_learning.html')
+    subjects = Subject.objects.all().prefetch_related('notes')
+    return render(request, 'students/magnify_learning.html', {'subjects': subjects})
+
+@login_required
+def pdf_chat(request, pdf_id):
+    if not request.user.is_student():
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    pdf_note = get_object_or_404(PDFNote, id=pdf_id)
+    chat_history = ChatHistory.objects.filter(student=request.user, pdf_note=pdf_note)
+    
+    return render(request, 'students/pdf_chat.html', {
+        'pdf_note': pdf_note,
+        'chat_history': chat_history
+    })
+
+@login_required
+@require_POST
+def ask_question(request, pdf_id):
+    if not request.user.is_student():
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    try:
+        pdf_note = get_object_or_404(PDFNote, id=pdf_id)
+        data = json.loads(request.body)
+        question = data.get('question', '').strip()
+        
+        if not question:
+            return JsonResponse({'error': 'Question is required'}, status=400)
+        
+        # Get previous chat history for context
+        previous_chats = ChatHistory.objects.filter(
+            student=request.user, 
+            pdf_note=pdf_note
+        ).order_by('-created_at')[:5]
+        
+        # Build chat history string
+        history_text = ""
+        for chat in reversed(previous_chats):
+            history_text += f"Q: {chat.question}\nA: {chat.answer}\n\n"
+        
+        # Get PDF file path
+        pdf_path = pdf_note.pdf_file.path
+        
+        # Get answer using the utility function
+        answer = get_answer_for_pdf(pdf_path, question, history_text)
+        
+        # Save to chat history
+        chat = ChatHistory.objects.create(
+            student=request.user,
+            pdf_note=pdf_note,
+            question=question,
+            answer=answer
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'answer': answer,
+            'question': question,
+            'timestamp': chat.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
 def quiz(request):
