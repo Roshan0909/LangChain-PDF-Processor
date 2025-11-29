@@ -4,7 +4,42 @@
 
 {% block teacher_content %}
 <div class="container">
-    <h2 class="mb-4">Create Quiz</h2>
-    <p class="text-muted">Quiz creation page</p>
+    <h2 class="mb-4">Create AI-Generated Quiz</h2>
+    <p class="lead text-muted mb-4">Select a subject and PDF to automatically generate a quiz using AI</p>
+    
+    {% if subjects %}
+        {% for subject in subjects %}
+            {% if subject.notes.all %}
+                <div class="card shadow-lg mb-4">
+                    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <h4 class="mb-0"><i class="bi bi-book"></i> {{ subject.name }}</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for note in subject.notes.all %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1"><i class="bi bi-file-pdf-fill text-danger"></i> {{ note.title }}</h6>
+                                            <small class="text-muted">Uploaded on {{ note.created_at|date:"M d, Y" }}</small>
+                                        </div>
+                                        <div>
+                                            <a href="{% url 'generate_quiz' note.id %}" class="btn btn-sm" style="background-color: #667eea; color: white;">
+                                                <i class="bi bi-robot"></i> Generate Quiz
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No subjects or PDFs available. Please create a subject and upload PDFs first.
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

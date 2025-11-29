@@ -1,0 +1,66 @@
+{% extends 'teachers/base_teacher.html' %}
+
+{% block title %}Generate Quiz - {{ pdf_note.title }}{% endblock %}
+
+{% block teacher_content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h4 class="mb-0"><i class="bi bi-robot"></i> Generate AI Quiz</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> <strong>AI will automatically generate quiz questions from this PDF</strong>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5><i class="bi bi-file-pdf-fill text-danger"></i> {{ pdf_note.title }}</h5>
+                        <p class="text-muted mb-0"><i class="bi bi-book"></i> Subject: {{ subject.name }}</p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="num_questions" class="form-label">Number of Questions</label>
+                            <select class="form-select" id="num_questions" name="num_questions" required>
+                                <option value="5">5 Questions</option>
+                                <option value="10" selected>10 Questions</option>
+                                <option value="15">15 Questions</option>
+                                <option value="20">20 Questions</option>
+                            </select>
+                            <small class="text-muted">More questions will take longer to generate</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="duration" class="form-label">Quiz Duration (minutes)</label>
+                            <input type="number" class="form-control" id="duration" name="duration" value="30" min="5" max="120" required>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="bi bi-clock"></i> <strong>Note:</strong> Quiz generation may take 30-60 seconds depending on the PDF size and number of questions.
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn" style="background-color: #667eea; color: white;">
+                                <i class="bi bi-stars"></i> Generate Quiz with AI
+                            </button>
+                            <a href="{% url 'create_quiz' %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelector('form').addEventListener('submit', function() {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating Quiz...';
+    });
+</script>
+{% endblock %}

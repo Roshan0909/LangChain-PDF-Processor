@@ -100,4 +100,77 @@ def quiz(request):
     if not request.user.is_student():
         return HttpResponseForbidden("You don't have permission to access this page.")
     
-    return render(request, 'students/quiz.html')
+    from teachers.models import Quiz
+    quizzes = Quiz.objects.filter(is_active=True).select_related('subject', 'pdf_note')
+    return render(request, 'students/quiz.html', {'quizzes': quizzes})
+
+@login_required
+def take_quiz(request, quiz_id):
+    if not request.user.is_student():
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    from teachers.models import Quiz, QuizAttempt
+    quiz = get_object_or_404(Quiz, id=quiz_id, is_active=True)
+    questions = quiz.questions.all()
+    
+    # Check if already attempted
+    existing_attempt = QuizAttempt.objects.filter(student=request.user, quiz=quiz, completed_at__isnull=False).first()
+    
+    return render(request, 'students/take_quiz.html', {
+        'quiz': quiz,
+        'questions': questions,
+        'already_attempted': existing_attempt
+    })
+
+@login_required
+@require_POST
+def submit_quiz(request, quiz_id):
+    if not request.user.is_student():
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    try:
+        from teachers.models import Quiz, QuizAttempt, Question
+        from django.utils import timezone
+        
+        quiz = get_object_or_404(Quiz, id=quiz_id, is_active=True)
+        data = json.loads(request.body)
+        answers = data.get('answers', {})
+        
+        # Calculate score
+        score = 0
+        total_questions = quiz.questions.count()
+        correct_answers = {}
+        
+        for question in quiz.questions.all():
+            question_id = str(question.id)
+            student_answer = answers.get(question_id)
+            correct_answer = question.correct_answer
+            
+            if student_answer == correct_answer:
+                score += 1
+                correct_answers[question_id] = True
+            else:
+                correct_answers[question_id] = False
+        
+        # Save attempt
+        attempt = QuizAttempt.objects.create(
+            quiz=quiz,
+            student=request.user,
+            completed_at=timezone.now(),
+            score=score,
+            total_points=total_questions,
+            answers=answers
+        )
+        
+        percentage = (score / total_questions * 100) if total_questions > 0 else 0
+        
+        return JsonResponse({
+            'success': True,
+            'score': score,
+            'total': total_questions,
+            'percentage': round(percentage, 2),
+            'correct_answers': correct_answers
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

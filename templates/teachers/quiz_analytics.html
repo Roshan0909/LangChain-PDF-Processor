@@ -1,0 +1,102 @@
+{% extends 'teachers/base_teacher.html' %}
+
+{% block title %}Quiz Analytics{% endblock %}
+
+{% block teacher_content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Quiz Analytics</h2>
+    
+    {% if quiz_stats %}
+        <div class="row">
+            {% for stat in quiz_stats %}
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-lg">
+                        <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <h5 class="mb-0">{{ stat.quiz.title }}</h5>
+                            <small>{{ stat.quiz.subject.name }}</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <div class="text-center p-3" style="background-color: #f8f9fa; border-radius: 10px;">
+                                        <h3 class="mb-0" style="color: #667eea;">{{ stat.total_attempts }}</h3>
+                                        <small class="text-muted">Total Attempts</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-3" style="background-color: #f8f9fa; border-radius: 10px;">
+                                        <h3 class="mb-0" style="color: #764ba2;">{{ stat.total_questions }}</h3>
+                                        <small class="text-muted">Questions</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Average Score</span>
+                                    <strong>{{ stat.avg_score }} / {{ stat.total_questions }}</strong>
+                                </div>
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar" style="width: {{ stat.avg_percentage }}%; background-color: #667eea;" role="progressbar">
+                                        {{ stat.avg_percentage }}%
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted"><i class="bi bi-clock"></i> {{ stat.quiz.duration }} mins</small>
+                                </div>
+                                <div class="col-6 text-end">
+                                    {% if stat.quiz.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <h6 class="mb-2">Student Performance</h6>
+                            {% if stat.quiz.attempts.all %}
+                                <div class="list-group">
+                                    {% for attempt in stat.quiz.attempts.all|slice:":5" %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <strong>{{ attempt.student.username }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ attempt.completed_at|date:"M d, Y H:i" }}</small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <h5 class="mb-0" style="color: #667eea;">{{ attempt.score }}/{{ stat.total_questions }}</h5>
+                                                    <small class="text-muted">{{ attempt.score|floatformat:0 }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                {% if stat.quiz.attempts.count > 5 %}
+                                    <small class="text-muted">Showing 5 of {{ stat.quiz.attempts.count }} attempts</small>
+                                {% endif %}
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i> No attempts yet
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <small class="text-muted"><i class="bi bi-calendar"></i> Created on {{ stat.quiz.created_at|date:"M d, Y" }}</small>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No quizzes created yet. Go to "Create Quiz" to generate your first quiz.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

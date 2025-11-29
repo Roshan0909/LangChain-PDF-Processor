@@ -30,8 +30,10 @@ class PDFNote(models.Model):
 class Quiz(models.Model):
     title = models.CharField(max_length=200)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='quizzes')
+    pdf_note = models.ForeignKey(PDFNote, on_delete=models.CASCADE, related_name='quizzes', null=True)
     description = models.TextField(blank=True)
-    duration = models.IntegerField(help_text="Duration in minutes")
+    duration = models.IntegerField(help_text="Duration in minutes", default=30)
+    num_questions = models.IntegerField(default=10)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_quizzes')
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)

@@ -7,4 +7,6 @@ urlpatterns = [
     path('subject/<int:subject_id>/', views.subject_detail, name='teacher_subject_detail'),
     path('subject/<int:subject_id>/upload/', views.upload_pdf, name='upload_pdf'),
     path('quiz/create/', views.create_quiz, name='create_quiz'),
+    path('quiz/generate/<int:pdf_id>/', views.generate_quiz, name='generate_quiz'),
+    path('quiz/analytics/', views.quiz_analytics, name='quiz_analytics'),
 ]
