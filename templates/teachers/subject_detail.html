@@ -1,0 +1,45 @@
+{% extends 'teachers/base_teacher.html' %}
+
+{% block title %}{{ subject.name }}{% endblock %}
+
+{% block teacher_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-lg">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #667eea; color: white;">
+                <div>
+                    <h3 class="mb-0">{{ subject.name }}</h3>
+                    <p class="mb-0 small">{{ subject.description }}</p>
+                </div>
+                <a href="{% url 'upload_pdf' subject.id %}" class="btn btn-light">+ Upload PDF</a>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'teacher_dashboard' %}" class="btn btn-sm btn-outline-secondary mb-3">← Back to Dashboard</a>
+                
+                <h5>PDF Notes ({{ notes.count }})</h5>
+                <hr>
+                
+                {% if notes %}
+                    <div class="list-group">
+                        {% for note in notes %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ note.title }}</h6>
+                                    <small class="text-muted">Uploaded on {{ note.created_at|date:"M d, Y" }}</small>
+                                </div>
+                                <a href="{{ note.pdf_file.url }}" target="_blank" class="btn btn-sm" style="background-color: #667eea; color: white;">
+                                    <i class="bi bi-file-pdf"></i> Open PDF
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        No PDF notes uploaded yet. Click "Upload PDF" to add notes for this subject.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
