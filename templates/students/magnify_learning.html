@@ -19,14 +19,10 @@
                 <div class="row align-items-end">
                     <div class="col-md-8 mb-3 mb-md-0">
                         <label for="pdfFile" class="form-label">Choose PDF File</label>
-                        <div id="dropZonePdf" class="drop-zone mb-2">
-                            <i class="bi bi-cloud-upload" style="font-size: 3rem; color: #667eea;"></i>
-                            <p class="mb-0 mt-2"><strong>Drag & Drop</strong> your PDF here</p>
-                            <p class="text-muted mb-0">or</p>
-                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="document.getElementById('pdfFile').click()">
-                                <i class="bi bi-folder2-open"></i> Browse Files
-                            </button>
-                            <p class="text-muted small mt-2 mb-0" id="fileNameDisplay"></p>
+                        <div id="dropZonePdf" class="drop-zone-compact mb-2">
+                            <i class="bi bi-cloud-upload" style="font-size: 2rem; color: #667eea;"></i>
+                            <p class="mb-0 mt-1 small"><strong>Drag & Drop</strong> PDF or <button type="button" class="btn btn-link btn-sm p-0" onclick="document.getElementById('pdfFile').click()">Browse</button></p>
+                            <p class="text-muted small mt-1 mb-0" id="fileNameDisplay"></p>
                         </div>
                         <input type="file" class="form-control d-none" id="pdfFile" name="pdf_file" accept=".pdf" required>
                         <small class="text-muted">Maximum file size: 10MB</small>
@@ -89,20 +85,20 @@
 </div>
 
 <style>
-    .drop-zone {
+    .drop-zone-compact {
         border: 2px dashed #667eea;
         border-radius: 8px;
-        padding: 30px;
+        padding: 15px 20px;
         text-align: center;
         transition: all 0.3s ease;
         background-color: #f8f9fa;
         cursor: pointer;
     }
-    .drop-zone:hover {
+    .drop-zone-compact:hover {
         border-color: #764ba2;
         background-color: #e9ecef;
     }
-    .drop-zone.drag-over {
+    .drop-zone-compact.drag-over {
         border-color: #764ba2;
         background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
         transform: scale(1.02);
