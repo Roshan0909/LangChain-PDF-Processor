@@ -82,7 +82,7 @@ def get_conversational_chain():
     dont give wrong answer
     Context:\n{context}\nQuestion:\n{question}\n\nAnswer:
     """
-    model = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.3)
+    model = ChatGoogleGenerativeAI(model="Gemini 2.0 Flash", temperature=0.3)
     prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
     return load_qa_chain(model, chain_type="stuff", prompt=prompt)
 
