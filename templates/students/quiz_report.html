@@ -1,0 +1,210 @@
+{% extends 'students/base_student.html' %}
+
+{% block title %}Quiz Report - {{ quiz.title }}{% endblock %}
+
+{% block student_content %}
+<style>
+    .report-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    .question-card {
+        border-left: 4px solid #e0e0e0;
+    }
+    .question-card.correct {
+        border-left-color: #28a745;
+    }
+    .question-card.incorrect {
+        border-left-color: #dc3545;
+    }
+    .correct-answer {
+        background-color: #d4edda;
+        padding: 10px;
+        border-radius: 5px;
+        border-left: 4px solid #28a745;
+    }
+    .wrong-answer {
+        background-color: #f8d7da;
+        padding: 10px;
+        border-radius: 5px;
+        border-left: 4px solid #dc3545;
+    }
+    @media print {
+        .no-print { display: none; }
+        .question-card { page-break-inside: avoid; }
+    }
+</style>
+
+<div class="report-container">
+    <!-- Header -->
+    <div class="card shadow-lg mb-4 no-print">
+        <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0"><i class="bi bi-file-text"></i> Quiz Report</h3>
+                    <p class="mb-0 mt-2">{{ quiz.title }}</p>
+                </div>
+                <div class="text-end">
+                    <button onclick="window.print()" class="btn btn-light">
+                        <i class="bi bi-printer"></i> Print
+                    </button>
+                    <a href="{% url 'quiz' %}" class="btn btn-light ms-2">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-3">
+                    <h2 style="color: #667eea;">{{ attempt.score }}/{{ quiz.questions.count }}</h2>
+                    <p class="text-muted mb-0">Score</p>
+                </div>
+                <div class="col-md-3">
+                    <h2 style="color: #764ba2;">{{ percentage }}%</h2>
+                    <p class="text-muted mb-0">Percentage</p>
+                </div>
+                <div class="col-md-3">
+                    <h2>
+                        {% if percentage >= 35 %}
+                            <span class="badge bg-success">PASS</span>
+                        {% else %}
+                            <span class="badge bg-danger">FAIL</span>
+                        {% endif %}
+                    </h2>
+                    <p class="text-muted mb-0">Result</p>
+                </div>
+                <div class="col-md-3">
+                    <h2 style="color: #28a745;">
+                        {% if percentage >= 90 %}A
+                        {% elif percentage >= 75 %}B
+                        {% elif percentage >= 50 %}C
+                        {% elif percentage >= 35 %}D
+                        {% else %}F
+                        {% endif %}
+                    </h2>
+                    <p class="text-muted mb-0">Grade</p>
+                </div>
+            </div>
+            <hr>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Subject:</strong> {{ quiz.subject.name }}</p>
+                    <p class="mb-1"><strong>Duration:</strong> {{ quiz.duration }} minutes</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="mb-1"><strong>Completed:</strong> {{ attempt.completed_at|date:"M d, Y - h:i A" }}</p>
+                    <p class="mb-1"><strong>Based on:</strong> {{ quiz.pdf_note.title }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Performance Breakdown</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Correct Answers: {{ attempt.score }}</label>
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-success" style="width: {{ percentage }}%;" role="progressbar">
+                            {{ attempt.score }} correct
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    {% widthratio quiz.questions.count 1 1 as total_questions %}
+                    {% widthratio total_questions attempt.score -1 as wrong_count_neg %}
+                    {% widthratio wrong_count_neg 1 -1 as wrong_count %}
+                    {% widthratio wrong_count total_questions 100 as wrong_percentage %}
+                    <label class="form-label">Wrong Answers: {{ wrong_count }}</label>
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-danger" style="width: {{ wrong_percentage }}%;" role="progressbar">
+                            {{ wrong_count }} wrong
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questions and Answers -->
+    <h4 class="mb-3">Detailed Question Review</h4>
+    {% for result in question_results %}
+        <div class="card shadow-sm mb-3 question-card {% if result.is_correct %}correct{% else %}incorrect{% endif %}">
+            <div class="card-header {% if result.is_correct %}bg-success{% else %}bg-danger{% endif %} text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        {% if result.is_correct %}✓{% else %}✗{% endif %}
+                        Question {{ forloop.counter }}
+                    </h5>
+                    <span class="badge bg-light text-dark">
+                        {% if result.is_correct %}Correct{% else %}Wrong{% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="mb-3"><strong>{{ result.question.text }}</strong></p>
+                
+                {% if result.question.question_type == 'multiple_choice' %}
+                    <div class="ms-3">
+                        <p class="mb-2"><strong>Options:</strong></p>
+                        {% for option in result.question.options %}
+                            <div class="mb-2 p-2 rounded {% if forloop.counter0|add:0 == result.question.correct_answer|add:0 %}correct-answer{% elif forloop.counter0|add:0 == result.student_answer|add:0 and not result.is_correct %}wrong-answer{% endif %}">
+                                {{ forloop.counter }}. {{ option }}
+                                {% if forloop.counter0|add:0 == result.question.correct_answer|add:0 %}
+                                    <strong class="text-success"> ✓ Correct Answer</strong>
+                                {% elif forloop.counter0|add:0 == result.student_answer|add:0 and not result.is_correct %}
+                                    <strong class="text-danger"> ✗ Your Answer</strong>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% elif result.question.question_type == 'true_false' %}
+                    <div class="ms-3">
+                        {% if result.is_correct %}
+                            <div class="correct-answer">
+                                <strong>Your Answer:</strong> {% if result.student_answer == '0' %}True{% else %}False{% endif %} ✓
+                            </div>
+                        {% else %}
+                            <div class="wrong-answer mb-2">
+                                <strong>Your Answer:</strong> {% if result.student_answer == '0' %}True{% else %}False{% endif %} ✗
+                            </div>
+                            <div class="correct-answer">
+                                <strong>Correct Answer:</strong> {% if result.question.correct_answer == '0' %}True{% else %}False{% endif %} ✓
+                            </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="ms-3">
+                        {% if result.is_correct %}
+                            <div class="correct-answer">
+                                <strong>Your Answer:</strong> {{ result.student_answer }} ✓
+                            </div>
+                        {% else %}
+                            <div class="wrong-answer mb-2">
+                                <strong>Your Answer:</strong> {{ result.student_answer|default:"Not answered" }} ✗
+                            </div>
+                            <div class="correct-answer">
+                                <strong>Correct Answer:</strong> {{ result.question.correct_answer }} ✓
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+
+    <!-- Back Button -->
+    <div class="text-center mb-4 no-print">
+        <a href="{% url 'quiz' %}" class="btn btn-lg" style="background-color: #667eea; color: white;">
+            <i class="bi bi-arrow-left"></i> Back to Quizzes
+        </a>
+    </div>
+</div>
+{% endblock %}

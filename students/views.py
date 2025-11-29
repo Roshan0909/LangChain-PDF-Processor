@@ -205,7 +205,12 @@ def quiz(request):
         return HttpResponseForbidden("You don't have permission to access this page.")
     
     from teachers.models import Quiz
-    quizzes = Quiz.objects.filter(is_active=True).select_related('subject', 'pdf_note')
+    quizzes = Quiz.objects.filter(is_active=True).select_related('subject', 'pdf_note').prefetch_related('attempts', 'questions')
+    
+    # Attach user's attempt to each quiz
+    for quiz_obj in quizzes:
+        quiz_obj.user_attempt = quiz_obj.attempts.filter(student=request.user, completed_at__isnull=False).first()
+    
     return render(request, 'students/quiz.html', {'quizzes': quizzes})
 
 @login_required
@@ -227,6 +232,40 @@ def take_quiz(request, quiz_id):
     })
 
 @login_required
+def quiz_report(request, attempt_id):
+    if not request.user.is_student():
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    from teachers.models import QuizAttempt
+    attempt = get_object_or_404(QuizAttempt, id=attempt_id, student=request.user, completed_at__isnull=False)
+    
+    quiz = attempt.quiz
+    questions = quiz.questions.all()
+    
+    # Build detailed results
+    question_results = []
+    for question in questions:
+        question_id = str(question.id)
+        student_answer = attempt.answers.get(question_id)
+        is_correct = student_answer == question.correct_answer
+        
+        result = {
+            'question': question,
+            'student_answer': student_answer,
+            'is_correct': is_correct
+        }
+        question_results.append(result)
+    
+    percentage = (attempt.score / quiz.questions.count() * 100) if quiz.questions.count() > 0 else 0
+    
+    return render(request, 'students/quiz_report.html', {
+        'attempt': attempt,
+        'quiz': quiz,
+        'question_results': question_results,
+        'percentage': round(percentage, 2)
+    })
+
+@login_required
 @require_POST
 def submit_quiz(request, quiz_id):
     if not request.user.is_student():
@@ -240,21 +279,39 @@ def submit_quiz(request, quiz_id):
         data = json.loads(request.body)
         answers = data.get('answers', {})
         
-        # Calculate score
+        # Calculate score and build detailed results
         score = 0
         total_questions = quiz.questions.count()
         correct_answers = {}
+        question_details = []
         
         for question in quiz.questions.all():
             question_id = str(question.id)
             student_answer = answers.get(question_id)
             correct_answer = question.correct_answer
             
-            if student_answer == correct_answer:
+            is_correct = student_answer == correct_answer
+            if is_correct:
                 score += 1
                 correct_answers[question_id] = True
             else:
                 correct_answers[question_id] = False
+            
+            # Build question detail for report
+            question_detail = {
+                'id': question.id,
+                'text': question.text,
+                'student_answer': student_answer,
+                'correct_answer': correct_answer,
+                'is_correct': is_correct,
+                'type': question.question_type
+            }
+            
+            # Add options for multiple choice
+            if question.question_type == 'multiple_choice':
+                question_detail['options'] = question.options
+            
+            question_details.append(question_detail)
         
         # Save attempt
         attempt = QuizAttempt.objects.create(
@@ -273,7 +330,8 @@ def submit_quiz(request, quiz_id):
             'score': score,
             'total': total_questions,
             'percentage': round(percentage, 2),
-            'correct_answers': correct_answers
+            'correct_answers': correct_answers,
+            'question_details': question_details
         })
         
     except Exception as e:

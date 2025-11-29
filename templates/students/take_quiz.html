@@ -120,7 +120,7 @@
 
 <!-- Result Modal -->
 <div class="modal fade" id="resultModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                 <h5 class="modal-title"><i class="bi bi-trophy"></i> Quiz Results</h5>
@@ -129,6 +129,9 @@
                 <div id="resultContent"></div>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+                    <i class="bi bi-printer"></i> Print Report
+                </button>
                 <a href="{% url 'quiz' %}" class="btn" style="background-color: #667eea; color: white;">Back to Quizzes</a>
             </div>
         </div>
@@ -203,31 +206,106 @@
                 const percentage = data.percentage;
                 let grade = '';
                 let emoji = '';
+                let passStatus = '';
                 
                 if (percentage >= 90) {
                     grade = 'Excellent!';
                     emoji = '🌟';
+                    passStatus = '<span class="badge bg-success">PASS</span>';
                 } else if (percentage >= 75) {
                     grade = 'Good Job!';
                     emoji = '👍';
-                } else if (percentage >= 60) {
+                    passStatus = '<span class="badge bg-success">PASS</span>';
+                } else if (percentage >= 50) {
                     grade = 'Not Bad!';
                     emoji = '📚';
-                } else {
-                    grade = 'Keep Trying!';
+                    passStatus = '<span class="badge bg-success">PASS</span>';
+                } else if (percentage >= 35) {
+                    grade = 'Keep Practicing!';
                     emoji = '💪';
+                    passStatus = '<span class="badge bg-info">PASS</span>';
+                } else {
+                    grade = 'Need More Study!';
+                    emoji = '📖';
+                    passStatus = '<span class="badge bg-danger">FAIL</span>';
                 }
                 
-                document.getElementById('resultContent').innerHTML = `
+                // Build detailed report
+                let reportHTML = `
                     <h1 style="font-size: 4rem;">${emoji}</h1>
                     <h3>${grade}</h3>
-                    <h2 class="my-4">Score: ${data.score}/${data.total}</h2>
-                    <div class="progress" style="height: 30px;">
+                    <h2 class="my-3">Score: ${data.score}/${data.total} ${passStatus}</h2>
+                    <div class="progress mb-4" style="height: 30px;">
                         <div class="progress-bar" style="width: ${percentage}%; background-color: #667eea;" role="progressbar">
                             ${percentage}%
                         </div>
                     </div>
+                    <button class="btn btn-outline-primary mb-3" onclick="toggleReport()">
+                        <i class="bi bi-file-text"></i> View Detailed Report
+                    </button>
+                    <div id="detailedReport" style="display: none; max-height: 400px; overflow-y: auto; text-align: left;">
                 `;
+                
+                // Add each question's result
+                data.question_details.forEach((q, index) => {
+                    const isCorrect = q.is_correct;
+                    const icon = isCorrect ? '✓' : '✗';
+                    const statusClass = isCorrect ? 'bg-success' : 'bg-danger';
+                    const statusText = isCorrect ? 'Correct' : 'Wrong';
+                    
+                    reportHTML += `
+                        <div class="card mb-3 border-${isCorrect ? 'success' : 'danger'}">
+                            <div class="card-header ${statusClass} text-white">
+                                <strong>${icon} Question ${index + 1}</strong>
+                                <span class="badge bg-light text-dark float-end">${statusText}</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-2"><strong>${q.text}</strong></p>
+                    `;
+                    
+                    if (q.type === 'multiple_choice' && q.options) {
+                        reportHTML += '<div class="ms-3">';
+                        q.options.forEach((option, optIndex) => {
+                            const studentSelected = q.student_answer == optIndex;
+                            const isCorrectOption = q.correct_answer == optIndex;
+                            let optionClass = '';
+                            let icon = '';
+                            
+                            if (isCorrectOption) {
+                                optionClass = 'text-success fw-bold';
+                                icon = '✓ ';
+                            }
+                            if (studentSelected && !isCorrect) {
+                                optionClass = 'text-danger fw-bold';
+                                icon = '✗ ';
+                            }
+                            
+                            reportHTML += `<p class="mb-1 ${optionClass}">${icon}${optIndex + 1}. ${option}</p>`;
+                        });
+                        reportHTML += '</div>';
+                    } else if (q.type === 'true_false') {
+                        const correctText = q.correct_answer == '0' ? 'True' : 'False';
+                        const studentText = q.student_answer == '0' ? 'True' : 'False';
+                        reportHTML += `
+                            <p class="mb-1"><strong>Your Answer:</strong> <span class="text-${isCorrect ? 'success' : 'danger'}">${studentText}</span></p>
+                            ${!isCorrect ? `<p class="mb-1"><strong>Correct Answer:</strong> <span class="text-success">${correctText}</span></p>` : ''}
+                        `;
+                    } else {
+                        reportHTML += `
+                            <p class="mb-1"><strong>Your Answer:</strong> <span class="text-${isCorrect ? 'success' : 'danger'}">${q.student_answer || 'Not answered'}</span></p>
+                            ${!isCorrect ? `<p class="mb-1"><strong>Correct Answer:</strong> <span class="text-success">${q.correct_answer}</span></p>` : ''}
+                        `;
+                    }
+                    
+                    reportHTML += `
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                reportHTML += '</div>';
+                
+                document.getElementById('resultContent').innerHTML = reportHTML;
                 
                 const modal = new bootstrap.Modal(document.getElementById('resultModal'));
                 modal.show();
@@ -237,6 +315,20 @@
         } catch (error) {
             console.error('Error:', error);
             alert('Failed to submit quiz. Please try again.');
+        }
+    }
+    
+    // Toggle detailed report
+    function toggleReport() {
+        const report = document.getElementById('detailedReport');
+        const button = event.target;
+        
+        if (report.style.display === 'none') {
+            report.style.display = 'block';
+            button.innerHTML = '<i class="bi bi-chevron-up"></i> Hide Detailed Report';
+        } else {
+            report.style.display = 'none';
+            button.innerHTML = '<i class="bi bi-file-text"></i> View Detailed Report';
         }
     }
 </script>
