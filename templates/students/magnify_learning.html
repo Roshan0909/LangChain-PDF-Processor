@@ -19,7 +19,16 @@
                 <div class="row align-items-end">
                     <div class="col-md-8 mb-3 mb-md-0">
                         <label for="pdfFile" class="form-label">Choose PDF File</label>
-                        <input type="file" class="form-control" id="pdfFile" name="pdf_file" accept=".pdf" required>
+                        <div id="dropZonePdf" class="drop-zone mb-2">
+                            <i class="bi bi-cloud-upload" style="font-size: 3rem; color: #667eea;"></i>
+                            <p class="mb-0 mt-2"><strong>Drag & Drop</strong> your PDF here</p>
+                            <p class="text-muted mb-0">or</p>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="document.getElementById('pdfFile').click()">
+                                <i class="bi bi-folder2-open"></i> Browse Files
+                            </button>
+                            <p class="text-muted small mt-2 mb-0" id="fileNameDisplay"></p>
+                        </div>
+                        <input type="file" class="form-control d-none" id="pdfFile" name="pdf_file" accept=".pdf" required>
                         <small class="text-muted">Maximum file size: 10MB</small>
                     </div>
                     <div class="col-md-4">
@@ -79,15 +88,71 @@
     {% endif %}
 </div>
 
+<style>
+    .drop-zone {
+        border: 2px dashed #667eea;
+        border-radius: 8px;
+        padding: 30px;
+        text-align: center;
+        transition: all 0.3s ease;
+        background-color: #f8f9fa;
+        cursor: pointer;
+    }
+    .drop-zone:hover {
+        border-color: #764ba2;
+        background-color: #e9ecef;
+    }
+    .drop-zone.drag-over {
+        border-color: #764ba2;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        transform: scale(1.02);
+    }
+</style>
+
 <script>
     const uploadChatForm = document.getElementById('uploadChatForm');
+    const dropZonePdf = document.getElementById('dropZonePdf');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
     const uploadProgress = document.getElementById('uploadProgress');
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
     const pdfFile = document.getElementById('pdfFile');
     
+    // Drag and drop handlers
+    dropZonePdf.addEventListener('click', function() {
+        pdfFile.click();
+    });
+    
+    dropZonePdf.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.add('drag-over');
+    });
+    
+    dropZonePdf.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.remove('drag-over');
+    });
+    
+    dropZonePdf.addEventListener('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            pdfFile.files = files;
+            pdfFile.dispatchEvent(new Event('change'));
+        }
+    });
+    
     // File size validation
     pdfFile.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            fileNameDisplay.textContent = '📄 ' + this.files[0].name;
+            fileNameDisplay.style.color = '#667eea';
+        }
         const maxSize = 10 * 1024 * 1024; // 10MB
         if (this.files.length > 0 && this.files[0].size > maxSize) {
             alert('File size exceeds 10MB. Please choose a smaller file.');

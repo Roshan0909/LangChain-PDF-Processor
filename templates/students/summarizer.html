@@ -47,7 +47,15 @@
                             <div class="tab-pane fade" id="file-input">
                                 <div class="mb-3">
                                     <label for="fileInput" class="form-label">Upload PDF or Word Document</label>
-                                    <input class="form-control" type="file" id="fileInput" name="file" accept=".pdf,.doc,.docx">
+                                    <div id="dropZoneFile" class="drop-zone mb-2">
+                                        <i class="bi bi-cloud-arrow-up" style="font-size: 3rem; color: #667eea;"></i>
+                                        <p class="mb-0 mt-2"><strong>Drag & Drop</strong> your file here</p>
+                                        <p class="text-muted mb-0">or</p>
+                                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="document.getElementById('fileInput').click()">
+                                            <i class="bi bi-folder2-open"></i> Browse Files
+                                        </button>
+                                    </div>
+                                    <input class="form-control d-none" type="file" id="fileInput" name="file" accept=".pdf,.doc,.docx">
                                     <small class="text-muted">Supported formats: PDF, DOC, DOCX</small>
                                 </div>
                                 <div id="fileInfo" class="alert alert-info d-none">
@@ -152,6 +160,24 @@
 </div>
 
 <style>
+    .drop-zone {
+        border: 2px dashed #667eea;
+        border-radius: 8px;
+        padding: 30px;
+        text-align: center;
+        transition: all 0.3s ease;
+        background-color: #f8f9fa;
+        cursor: pointer;
+    }
+    .drop-zone:hover {
+        border-color: #764ba2;
+        background-color: #e9ecef;
+    }
+    .drop-zone.drag-over {
+        border-color: #764ba2;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        transform: scale(1.02);
+    }
     .summary-output {
         min-height: 400px;
         max-height: 600px;
@@ -185,6 +211,38 @@
     const summaryOutput = document.getElementById('summaryOutput');
     const loadingIndicator = document.getElementById('loadingIndicator');
     const copyBtn = document.getElementById('copyBtn');
+    const dropZoneFile = document.getElementById('dropZoneFile');
+    
+    // Drag and drop handlers
+    dropZoneFile.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    dropZoneFile.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.add('drag-over');
+    });
+    
+    dropZoneFile.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.remove('drag-over');
+    });
+    
+    dropZoneFile.addEventListener('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(files[0]);
+            fileInput.files = dataTransfer.files;
+            fileInput.dispatchEvent(new Event('change'));
+        }
+    });
     
     // Character counter
     textInput.addEventListener('input', function() {
