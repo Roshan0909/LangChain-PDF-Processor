@@ -3,41 +3,265 @@
 {% block title %}Login - Student Campus{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow-lg">
-            <div class="card-header bg-primary text-white text-center">
-                <h3>Login to Student Campus</h3>
+</div><!-- Close base container -->
+<div class="auth-container">
+    <div class="row g-0">
+        <!-- Left Side - Illustration -->
+        <div class="col-lg-6 d-none d-lg-flex auth-left">
+            <div class="auth-left-content">
+                <div class="text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 500 500" class="auth-illustration">
+                        <defs>
+                            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="250" cy="250" r="200" fill="url(#grad1)" opacity="0.1"/>
+                        <circle cx="250" cy="250" r="150" fill="url(#grad1)" opacity="0.2"/>
+                        <circle cx="250" cy="200" r="80" fill="#667eea"/>
+                        <rect x="190" y="280" width="120" height="140" rx="10" fill="#764ba2"/>
+                        <circle cx="230" cy="180" r="8" fill="white"/>
+                        <circle cx="270" cy="180" r="8" fill="white"/>
+                        <path d="M 230 220 Q 250 230 270 220" stroke="white" stroke-width="4" fill="none"/>
+                    </svg>
+                    <h2 class="mt-4 text-white">Welcome Back!</h2>
+                    <p class="text-white-50">Login to access your learning dashboard</p>
+                </div>
             </div>
-            <div class="card-body p-4">
-                <form method="post">
+        </div>
+        
+        <!-- Right Side - Login Form -->
+        <div class="col-lg-6 d-flex align-items-center justify-content-center auth-right">
+            <div class="auth-form-container">
+                <div class="text-center mb-4">
+                    <div class="auth-icon mb-3">
+                        <i class="bi bi-mortarboard-fill"></i>
+                    </div>
+                    <h2 class="auth-title">Sign In</h2>
+                    <p class="text-muted">Enter your credentials to continue</p>
+                </div>
+                
+                <form method="post" class="auth-form">
                     {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
+                    
+                    <div class="form-floating mb-3">
                         {{ form.username }}
+                        <label for="{{ form.username.id_for_label }}">
+                            <i class="bi bi-person"></i> Username
+                        </label>
                         {% if form.username.errors %}
-                            <div class="text-danger">{{ form.username.errors }}</div>
+                            <div class="invalid-feedback d-block">
+                                <i class="bi bi-exclamation-circle"></i> {{ form.username.errors }}
+                            </div>
                         {% endif %}
                     </div>
-                    <div class="mb-3">
-                        <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
+                    
+                    <div class="form-floating mb-3">
                         {{ form.password }}
+                        <label for="{{ form.password.id_for_label }}">
+                            <i class="bi bi-lock"></i> Password
+                        </label>
                         {% if form.password.errors %}
-                            <div class="text-danger">{{ form.password.errors }}</div>
+                            <div class="invalid-feedback d-block">
+                                <i class="bi bi-exclamation-circle"></i> {{ form.password.errors }}
+                            </div>
                         {% endif %}
                     </div>
+                    
                     {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                            {{ form.non_field_errors }}
+                        <div class="alert alert-danger d-flex align-items-center" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <div>{{ form.non_field_errors }}</div>
                         </div>
                     {% endif %}
-                    <button type="submit" class="btn btn-primary w-100 mb-3">Login</button>
+                    
+                    <button type="submit" class="btn btn-gradient w-100 mb-3">
+                        <i class="bi bi-box-arrow-in-right"></i> Sign In
+                    </button>
                 </form>
-                <div class="text-center">
-                    <p>Don't have an account? <a href="{% url 'signup' %}">Sign up here</a></p>
-                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    html, body {
+        height: 100%;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+    }
+    
+    body {
+        background: #f8f9fa !important;
+    }
+    
+    .container {
+        display: none;
+    }
+    
+    nav.navbar {
+        display: none;
+    }
+    
+    .auth-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+    
+    .auth-container .row {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+    }
+    
+    .auth-left {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .auth-left::before {
+        content: '';
+        position: absolute;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: moveBackground 20s linear infinite;
+    }
+    
+    @keyframes moveBackground {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(50px, 50px); }
+    }
+    
+    .auth-left-content {
+        z-index: 1;
+        position: relative;
+    }
+    
+    .auth-illustration {
+        filter: drop-shadow(0 10px 30px rgba(0,0,0,0.2));
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-20px); }
+    }
+    
+    .auth-right {
+        background: #f8f9fa;
+        padding: 2rem;
+    }
+    
+    .auth-form-container {
+        width: 100%;
+        max-width: 450px;
+        max-height: 85vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    
+    .auth-form-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .auth-form-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .auth-form-container::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+    }
+    
+    .auth-icon {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .auth-title {
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    .form-floating > .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem 0.75rem;
+        height: calc(3.5rem + 2px);
+    }
+    
+    .form-floating > .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+    }
+    
+    .form-floating > label {
+        padding: 1rem 0.75rem;
+    }
+    
+    .btn-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.875rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .gradient-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-decoration: none;
+        cursor: pointer;
+        display: inline-block;
+    }
+    
+    .gradient-link:hover {
+        opacity: 0.8;
+        text-decoration: underline;
+    }
+    
+    @media (max-width: 991px) {
+        .auth-form-container {
+            padding: 2rem;
+        }
+    }
+</style>
 {% endblock %}
