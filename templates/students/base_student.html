@@ -155,6 +155,9 @@
                         <a class="nav-link {% if request.resolver_match.url_name == 'quiz' %}active{% endif %}" href="{% url 'quiz' %}">
                             <i class="bi bi-question-circle"></i> Quiz
                         </a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'knowledge_bot' %}active{% endif %}" href="{% url 'knowledge_bot' %}">
+                            <i class="bi bi-robot"></i> Knowledge Bot
+                        </a>
                         <a class="nav-link {% if request.resolver_match.url_name == 'student_chat' or request.resolver_match.url_name == 'student_chat_with' %}active{% endif %}" href="{% url 'student_chat' %}">
                             <i class="bi bi-chat-dots"></i> Messages
                         </a>

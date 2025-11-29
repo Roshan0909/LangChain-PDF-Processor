@@ -8,6 +8,7 @@ from .models import ChatHistory
 from .utils import get_answer_for_pdf
 from authentication.models import User
 import json
+import requests
 
 @login_required
 def student_dashboard(request):
@@ -394,3 +395,162 @@ def student_chat_with(request, user_id):
         'messages': messages_list,
         'available_notes': available_notes
     })
+
+@login_required
+def knowledge_bot(request):
+    """General knowledge chatbot using Wikipedia API and Gemini AI"""
+    if not request.user.is_student():
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    return render(request, 'students/knowledge_bot.html')
+
+@login_required
+def knowledge_bot_ask(request):
+    """Handle knowledge bot questions"""
+    if not request.user.is_student():
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        question = data.get('question', '').strip()
+        
+        if not question:
+            return JsonResponse({'success': False, 'error': 'Question cannot be empty'}, status=400)
+        
+        # Search Wikipedia for relevant information
+        wiki_context = search_wikipedia(question)
+        
+        # Check if we got any results
+        if not wiki_context.get('context'):
+            # Try a simplified search with just key words
+            words = question.lower().replace('what is', '').replace('who is', '').replace('?', '').strip()
+            wiki_context = search_wikipedia(words)
+        
+        # Generate answer
+        answer = generate_knowledge_answer(question, wiki_context)
+        
+        return JsonResponse({
+            'success': True,
+            'answer': answer,
+            'sources': wiki_context.get('sources', [])
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+def search_wikipedia(query):
+    """Search Wikipedia for relevant information using proper API"""
+    try:
+        import os
+        from dotenv import load_dotenv
+        load_dotenv()
+        
+        # Get credentials from environment
+        client_id = os.getenv('WIKIPEDIA_CLIENT_ID')
+        client_secret = os.getenv('WIKIPEDIA_CLIENT_SECRET')
+        
+        # Use Wikipedia API with proper headers
+        search_url = "https://en.wikipedia.org/w/api.php"
+        
+        headers = {
+            'User-Agent': 'StudentCampusApp/1.0 (Educational Purpose)'
+        }
+        
+        # Search for relevant articles
+        search_params = {
+            'action': 'query',
+            'format': 'json',
+            'list': 'search',
+            'srsearch': query,
+            'srlimit': 5,
+            'srprop': 'snippet'
+        }
+        
+        search_response = requests.get(search_url, params=search_params, headers=headers, timeout=10)
+        search_data = search_response.json()
+        
+        context = ""
+        sources = []
+        
+        if 'query' in search_data and 'search' in search_data['query']:
+            results = search_data['query']['search']
+            
+            if not results:
+                return {'context': '', 'sources': []}
+            
+            # Get the first result's full content
+            first_result = results[0]
+            title = first_result['title']
+            page_id = first_result['pageid']
+            
+            # Get full page content (not just intro)
+            content_params = {
+                'action': 'query',
+                'format': 'json',
+                'pageids': page_id,
+                'prop': 'extracts',
+                'explaintext': True,
+                'exsectionformat': 'plain'
+            }
+            
+            content_response = requests.get(search_url, params=content_params, headers=headers, timeout=10)
+            content_data = content_response.json()
+            
+            if 'query' in content_data and 'pages' in content_data['query']:
+                page_content = content_data['query']['pages'][str(page_id)].get('extract', '')
+                if page_content:
+                    # Get first 3000 characters for comprehensive answer
+                    context = f"{title}\n\n{page_content[:3000]}"
+                    if len(page_content) > 3000:
+                        context += "..."
+                    
+                    sources.append({
+                        'title': title,
+                        'url': f"https://en.wikipedia.org/?curid={page_id}"
+                    })
+                    
+                    # Add one more related article if available
+                    if len(results) > 1:
+                        second_result = results[1]
+                        second_title = second_result['title']
+                        second_page_id = second_result['pageid']
+                        
+                        content_params['pageids'] = second_page_id
+                        content_response = requests.get(search_url, params=content_params, headers=headers, timeout=10)
+                        content_data = content_response.json()
+                        
+                        if 'query' in content_data and 'pages' in content_data['query']:
+                            second_content = content_data['query']['pages'][str(second_page_id)].get('extract', '')
+                            if second_content:
+                                context += f"\n\nRelated: {second_title}\n\n{second_content[:1000]}"
+                                sources.append({
+                                    'title': second_title,
+                                    'url': f"https://en.wikipedia.org/?curid={second_page_id}"
+                                })
+        
+        return {'context': context, 'sources': sources}
+        
+    except Exception as e:
+        return {'context': '', 'sources': []}
+
+def generate_knowledge_answer(question, wiki_context):
+    """Format answer using Wikipedia content only"""
+    try:
+        context = wiki_context.get('context', '').strip()
+        
+        if context and len(context) > 50:  # Make sure we have substantial content
+            # Return the Wikipedia context directly
+            return context
+        else:
+            return ("I couldn't find relevant information on Wikipedia for your question. "
+                   "Please try:\n\n"
+                   "• Using simpler keywords\n"
+                   "• Checking your spelling\n"
+                   "• Asking about a different topic\n\n"
+                   "Examples: 'photosynthesis', 'Albert Einstein', 'solar system', 'Python programming'")
+        
+    except Exception as e:
+        return f"I apologize, but I encountered an error: {str(e)}"
