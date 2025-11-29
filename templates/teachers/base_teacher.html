@@ -152,6 +152,9 @@
                         <a class="nav-link {% if request.resolver_match.url_name == 'quiz_analytics' %}active{% endif %}" href="{% url 'quiz_analytics' %}">
                             <i class="bi bi-bar-chart"></i> Quiz Analytics
                         </a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'teacher_chat' or request.resolver_match.url_name == 'teacher_chat_with' %}active{% endif %}" href="{% url 'teacher_chat' %}">
+                            <i class="bi bi-chat-dots"></i> Messages
+                        </a>
                         <a class="nav-link logout-btn" href="{% url 'logout' %}">
                             <i class="bi bi-box-arrow-right"></i> Logout
                         </a>
@@ -162,15 +165,6 @@
             <!-- Main Content -->
             <div class="col-md-10 p-0">
                 <div class="main-content">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-
                     {% block teacher_content %}
                     {% endblock %}
                 </div>

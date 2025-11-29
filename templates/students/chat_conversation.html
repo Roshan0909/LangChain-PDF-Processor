@@ -1,0 +1,314 @@
+{% extends 'students/base_student.html' %}
+
+{% block title %}Chat with {{ other_user.username }} - Student{% endblock %}
+
+{% block student_content %}
+<style>
+    body {
+        overflow: hidden !important;
+    }
+    .main-content {
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+</style>
+<div class="container-fluid" style="height: calc(100vh - 56px); overflow: hidden;">
+    <div class="card shadow-lg h-100" style="display: flex; flex-direction: column;">
+        <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; flex-shrink: 0;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <a href="{% url 'student_chat' %}" class="btn btn-sm btn-light me-3">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                    <div class="rounded-circle bg-white text-success d-flex align-items-center justify-content-center" 
+                         style="width: 40px; height: 40px; font-size: 18px; font-weight: bold;">
+                        {{ other_user.username|slice:":1"|upper }}
+                    </div>
+                    <h5 class="mb-0 ms-3">{{ other_user.username }}</h5>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body overflow-auto" id="chatMessages" style="background-color: #f8f9fa; flex: 1 1 auto;">
+            {% for message in messages %}
+                <div class="mb-3 d-flex {% if message.sender.id == user.id %}justify-content-end{% else %}justify-content-start{% endif %}">
+                    <div class="{% if message.sender.id == user.id %}bg-primary text-white{% else %}bg-white{% endif %} rounded p-3 shadow-sm" 
+                         style="max-width: 70%;">
+                        {% if message.message %}
+                            <p class="mb-1">{{ message.message }}</p>
+                        {% endif %}
+                        
+                        {% if message.file %}
+                            {% if message.is_image %}
+                                <img src="{{ message.file.url }}" class="img-fluid rounded mt-2" style="max-width: 300px; max-height: 300px;" alt="Shared image">
+                            {% else %}
+                                <div class="mt-2 p-2 {% if message.sender.id == user.id %}bg-white{% else %}bg-light{% endif %} rounded">
+                                    <i class="bi bi-file-earmark {% if message.sender.id == user.id %}text-primary{% else %}text-dark{% endif %}"></i>
+                                    <a href="{{ message.file.url }}" target="_blank" class="{% if message.sender.id == user.id %}text-primary{% else %}text-dark{% endif %} text-decoration-none">
+                                        {{ message.file.name|slice:"20:" }}
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% if message.attached_note %}
+                            <div class="mt-2 p-2 {% if message.sender.id == user.id %}bg-white{% else %}bg-light{% endif %} rounded border">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-file-pdf-fill text-danger me-2"></i>
+                                    <div>
+                                        <strong class="{% if message.sender.id == user.id %}text-primary{% else %}text-dark{% endif %}">{{ message.attached_note.title }}</strong><br>
+                                        <small class="{% if message.sender.id == user.id %}text-primary{% else %}text-muted{% endif %}">{{ message.attached_note.subject.name }}</small>
+                                    </div>
+                                </div>
+                                <a href="{{ message.attached_note.pdf_file.url }}" target="_blank" class="btn btn-sm {% if message.sender.id == user.id %}btn-outline-primary{% else %}btn-outline-secondary{% endif %} mt-2 w-100">
+                                    <i class="bi bi-eye"></i> View PDF
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div class="card-footer bg-white" style="flex-shrink: 0;">
+            <div class="mb-2 d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('fileInput').click()">
+                    <i class="bi bi-paperclip"></i> Attach File
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#notesModal">
+                    <i class="bi bi-file-pdf"></i> Attach Note
+                </button>
+            </div>
+            <div id="filePreview" class="mb-2" style="display: none;">
+                <div class="bg-light border rounded p-2 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-file-earmark"></i> <span id="fileName"></span></span>
+                    <button type="button" class="btn-close" onclick="clearFile()"></button>
+                </div>
+            </div>
+            <div id="notePreview" class="mb-2" style="display: none;">
+                <div class="bg-light border rounded p-2 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-file-pdf-fill text-success"></i> <span id="noteName"></span></span>
+                    <button type="button" class="btn-close" onclick="clearNote()"></button>
+                </div>
+            </div>
+            <form id="messageForm" class="d-flex gap-2">
+                {% csrf_token %}
+                <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)">
+                <input type="hidden" id="selectedNoteId" value="">
+                <input type="text" id="messageInput" class="form-control" placeholder="Type your message..." autocomplete="off">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-send"></i> Send
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Notes Modal -->
+<div class="modal fade" id="notesModal" tabindex="-1" aria-labelledby="notesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title" id="notesModalLabel">Attach Note</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if available_notes %}
+                    <div class="list-group">
+                        {% for note in available_notes %}
+                            <button type="button" class="list-group-item list-group-item-action" onclick="selectNote({{ note.id }}, '{{ note.title|escapejs }}', '{{ note.subject.name|escapejs }}')">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-file-pdf-fill text-danger me-2"></i>
+                                    <div>
+                                        <strong>{{ note.title }}</strong><br>
+                                        <small class="text-muted">{{ note.subject.name }}</small>
+                                    </div>
+                                </div>
+                            </button>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-muted text-center p-3">
+                        <i class="bi bi-info-circle"></i> No notes available to attach.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const otherUserId = {{ other_user.id }};
+    const currentUserId = {{ user.id }};
+    const chatMessages = document.getElementById('chatMessages');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+    const fileInput = document.getElementById('fileInput');
+    const selectedNoteId = document.getElementById('selectedNoteId');
+    let selectedFile = null;
+    let lastMessageId = {% if messages %}{{ messages.last.id }}{% else %}0{% endif %};
+    
+    // Scroll to bottom on load
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Handle file selection
+    function handleFileSelect(event) {
+        selectedFile = event.target.files[0];
+        if (selectedFile) {
+            document.getElementById('fileName').textContent = selectedFile.name;
+            document.getElementById('filePreview').style.display = 'block';
+        }
+    }
+    
+    // Clear file
+    function clearFile() {
+        selectedFile = null;
+        fileInput.value = '';
+        document.getElementById('filePreview').style.display = 'none';
+    }
+    
+    // Select note
+    function selectNote(noteId, noteTitle, subjectName) {
+        selectedNoteId.value = noteId;
+        document.getElementById('noteName').textContent = noteTitle + ' (' + subjectName + ')';
+        document.getElementById('notePreview').style.display = 'block';
+        bootstrap.Modal.getInstance(document.getElementById('notesModal')).hide();
+    }
+    
+    // Clear note
+    function clearNote() {
+        selectedNoteId.value = '';
+        document.getElementById('notePreview').style.display = 'none';
+    }
+    
+    // Send message
+    messageForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const message = messageInput.value.trim();
+        const noteId = selectedNoteId.value;
+        
+        if (!message && !selectedFile && !noteId) {
+            return;
+        }
+        
+        try {
+            let response;
+            
+            if (selectedFile) {
+                // Send with file
+                const formData = new FormData();
+                formData.append('message', message);
+                formData.append('file', selectedFile);
+                if (noteId) formData.append('note_id', noteId);
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                
+                response = await fetch(`/teacher/chat/send/${otherUserId}/`, {
+                    method: 'POST',
+                    body: formData
+                });
+            } else {
+                // Send text/note only
+                response = await fetch(`/teacher/chat/send/${otherUserId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ 
+                        message: message,
+                        note_id: noteId || null
+                    })
+                });
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                addMessage(data.message, true);
+                messageInput.value = '';
+                clearFile();
+                clearNote();
+                lastMessageId = data.message.id;
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
+    });
+    
+    // Add message to chat
+    function addMessage(message, isOwn) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `mb-3 d-flex ${isOwn ? 'justify-content-end' : 'justify-content-start'}`;
+        
+        let content = '';
+        if (message.text) {
+            content += `<p class="mb-1">${escapeHtml(message.text)}</p>`;
+        }
+        
+        if (message.file_url) {
+            if (message.is_image) {
+                content += `<img src="${message.file_url}" class="img-fluid rounded mt-2" style="max-width: 300px; max-height: 300px;" alt="Shared image">`;
+            } else {
+                content += `
+                    <div class="mt-2 p-2 ${isOwn ? 'bg-white' : 'bg-light'} rounded">
+                        <i class="bi bi-file-earmark ${isOwn ? 'text-primary' : 'text-dark'}"></i>
+                        <a href="${message.file_url}" target="_blank" class="${isOwn ? 'text-primary' : 'text-dark'} text-decoration-none">
+                            ${message.file_name}
+                        </a>
+                    </div>
+                `;
+            }
+        }
+        
+        if (message.attached_note) {
+            content += `
+                <div class="mt-2 p-2 ${isOwn ? 'bg-white' : 'bg-light'} rounded border">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-file-pdf-fill text-danger me-2"></i>
+                        <div>
+                            <strong class="${isOwn ? 'text-primary' : 'text-dark'}">${message.attached_note.title}</strong><br>
+                            <small class="${isOwn ? 'text-primary' : 'text-muted'}">${message.attached_note.subject}</small>
+                        </div>
+                    </div>
+                    <a href="${message.attached_note.pdf_url}" target="_blank" class="btn btn-sm ${isOwn ? 'btn-outline-primary' : 'btn-outline-secondary'} mt-2 w-100">
+                        <i class="bi bi-eye"></i> View PDF
+                    </a>
+                </div>
+            `;
+        }
+        
+        messageDiv.innerHTML = `
+            <div class="${isOwn ? 'bg-primary text-white' : 'bg-white'} rounded p-3 shadow-sm" style="max-width: 70%;">
+                ${content}
+            </div>
+        `;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Poll for new messages every 3 seconds
+    setInterval(async () => {
+        try {
+            const response = await fetch(`/teacher/chat/get/${otherUserId}/?since_id=${lastMessageId}`);
+            const data = await response.json();
+            
+            if (data.success && data.messages.length > 0) {
+                data.messages.forEach(message => {
+                    addMessage(message, message.sender_id === currentUserId);
+                    lastMessageId = message.id;
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching messages:', error);
+        }
+    }, 3000);
+</script>
+{% endblock %}

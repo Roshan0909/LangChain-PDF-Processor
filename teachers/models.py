@@ -81,3 +81,29 @@ class QuizAttempt(models.Model):
     
     class Meta:
         ordering = ['-started_at']
+
+class ChatMessage(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
+    message = models.TextField(blank=True)
+    file = models.FileField(upload_to='chat_files/%Y/%m/%d/', null=True, blank=True)
+    attached_note = models.ForeignKey(PDFNote, on_delete=models.SET_NULL, null=True, blank=True, related_name='chat_references')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"Message {self.id}"
+    
+    def is_image(self):
+        if self.file:
+            ext = self.file.name.split('.')[-1].lower()
+            return ext in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
+        return False
+    
+    def file_extension(self):
+        if self.file:
+            return self.file.name.split('.')[-1].lower()
+        return None
+    
+    class Meta:
+        ordering = ['created_at']
