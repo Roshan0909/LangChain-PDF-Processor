@@ -12,8 +12,43 @@
             min-height: 100vh;
         }
         .navbar {
-            background-color: rgba(255, 255, 255, 0.95) !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            border: none;
+        }
+        .navbar-brand {
+            color: white !important;
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: 0.5px;
+        }
+        .navbar .btn-outline-danger {
+            border-color: white;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .navbar .btn-outline-danger:hover {
+            background-color: white;
+            color: #667eea;
+            border-color: white;
+        }
+        .navbar span {
+            color: white;
+            font-weight: 500;
+        }
+        .user-info {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 16px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+        }
+        .navbar-brand:hover {
+            transform: scale(1.05);
+            transition: transform 0.3s ease;
+        }
+        .navbar .bi {
+            font-size: 1.1rem;
         }
         .sidebar {
             min-height: 100vh;
@@ -50,10 +85,17 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="{% url 'teacher_dashboard' %}">Student Campus - Teacher</a>
-            <div class="ms-auto d-flex align-items-center">
-                <span class="me-3">Welcome, {{ user.username }}</span>
-                <a class="btn btn-outline-danger btn-sm" href="{% url 'logout' %}">Logout</a>
+            <a class="navbar-brand fw-bold" href="{% url 'teacher_dashboard' %}">
+                <i class="bi bi-book-half me-2"></i>Student Campus - Teacher
+            </a>
+            <div class="ms-auto d-flex align-items-center gap-3">
+                <div class="user-info">
+                    <i class="bi bi-person-badge me-2"></i>
+                    <span>{{ user.username }}</span>
+                </div>
+                <a class="btn btn-outline-danger btn-sm" href="{% url 'logout' %}">
+                    <i class="bi bi-box-arrow-right me-1"></i>Logout
+                </a>
             </div>
         </div>
     </nav>
