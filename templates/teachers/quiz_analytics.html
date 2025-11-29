@@ -180,54 +180,59 @@
                     {% for stat in quiz_stats %}
                         <div class="mb-4">
                             <h6 class="border-bottom pb-2 mb-3">{{ stat.quiz.title }}</h6>
-                            {% if stat.quiz.attempts.all %}
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>Student</th>
-                                                <th>Score</th>
-                                                <th>Percentage</th>
-                                                <th>Grade</th>
-                                                <th>Completed</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for attempt in stat.quiz.attempts.all %}
+                            {% with completed_attempts=stat.quiz.attempts.all|dictsort:"completed_at" %}
+                                {% if completed_attempts %}
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
                                                 <tr>
-                                                    <td><strong>{{ attempt.student.username }}</strong></td>
-                                                    <td>{{ attempt.score }}/{{ stat.total_questions }}</td>
-                                                    <td>
-                                                        <div class="progress" style="height: 20px; width: 100px;">
-                                                            {% widthratio attempt.score stat.total_questions 100 as percentage %}
-                                                            <div class="progress-bar" style="width: {{ percentage }}%; background-color: {% if percentage >= 90 %}#28a745{% elif percentage >= 75 %}#667eea{% elif percentage >= 50 %}#ffc107{% else %}#dc3545{% endif %};" role="progressbar">
-                                                                {{ percentage }}%
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        {% widthratio attempt.score stat.total_questions 100 as percentage %}
-                                                        {% if percentage >= 90 %}
-                                                            <span class="badge bg-success">A</span>
-                                                        {% elif percentage >= 75 %}
-                                                            <span class="badge bg-primary">B</span>
-                                                        {% elif percentage >= 50 %}
-                                                            <span class="badge bg-warning">C</span>
-                                                        {% else %}
-                                                            <span class="badge bg-danger">F</span>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td><small>{{ attempt.completed_at|date:"M d, Y H:i" }}</small></td>
+                                                    <th>Student</th>
+                                                    <th>Score</th>
+                                                    <th>Percentage</th>
+                                                    <th>Grade</th>
+                                                    <th>Completed</th>
                                                 </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            {% else %}
-                                <div class="alert alert-info">
-                                    <i class="bi bi-info-circle"></i> No attempts yet for this quiz
-                                </div>
-                            {% endif %}
+                                            </thead>
+                                            <tbody>
+                                                {% for attempt in completed_attempts %}
+                                                    {% if attempt.completed_at and attempt.score is not None and stat.total_questions > 0 %}
+                                                        <tr>
+                                                            <td><strong>{{ attempt.student.username }}</strong></td>
+                                                            <td>{{ attempt.score }}/{{ stat.total_questions }}</td>
+                                                            <td>
+                                                                {% widthratio attempt.score stat.total_questions 100 as percentage %}
+                                                                <div class="progress" style="height: 20px; width: 100px;">
+                                                                    <div class="progress-bar" style="width: {{ percentage }}%; background-color: {% if percentage|add:0 >= 90 %}#28a745{% elif percentage|add:0 >= 75 %}#667eea{% elif percentage|add:0 >= 50 %}#ffc107{% elif percentage|add:0 >= 35 %}#17a2b8{% else %}#dc3545{% endif %};" role="progressbar">
+                                                                        {{ percentage }}%
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                {% if percentage|add:0 >= 90 %}
+                                                                    <span class="badge bg-success">A (Pass)</span>
+                                                                {% elif percentage|add:0 >= 75 %}
+                                                                    <span class="badge bg-primary">B (Pass)</span>
+                                                                {% elif percentage|add:0 >= 50 %}
+                                                                    <span class="badge bg-warning text-dark">C (Pass)</span>
+                                                                {% elif percentage|add:0 >= 35 %}
+                                                                    <span class="badge bg-info text-dark">D (Pass)</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-danger">F (Fail) - {{ percentage }}%</span>
+                                                                {% endif %}
+                                                            </td>
+                                                            <td><small>{{ attempt.completed_at|date:"M d, Y H:i" }}</small></td>
+                                                        </tr>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle"></i> No completed attempts yet for this quiz
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
                         </div>
                     {% endfor %}
                 </div>
