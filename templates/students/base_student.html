@@ -10,8 +10,14 @@
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding-top: 56px;
         }
         .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
             border: none;
@@ -51,11 +57,11 @@
             font-size: 1.1rem;
         }
         .sidebar {
-            min-height: 100vh;
+            min-height: calc(100vh - 56px);
             background-color: #667eea;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
             position: sticky;
-            top: 0;
+            top: 56px;
         }
         .sidebar .nav-link {
             color: #fff;
