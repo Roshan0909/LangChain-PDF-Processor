@@ -4,94 +4,221 @@
 
 {% block teacher_content %}
 <div class="container-fluid">
-    <h2 class="mb-4">Quiz Analytics</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Quiz Analytics Dashboard</h2>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-primary active" onclick="showTab('overview')">
+                <i class="bi bi-graph-up"></i> Overview
+            </button>
+            <button type="button" class="btn btn-outline-primary" onclick="showTab('details')">
+                <i class="bi bi-list-check"></i> Quiz Details
+            </button>
+            <button type="button" class="btn btn-outline-primary" onclick="showTab('students')">
+                <i class="bi bi-people"></i> Student Performance
+            </button>
+        </div>
+    </div>
     
     {% if quiz_stats %}
-        <div class="row">
-            {% for stat in quiz_stats %}
-                <div class="col-md-6 mb-4">
-                    <div class="card shadow-lg">
-                        <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                            <h5 class="mb-0">{{ stat.quiz.title }}</h5>
-                            <small>{{ stat.quiz.subject.name }}</small>
-                        </div>
+        <!-- Overview Tab -->
+        <div id="overviewTab" class="analytics-tab">
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center h-100" style="border-left: 4px solid #667eea;">
                         <div class="card-body">
-                            <div class="row mb-3">
-                                <div class="col-6">
-                                    <div class="text-center p-3" style="background-color: #f8f9fa; border-radius: 10px;">
-                                        <h3 class="mb-0" style="color: #667eea;">{{ stat.total_attempts }}</h3>
-                                        <small class="text-muted">Total Attempts</small>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="text-center p-3" style="background-color: #f8f9fa; border-radius: 10px;">
-                                        <h3 class="mb-0" style="color: #764ba2;">{{ stat.total_questions }}</h3>
-                                        <small class="text-muted">Questions</small>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Average Score</span>
-                                    <strong>{{ stat.avg_score }} / {{ stat.total_questions }}</strong>
-                                </div>
-                                <div class="progress" style="height: 25px;">
-                                    <div class="progress-bar" style="width: {{ stat.avg_percentage }}%; background-color: #667eea;" role="progressbar">
-                                        {{ stat.avg_percentage }}%
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-6">
-                                    <small class="text-muted"><i class="bi bi-clock"></i> {{ stat.quiz.duration }} mins</small>
-                                </div>
-                                <div class="col-6 text-end">
-                                    {% if stat.quiz.is_active %}
-                                        <span class="badge bg-success">Active</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Inactive</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            <hr>
-                            
-                            <h6 class="mb-2">Student Performance</h6>
-                            {% if stat.quiz.attempts.all %}
-                                <div class="list-group">
-                                    {% for attempt in stat.quiz.attempts.all|slice:":5" %}
-                                        <div class="list-group-item">
-                                            <div class="d-flex justify-content-between">
-                                                <div>
-                                                    <strong>{{ attempt.student.username }}</strong>
-                                                    <br>
-                                                    <small class="text-muted">{{ attempt.completed_at|date:"M d, Y H:i" }}</small>
-                                                </div>
-                                                <div class="text-end">
-                                                    <h5 class="mb-0" style="color: #667eea;">{{ attempt.score }}/{{ stat.total_questions }}</h5>
-                                                    <small class="text-muted">{{ attempt.score|floatformat:0 }}</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                                {% if stat.quiz.attempts.count > 5 %}
-                                    <small class="text-muted">Showing 5 of {{ stat.quiz.attempts.count }} attempts</small>
-                                {% endif %}
-                            {% else %}
-                                <div class="alert alert-info">
-                                    <i class="bi bi-info-circle"></i> No attempts yet
-                                </div>
-                            {% endif %}
+                            <h2 style="color: #667eea;">{{ quiz_stats|length }}</h2>
+                            <p class="text-muted mb-0">Total Quizzes</p>
                         </div>
-                        <div class="card-footer bg-transparent">
-                            <small class="text-muted"><i class="bi bi-calendar"></i> Created on {{ stat.quiz.created_at|date:"M d, Y" }}</small>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center h-100" style="border-left: 4px solid #764ba2;">
+                        <div class="card-body">
+                            <h2 style="color: #764ba2;">{{ total_attempts }}</h2>
+                            <p class="text-muted mb-0">Total Attempts</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center h-100" style="border-left: 4px solid #28a745;">
+                        <div class="card-body">
+                            <h2 style="color: #28a745;">{{ unique_students }}</h2>
+                            <p class="text-muted mb-0">Active Students</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center h-100" style="border-left: 4px solid #ffc107;">
+                        <div class="card-body">
+                            <h2 style="color: #ffc107;">{{ overall_avg }}%</h2>
+                            <p class="text-muted mb-0">Average Score</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                {% for stat in quiz_stats %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100" style="border-left: 3px solid #667eea;">
+                            <div class="card-body">
+                                <h6 class="card-title text-truncate" title="{{ stat.quiz.title }}">{{ stat.quiz.title }}</h6>
+                                <p class="text-muted small mb-2">{{ stat.quiz.subject.name }}</p>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="badge bg-primary">{{ stat.total_attempts }} attempts</span>
+                                    <span class="badge bg-success">{{ stat.avg_percentage }}%</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar" style="width: {{ stat.avg_percentage }}%; background-color: #667eea;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Quiz Details Tab -->
+        <div id="detailsTab" class="analytics-tab" style="display: none;">
+            {% for stat in quiz_stats %}
+                <div class="card shadow-lg mb-4">
+                    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-0">{{ stat.quiz.title }}</h5>
+                                <small>{{ stat.quiz.subject.name }}</small>
+                            </div>
+                            <div>
+                                {% if stat.quiz.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="text-center p-3" style="background-color: #f8f9fa; border-radius: 10px;">
+                                    <h3 class="mb-0" style="color: #667eea;">{{ stat.total_attempts }}</h3>
+                                    <small class="text-muted">Total Attempts</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3" style="background-color: #f8f9fa; border-radius: 10px;">
+                                    <h3 class="mb-0" style="color: #764ba2;">{{ stat.total_questions }}</h3>
+                                    <small class="text-muted">Questions</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3" style="background-color: #f8f9fa; border-radius: 10px;">
+                                    <h3 class="mb-0" style="color: #28a745;">{{ stat.avg_score }}</h3>
+                                    <small class="text-muted">Avg Score</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3" style="background-color: #f8f9fa; border-radius: 10px;">
+                                    <h3 class="mb-0" style="color: #ffc107;">{{ stat.quiz.duration }}</h3>
+                                    <small class="text-muted">Minutes</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>Performance Overview</h6>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar" style="width: {{ stat.avg_percentage }}%; background-color: #667eea;" role="progressbar">
+                                    <strong>{{ stat.avg_percentage }}% Average</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Quiz Information</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="bi bi-file-pdf"></i> <strong>PDF:</strong> {{ stat.quiz.pdf_note.title }}</li>
+                                    <li><i class="bi bi-calendar"></i> <strong>Created:</strong> {{ stat.quiz.created_at|date:"M d, Y" }}</li>
+                                    <li><i class="bi bi-person"></i> <strong>Creator:</strong> {{ stat.quiz.created_by.username }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Statistics</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="bi bi-graph-up"></i> <strong>Highest Score:</strong> {{ stat.highest_score }}/{{ stat.total_questions }}</li>
+                                    <li><i class="bi bi-graph-down"></i> <strong>Lowest Score:</strong> {{ stat.lowest_score }}/{{ stat.total_questions }}</li>
+                                    <li><i class="bi bi-people"></i> <strong>Unique Students:</strong> {{ stat.unique_students }}</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
             {% endfor %}
+        </div>
+        
+        <!-- Student Performance Tab -->
+        <div id="studentsTab" class="analytics-tab" style="display: none;">
+            <div class="card shadow-lg">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h5 class="mb-0"><i class="bi bi-people"></i> Student Performance Overview</h5>
+                </div>
+                <div class="card-body">
+                    {% for stat in quiz_stats %}
+                        <div class="mb-4">
+                            <h6 class="border-bottom pb-2 mb-3">{{ stat.quiz.title }}</h6>
+                            {% if stat.quiz.attempts.all %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Student</th>
+                                                <th>Score</th>
+                                                <th>Percentage</th>
+                                                <th>Grade</th>
+                                                <th>Completed</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for attempt in stat.quiz.attempts.all %}
+                                                <tr>
+                                                    <td><strong>{{ attempt.student.username }}</strong></td>
+                                                    <td>{{ attempt.score }}/{{ stat.total_questions }}</td>
+                                                    <td>
+                                                        <div class="progress" style="height: 20px; width: 100px;">
+                                                            {% widthratio attempt.score stat.total_questions 100 as percentage %}
+                                                            <div class="progress-bar" style="width: {{ percentage }}%; background-color: {% if percentage >= 90 %}#28a745{% elif percentage >= 75 %}#667eea{% elif percentage >= 50 %}#ffc107{% else %}#dc3545{% endif %};" role="progressbar">
+                                                                {{ percentage }}%
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        {% widthratio attempt.score stat.total_questions 100 as percentage %}
+                                                        {% if percentage >= 90 %}
+                                                            <span class="badge bg-success">A</span>
+                                                        {% elif percentage >= 75 %}
+                                                            <span class="badge bg-primary">B</span>
+                                                        {% elif percentage >= 50 %}
+                                                            <span class="badge bg-warning">C</span>
+                                                        {% else %}
+                                                            <span class="badge bg-danger">F</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td><small>{{ attempt.completed_at|date:"M d, Y H:i" }}</small></td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i> No attempts yet for this quiz
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     {% else %}
         <div class="alert alert-info">
@@ -99,4 +226,30 @@
         </div>
     {% endif %}
 </div>
+
+<script>
+    function showTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.analytics-tab').forEach(tab => {
+            tab.style.display = 'none';
+        });
+        
+        // Remove active class from all buttons
+        document.querySelectorAll('.btn-group .btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Show selected tab
+        if (tabName === 'overview') {
+            document.getElementById('overviewTab').style.display = 'block';
+            event.target.classList.add('active');
+        } else if (tabName === 'details') {
+            document.getElementById('detailsTab').style.display = 'block';
+            event.target.classList.add('active');
+        } else if (tabName === 'students') {
+            document.getElementById('studentsTab').style.display = 'block';
+            event.target.classList.add('active');
+        }
+    }
+</script>
 {% endblock %}

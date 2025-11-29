@@ -134,27 +134,57 @@ def quiz_analytics(request):
     if not request.user.is_teacher():
         return HttpResponseForbidden("You don't have permission to access this page.")
     
-    quizzes = Quiz.objects.filter(created_by=request.user).prefetch_related('attempts', 'questions')
+    quizzes = Quiz.objects.filter(created_by=request.user).prefetch_related('attempts', 'questions', 'attempts__student')
     
     # Calculate statistics for each quiz
     quiz_stats = []
+    total_attempts_all = 0
+    unique_students_set = set()
+    all_percentages = []
+    
     for quiz in quizzes:
         attempts = quiz.attempts.filter(completed_at__isnull=False)
         total_attempts = attempts.count()
+        total_attempts_all += total_attempts
+        
+        # Get unique students for this quiz
+        students_in_quiz = set(attempt.student.id for attempt in attempts)
+        unique_students_set.update(students_in_quiz)
         
         if total_attempts > 0:
-            avg_score = sum(a.score for a in attempts) / total_attempts
-            avg_percentage = (avg_score / quiz.questions.count()) * 100 if quiz.questions.count() > 0 else 0
+            scores = [a.score for a in attempts]
+            avg_score = sum(scores) / total_attempts
+            highest_score = max(scores)
+            lowest_score = min(scores)
+            
+            if quiz.questions.count() > 0:
+                avg_percentage = (avg_score / quiz.questions.count()) * 100
+                all_percentages.append(avg_percentage)
+            else:
+                avg_percentage = 0
         else:
             avg_score = 0
             avg_percentage = 0
+            highest_score = 0
+            lowest_score = 0
         
         quiz_stats.append({
             'quiz': quiz,
             'total_attempts': total_attempts,
             'avg_score': round(avg_score, 2),
             'avg_percentage': round(avg_percentage, 2),
-            'total_questions': quiz.questions.count()
+            'total_questions': quiz.questions.count(),
+            'highest_score': highest_score,
+            'lowest_score': lowest_score,
+            'unique_students': len(students_in_quiz)
         })
     
-    return render(request, 'teachers/quiz_analytics.html', {'quiz_stats': quiz_stats})
+    # Calculate overall statistics
+    overall_avg = round(sum(all_percentages) / len(all_percentages), 2) if all_percentages else 0
+    
+    return render(request, 'teachers/quiz_analytics.html', {
+        'quiz_stats': quiz_stats,
+        'total_attempts': total_attempts_all,
+        'unique_students': len(unique_students_set),
+        'overall_avg': overall_avg
+    })
