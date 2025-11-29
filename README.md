@@ -24,11 +24,12 @@ A comprehensive Django-based learning management system that integrates AI capab
 
 ## Technology Stack
 
-- **Backend**: Django 5.2.8
+- **Backend**: Django
 - **Frontend**: Bootstrap 5.3.0 with Bootstrap Icons
-- **AI**: Google Gemini 2.5 Flash
+- **AI**: Google Gemini AI (Generative AI)
 - **Database**: SQLite (development)
 - **PDF Processing**: PyPDF2, LangChain, FAISS
+- **Vector Store**: FAISS for document embeddings
 - **APIs**: Wikipedia API for Knowledge Bot
 
 ## Installation
@@ -36,13 +37,14 @@ A comprehensive Django-based learning management system that integrates AI capab
 1. Clone the repository:
 ```bash
 git clone https://github.com/Roshan0909/LangChain-PDF-Processor.git
-cd gemini
+cd smart_campus
 ```
 
 2. Create a virtual environment:
 ```bash
 python -m venv venv
 venv\Scripts\activate  # Windows
+# Or on Linux/Mac: source venv/bin/activate
 ```
 
 3. Install dependencies:
@@ -77,22 +79,40 @@ python manage.py runserver
 ## Project Structure
 
 ```
-gemini/
+smart_campus/
 ├── authentication/          # User authentication and management
+│   ├── models.py           # User models
+│   ├── views.py            # Login, signup, logout views
+│   ├── forms.py            # Authentication forms
+│   └── urls.py             # Authentication routes
 ├── teachers/               # Teacher functionalities
 │   ├── models.py          # Subject, Quiz, Question, ChatMessage models
 │   ├── views.py           # Teacher views and logic
 │   ├── quiz_generator.py  # AI quiz generation
-│   └── templates/         # Teacher templates
+│   ├── forms.py           # Teacher forms
+│   └── urls.py            # Teacher routes
 ├── students/              # Student functionalities
 │   ├── models.py         # Student models
 │   ├── views.py          # Student views and logic
 │   ├── utils.py          # PDF processing utilities
-│   └── templates/        # Student templates
-├── templates/            # Shared templates
-├── media/               # User uploads (PDFs, chat files)
+│   ├── summarizer_utils.py # Document summarization
+│   └── urls.py           # Student routes
+├── templates/            # HTML templates
+│   ├── base.html        # Base template
+│   ├── authentication/  # Auth templates
+│   ├── teachers/        # Teacher templates
+│   └── students/        # Student templates
+├── media/               # User uploads
+│   ├── chat_files/     # Chat file uploads
+│   └── notes/          # PDF course materials
 ├── faiss_index/         # Vector embeddings for PDF search
-└── student_campus/      # Django project settings
+├── student_campus/      # Django project settings
+│   ├── settings.py     # Main settings
+│   ├── urls.py         # URL configuration
+│   └── wsgi.py         # WSGI config
+├── manage.py           # Django management script
+├── app.py              # Application entry point
+└── db.sqlite3          # SQLite database
 ```
 
 ## Key Features Explained
@@ -171,9 +191,9 @@ LOGGING = {
 ```
 
 ### Media Files
-- PDFs: `media/pdfs/`
+- Course PDFs: `media/notes/YYYY/MM/DD/`
 - Chat files: `media/chat_files/YYYY/MM/DD/`
-- Vector embeddings: `faiss_index/`
+- Vector embeddings: `faiss_index/` (multiple indices with hashed names)
 
 ## API Keys Required
 
