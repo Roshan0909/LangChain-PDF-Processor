@@ -68,8 +68,16 @@
                                     <span class="badge bg-primary">{{ stat.total_attempts }} attempts</span>
                                     <span class="badge bg-success">{{ stat.avg_percentage }}%</span>
                                 </div>
-                                <div class="progress" style="height: 8px;">
+                                <div class="progress mb-3" style="height: 8px;">
                                     <div class="progress-bar" style="width: {{ stat.avg_percentage }}%; background-color: #667eea;"></div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-info flex-fill" onclick="copyQuizContent{{ stat.quiz.id }}()" title="Copy Questions & Answers">
+                                        <i class="bi bi-clipboard"></i> Copy Q&A
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success flex-fill" onclick="viewAnswerSheet{{ stat.quiz.id }}()" title="View Answer Sheet">
+                                        <i class="bi bi-eye"></i> View Answers
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -301,5 +309,121 @@
             });
         });
     });
+
+    // Generate Copy and View functions for each quiz
+    {% for stat in quiz_stats %}
+    // Copy Quiz Content for Quiz ID {{ stat.quiz.id }}
+    function copyQuizContent{{ stat.quiz.id }}() {
+        let text = '{{ stat.quiz.title|escapejs }}\\n';
+        text += 'Subject: {{ stat.quiz.subject.name|escapejs }}\\n';
+        text += 'Total Questions: {{ stat.total_questions }}\\n';
+        text += 'Duration: {{ stat.quiz.duration }} minutes\\n';
+        text += '\\n' + '='.repeat(60) + '\\n\\n';
+        
+        {% for question in stat.quiz.questions.all %}
+        text += 'Question {{ forloop.counter }}:\\n';
+        text += '{{ question.text|escapejs }}\\n\\n';
+        {% if question.question_type == 'multiple_choice' %}
+        {% for option in question.options %}
+        text += '  {{ forloop.counter }}. {{ option|escapejs }}\\n';
+        {% endfor %}
+        text += '\\nCorrect Answer: Option {{ question.correct_answer|add:1 }}\\n';
+        {% elif question.question_type == 'true_false' %}
+        text += 'Correct Answer: {% if question.correct_answer == "0" %}True{% else %}False{% endif %}\\n';
+        {% else %}
+        text += 'Correct Answer: {{ question.correct_answer|escapejs }}\\n';
+        {% endif %}
+        text += '\\n' + '-'.repeat(60) + '\\n\\n';
+        {% endfor %}
+        
+        navigator.clipboard.writeText(text).then(function() {
+            alert('Quiz content copied to clipboard!');
+        }, function(err) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                alert('Quiz content copied to clipboard!');
+            } catch (e) {
+                alert('Failed to copy. Please try again.');
+            }
+            document.body.removeChild(textarea);
+        });
+    }
+
+    // View Answer Sheet for Quiz ID {{ stat.quiz.id }}
+    function viewAnswerSheet{{ stat.quiz.id }}() {
+        let html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>{{ stat.quiz.title|escapejs }} - Answer Sheet</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                <style>
+                    body { padding: 20px; font-family: Arial, sans-serif; }
+                    .question { margin-bottom: 30px; page-break-inside: avoid; }
+                    .correct-answer { background-color: #d4edda; padding: 10px; border-radius: 5px; border-left: 4px solid #28a745; }
+                    @media print { 
+                        .no-print { display: none; }
+                        body { padding: 10px; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+                        <h2>{{ stat.quiz.title|escapejs }} - Answer Sheet</h2>
+                        <button onclick="window.print()" class="btn btn-primary">Print</button>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Subject:</strong> {{ stat.quiz.subject.name|escapejs }}<br>
+                        <strong>Total Questions:</strong> {{ stat.total_questions }}<br>
+                        <strong>Duration:</strong> {{ stat.quiz.duration }} minutes
+                    </div>
+                    <hr>
+        `;
+        
+        {% for question in stat.quiz.questions.all %}
+        html += `
+            <div class="question">
+                <h5 class="text-primary">Question {{ forloop.counter }}</h5>
+                <p><strong>{{ question.text|escapejs }}</strong></p>
+                {% if question.question_type == 'multiple_choice' %}
+                <div class="options mb-2">
+                    {% for option in question.options %}
+                    <div class="{% if forloop.counter0|add:0 == question.correct_answer|add:0 %}correct-answer{% endif %} mb-1 p-2">
+                        {{ forloop.counter }}. {{ option|escapejs }}
+                        {% if forloop.counter0|add:0 == question.correct_answer|add:0 %}<strong> ✓ (Correct Answer)</strong>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif question.question_type == 'true_false' %}
+                <div class="correct-answer">
+                    <strong>Correct Answer:</strong> {% if question.correct_answer == '0' %}True{% else %}False{% endif %}
+                </div>
+                {% else %}
+                <div class="correct-answer">
+                    <strong>Correct Answer:</strong> {{ question.correct_answer|escapejs }}
+                </div>
+                {% endif %}
+            </div>
+        `;
+        {% endfor %}
+        
+        html += `
+                </div>
+            </body>
+            </html>
+        `;
+        
+        const newWindow = window.open('', 'Answer Sheet', 'width=800,height=600');
+        newWindow.document.write(html);
+        newWindow.document.close();
+    }
+    {% endfor %}
 </script>
 {% endblock %}

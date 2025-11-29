@@ -216,5 +216,128 @@
             });
         }
     });
+
+    // View Answer Sheet
+    function viewAnswerSheet() {
+        const answerSheetContent = generateAnswerSheetHTML();
+        const newWindow = window.open('', 'Answer Sheet', 'width=800,height=600');
+        newWindow.document.write(answerSheetContent);
+        newWindow.document.close();
+    }
+
+    // Generate Answer Sheet HTML
+    function generateAnswerSheetHTML() {
+        let html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>{{ quiz.title }} - Answer Sheet</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                <style>
+                    body { padding: 20px; font-family: Arial, sans-serif; }
+                    .question { margin-bottom: 30px; page-break-inside: avoid; }
+                    .correct-answer { background-color: #d4edda; padding: 10px; border-radius: 5px; border-left: 4px solid #28a745; }
+                    @media print { 
+                        .no-print { display: none; }
+                        body { padding: 10px; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+                        <h2>{{ quiz.title }} - Answer Sheet</h2>
+                        <button onclick="window.print()" class="btn btn-primary">
+                            <i class="bi bi-printer"></i> Print
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Subject:</strong> {{ quiz.subject.name }}<br>
+                        <strong>Total Questions:</strong> {{ questions.count }}<br>
+                        <strong>Duration:</strong> {{ quiz.duration }} minutes
+                    </div>
+                    <hr>
+        `;
+        
+        {% for question in questions %}
+        html += `
+            <div class="question">
+                <h5 class="text-primary">Question {{ forloop.counter }}</h5>
+                <p><strong>{{ question.text|escapejs }}</strong></p>
+                {% if question.question_type == 'multiple_choice' %}
+                <div class="options mb-2">
+                    {% for option in question.options %}
+                    <div class="{% if forloop.counter0|add:0 == question.correct_answer|add:0 %}correct-answer{% endif %} mb-1 p-2">
+                        {{ forloop.counter }}. {{ option|escapejs }}
+                        {% if forloop.counter0|add:0 == question.correct_answer|add:0 %}<strong> ✓ (Correct Answer)</strong>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif question.question_type == 'true_false' %}
+                <div class="correct-answer">
+                    <strong>Correct Answer:</strong> {% if question.correct_answer == '0' %}True{% else %}False{% endif %}
+                </div>
+                {% else %}
+                <div class="correct-answer">
+                    <strong>Correct Answer:</strong> {{ question.correct_answer|escapejs }}
+                </div>
+                {% endif %}
+            </div>
+        `;
+        {% endfor %}
+        
+        html += `
+                </div>
+            </body>
+            </html>
+        `;
+        
+        return html;
+    }
+
+    // Copy All Questions and Answers
+    function copyQuizContent() {
+        let text = '{{ quiz.title }}\\n';
+        text += 'Subject: {{ quiz.subject.name }}\\n';
+        text += 'Total Questions: {{ questions.count }}\\n';
+        text += 'Duration: {{ quiz.duration }} minutes\\n';
+        text += '\\n' + '='.repeat(60) + '\\n\\n';
+        
+        {% for question in questions %}
+        text += 'Question {{ forloop.counter }}:\\n';
+        text += '{{ question.text|escapejs }}\\n\\n';
+        {% if question.question_type == 'multiple_choice' %}
+        {% for option in question.options %}
+        text += '  {{ forloop.counter }}. {{ option|escapejs }}\\n';
+        {% endfor %}
+        text += '\\nCorrect Answer: Option {{ question.correct_answer|add:1 }}\\n';
+        {% elif question.question_type == 'true_false' %}
+        text += 'Correct Answer: {% if question.correct_answer == "0" %}True{% else %}False{% endif %}\\n';
+        {% else %}
+        text += 'Correct Answer: {{ question.correct_answer|escapejs }}\\n';
+        {% endif %}
+        text += '\\n' + '-'.repeat(60) + '\\n\\n';
+        {% endfor %}
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(text).then(function() {
+            alert('Quiz content copied to clipboard!');
+        }, function(err) {
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                alert('Quiz content copied to clipboard!');
+            } catch (e) {
+                alert('Failed to copy. Please try again.');
+            }
+            document.body.removeChild(textarea);
+        });
+    }
 </script>
 {% endblock %}
