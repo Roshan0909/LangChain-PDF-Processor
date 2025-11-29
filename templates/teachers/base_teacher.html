@@ -57,11 +57,23 @@
             font-size: 1.1rem;
         }
         .sidebar {
-            min-height: calc(100vh - 56px);
+            height: calc(100vh - 56px);
             background-color: #667eea;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
             position: sticky;
             top: 56px;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar > div:first-child {
+            position: relative;
+            height: 100%;
+        }
+        .sidebar .nav {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding-top: 1rem;
         }
         .sidebar .nav-link {
             color: #fff;
@@ -81,6 +93,28 @@
             margin-right: 10px;
             font-size: 1.2rem;
         }
+        .logout-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 15px;
+            right: 15px;
+            background-color: transparent;
+            color: white;
+            border: 2px solid white;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: block;
+        }
+        .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-color: white;
+            transform: translateX(5px);
+        }
         .main-content {
             background-color: #fff;
             min-height: 100vh;
@@ -99,9 +133,6 @@
                     <i class="bi bi-person-badge me-2"></i>
                     <span>{{ user.username }}</span>
                 </div>
-                <a class="btn btn-outline-danger btn-sm" href="{% url 'logout' %}">
-                    <i class="bi bi-box-arrow-right me-1"></i>Logout
-                </a>
             </div>
         </div>
     </nav>
@@ -111,7 +142,7 @@
             <!-- Sidebar -->
             <div class="col-md-2 p-0">
                 <div class="sidebar">
-                    <nav class="nav flex-column py-3">
+                    <nav class="nav flex-column">
                         <a class="nav-link {% if request.resolver_match.url_name == 'teacher_dashboard' %}active{% endif %}" href="{% url 'teacher_dashboard' %}">
                             <i class="bi bi-house-door"></i> Dashboard
                         </a>
@@ -120,6 +151,9 @@
                         </a>
                         <a class="nav-link {% if request.resolver_match.url_name == 'quiz_analytics' %}active{% endif %}" href="{% url 'quiz_analytics' %}">
                             <i class="bi bi-bar-chart"></i> Quiz Analytics
+                        </a>
+                        <a class="nav-link logout-btn" href="{% url 'logout' %}">
+                            <i class="bi bi-box-arrow-right"></i> Logout
                         </a>
                     </nav>
                 </div>
