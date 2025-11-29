@@ -7,6 +7,7 @@ urlpatterns = [
     path('magnify-learning/', views.magnify_learning, name='magnify_learning'),
     path('pdf-chat/<int:pdf_id>/', views.pdf_chat, name='pdf_chat'),
     path('ask-question/<int:pdf_id>/', views.ask_question, name='ask_question'),
+    path('upload-and-chat/', views.upload_and_chat, name='upload_and_chat'),
     path('summarizer/', views.summarizer, name='summarizer'),
     path('generate-summary/', views.generate_summary, name='generate_summary'),
     path('quiz/', views.quiz, name='quiz'),

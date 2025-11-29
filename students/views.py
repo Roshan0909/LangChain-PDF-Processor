@@ -96,6 +96,53 @@ def ask_question(request, pdf_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
+@require_POST
+def upload_and_chat(request):
+    if not request.user.is_student():
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    try:
+        pdf_file = request.FILES.get('pdf_file')
+        
+        if not pdf_file:
+            return JsonResponse({'error': 'No file uploaded'}, status=400)
+        
+        if not pdf_file.name.endswith('.pdf'):
+            return JsonResponse({'error': 'Only PDF files are allowed'}, status=400)
+        
+        # Check file size (10MB limit)
+        if pdf_file.size > 10 * 1024 * 1024:
+            return JsonResponse({'error': 'File size exceeds 10MB limit'}, status=400)
+        
+        # Create a temporary PDFNote for the uploaded file
+        # We'll create it under a special "Personal Uploads" subject
+        from teachers.models import Subject
+        
+        # Try to get or create a personal subject for this student
+        personal_subject, created = Subject.objects.get_or_create(
+            name=f"Personal Uploads - {request.user.username}",
+            teacher=request.user,
+            defaults={'description': 'Files uploaded for personal learning'}
+        )
+        
+        # Create the PDFNote
+        pdf_note = PDFNote.objects.create(
+            subject=personal_subject,
+            title=pdf_file.name.replace('.pdf', ''),
+            pdf_file=pdf_file,
+            uploaded_by=request.user
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'redirect_url': f'/student/pdf-chat/{pdf_note.id}/',
+            'message': 'File uploaded successfully'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
 def summarizer(request):
     if not request.user.is_student():
         return HttpResponseForbidden("You don't have permission to access this page.")
