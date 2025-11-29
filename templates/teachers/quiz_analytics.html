@@ -3,6 +3,23 @@
 {% block title %}Quiz Analytics{% endblock %}
 
 {% block teacher_content %}
+<style>
+    .correct-answer { 
+        background-color: #d4edda; 
+        padding: 10px; 
+        border-radius: 5px; 
+        border-left: 4px solid #28a745; 
+    }
+    .question { 
+        margin-bottom: 30px; 
+        page-break-inside: avoid; 
+    }
+    @media print { 
+        .no-print { display: none; }
+        body { padding: 10px; }
+    }
+</style>
+
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">Quiz Analytics Dashboard</h2>
@@ -253,6 +270,27 @@
     {% endif %}
 </div>
 
+<!-- Answer Sheet Modal -->
+<div class="modal fade" id="answerSheetModal" tabindex="-1" aria-labelledby="answerSheetModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title" id="answerSheetModalLabel">Answer Sheet</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="answerSheetContent">
+                <!-- Content will be dynamically loaded here -->
+            </div>
+            <div class="modal-footer no-print">
+                <button type="button" class="btn btn-primary" onclick="window.print()">
+                    <i class="bi bi-printer"></i> Print
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     function showTab(tabName) {
         // Hide all tabs
@@ -358,38 +396,17 @@
     // View Answer Sheet for Quiz ID {{ stat.quiz.id }}
     function viewAnswerSheet{{ stat.quiz.id }}() {
         let html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>{{ stat.quiz.title|escapejs }} - Answer Sheet</title>
-                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-                <style>
-                    body { padding: 20px; font-family: Arial, sans-serif; }
-                    .question { margin-bottom: 30px; page-break-inside: avoid; }
-                    .correct-answer { background-color: #d4edda; padding: 10px; border-radius: 5px; border-left: 4px solid #28a745; }
-                    @media print { 
-                        .no-print { display: none; }
-                        body { padding: 10px; }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-                        <h2>{{ stat.quiz.title|escapejs }} - Answer Sheet</h2>
-                        <button onclick="window.print()" class="btn btn-primary">Print</button>
-                    </div>
-                    <div class="mb-3">
-                        <strong>Subject:</strong> {{ stat.quiz.subject.name|escapejs }}<br>
-                        <strong>Total Questions:</strong> {{ stat.total_questions }}<br>
-                        <strong>Duration:</strong> {{ stat.quiz.duration }} minutes
-                    </div>
-                    <hr>
+            <div class="mb-3">
+                <strong>Subject:</strong> {{ stat.quiz.subject.name|escapejs }}<br>
+                <strong>Total Questions:</strong> {{ stat.total_questions }}<br>
+                <strong>Duration:</strong> {{ stat.quiz.duration }} minutes
+            </div>
+            <hr>
         `;
         
         {% for question in stat.quiz.questions.all %}
         html += `
-            <div class="question">
+            <div class="question mb-4">
                 <h5 class="text-primary">Question {{ forloop.counter }}</h5>
                 <p><strong>{{ question.text|escapejs }}</strong></p>
                 {% if question.question_type == 'multiple_choice' %}
@@ -414,15 +431,13 @@
         `;
         {% endfor %}
         
-        html += `
-                </div>
-            </body>
-            </html>
-        `;
+        // Update modal content
+        document.getElementById('answerSheetModalLabel').textContent = '{{ stat.quiz.title|escapejs }} - Answer Sheet';
+        document.getElementById('answerSheetContent').innerHTML = html;
         
-        const newWindow = window.open('', 'Answer Sheet', 'width=800,height=600');
-        newWindow.document.write(html);
-        newWindow.document.close();
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('answerSheetModal'));
+        modal.show();
     }
     {% endfor %}
 </script>
