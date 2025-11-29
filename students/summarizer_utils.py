@@ -14,14 +14,14 @@ def summarize_text(text, summary_type="concise"):
     
     if summary_type == "concise":
         prompt = f"""
-        Summarize the following text in a concise, easy-to-understand manner. 
-        Focus on the key points and main ideas. Make it suitable for quick learning.
-        Use bullet points where appropriate.
+        Summarize the following text in 3-5 short sentences maximum. 
+        Extract only the most critical points. Keep it extremely brief and to the point.
+        Make it easy to understand and remember quickly.
         
         Text to summarize:
         {text}
         
-        Provide a clear, concise summary:
+        Provide a very short, concise summary (3-5 sentences only):
         """
     elif summary_type == "detailed":
         prompt = f"""
