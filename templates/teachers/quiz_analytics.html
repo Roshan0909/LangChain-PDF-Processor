@@ -87,13 +87,26 @@
                             <div>
                                 <h5 class="mb-0">{{ stat.quiz.title }}</h5>
                                 <small>{{ stat.quiz.subject.name }}</small>
-                            </div>
-                            <div>
-                                {% if stat.quiz.is_active %}
-                                    <span class="badge bg-success">Active</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">Inactive</span>
+                                {% if stat.quiz.deadline %}
+                                    <div class="mt-1"><i class="bi bi-calendar-event"></i> Deadline: {{ stat.quiz.deadline|date:"M d, Y g:i A" }}</div>
                                 {% endif %}
+                            </div>
+                            <div class="d-flex gap-2 align-items-center">
+                                {% if stat.quiz.is_active %}
+                                    <span class="badge bg-success fs-6"><i class="bi bi-circle-fill"></i> Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary fs-6"><i class="bi bi-circle-fill"></i> Inactive</span>
+                                {% endif %}
+                                <div class="btn-group">
+                                    <a href="{% url 'quiz_detail' stat.quiz.id %}" class="btn btn-light btn-sm" title="Edit Quiz">
+                                        <i class="bi bi-pencil-square"></i> Edit
+                                    </a>
+                                    <button type="button" class="btn btn-sm toggle-quiz-btn {% if stat.quiz.is_active %}btn-warning{% else %}btn-success{% endif %}" 
+                                            data-quiz-id="{{ stat.quiz.id }}" data-is-active="{{ stat.quiz.is_active }}" title="{% if stat.quiz.is_active %}Deactivate{% else %}Activate{% endif %} Quiz">
+                                        <i class="bi {% if stat.quiz.is_active %}bi-pause-circle{% else %}bi-play-circle{% endif %}"></i>
+                                        {% if stat.quiz.is_active %}Deactivate{% else %}Activate{% endif %}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -251,5 +264,37 @@
             event.target.classList.add('active');
         }
     }
+
+    // Toggle quiz active/inactive
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.toggle-quiz-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const quizId = this.getAttribute('data-quiz-id');
+                const isActive = this.getAttribute('data-is-active') === 'True';
+                
+                if (confirm(`Are you sure you want to ${isActive ? 'deactivate' : 'activate'} this quiz?`)) {
+                    fetch(`/teacher/quiz/${quizId}/toggle/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.error || 'Failed to toggle quiz status');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while updating quiz status');
+                    });
+                }
+            });
+        });
+    });
 </script>
 {% endblock %}

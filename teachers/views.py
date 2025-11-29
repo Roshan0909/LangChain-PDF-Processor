@@ -118,7 +118,7 @@ def generate_quiz(request, pdf_id):
                 )
             
             messages.success(request, f'Quiz "{quiz.title}" created successfully with {len(questions_data)} questions!')
-            return redirect('quiz_analytics')
+            return redirect('quiz_detail', quiz_id=quiz.id)
             
         except Exception as e:
             messages.error(request, f'Error generating quiz: {str(e)}')
@@ -128,6 +128,75 @@ def generate_quiz(request, pdf_id):
         'pdf_note': pdf_note,
         'subject': pdf_note.subject
     })
+
+@login_required
+def quiz_detail(request, quiz_id):
+    if not request.user.is_teacher():
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    quiz = get_object_or_404(Quiz, id=quiz_id, created_by=request.user)
+    questions = quiz.questions.all().order_by('order')
+    
+    if request.method == 'POST':
+        # Handle quiz metadata update
+        quiz.title = request.POST.get('title', quiz.title)
+        quiz.description = request.POST.get('description', quiz.description)
+        quiz.duration = int(request.POST.get('duration', quiz.duration))
+        
+        deadline_str = request.POST.get('deadline')
+        if deadline_str:
+            from django.utils import timezone
+            from datetime import datetime
+            quiz.deadline = timezone.make_aware(datetime.fromisoformat(deadline_str))
+        
+        quiz.save()
+        
+        # Handle question updates
+        for question in questions:
+            q_text = request.POST.get(f'question_{question.id}')
+            q_answer = request.POST.get(f'answer_{question.id}')
+            
+            if q_text:
+                question.text = q_text
+            if q_answer:
+                question.correct_answer = q_answer
+            
+            # Update options for multiple choice
+            if question.question_type == 'multiple_choice':
+                options = []
+                for i in range(4):
+                    option = request.POST.get(f'option_{question.id}_{i}')
+                    if option:
+                        options.append(option)
+                question.options = options
+            
+            question.save()
+        
+        messages.success(request, 'Quiz updated successfully!')
+        return redirect('quiz_detail', quiz_id=quiz.id)
+    
+    return render(request, 'teachers/quiz_detail.html', {
+        'quiz': quiz,
+        'questions': questions
+    })
+
+@login_required
+def toggle_quiz_active(request, quiz_id):
+    if not request.user.is_teacher():
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    if request.method == 'POST':
+        quiz = get_object_or_404(Quiz, id=quiz_id, created_by=request.user)
+        quiz.is_active = not quiz.is_active
+        quiz.save()
+        
+        return JsonResponse({
+            'success': True,
+            'is_active': quiz.is_active,
+            'message': f'Quiz {"activated" if quiz.is_active else "deactivated"} successfully!'
+        })
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 
 @login_required
 def quiz_analytics(request):

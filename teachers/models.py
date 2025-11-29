@@ -36,6 +36,7 @@ class Quiz(models.Model):
     num_questions = models.IntegerField(default=10)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_quizzes')
     created_at = models.DateTimeField(auto_now_add=True)
+    deadline = models.DateTimeField(null=True, blank=True, help_text="Quiz deadline")
     is_active = models.BooleanField(default=True)
     
     def __str__(self):

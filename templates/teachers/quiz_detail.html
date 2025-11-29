@@ -1,0 +1,220 @@
+{% extends 'teachers/base_teacher.html' %}
+
+{% block title %}Quiz Details - {{ quiz.title }}{% endblock %}
+
+{% block teacher_content %}
+<div class="container-fluid p-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="mb-0">
+                    <i class="bi bi-clipboard-check text-primary"></i> Quiz Details
+                </h2>
+                <div>
+                    <button type="button" class="btn btn-outline-secondary me-2" onclick="window.location.href='{% url 'quiz_analytics' %}'">
+                        <i class="bi bi-bar-chart"></i> Back to Analytics
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="document.getElementById('saveBtn').click()">
+                        <i class="bi bi-save"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quiz Status Card -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="mb-2">{{ quiz.title }}</h5>
+                            <div class="d-flex gap-3 flex-wrap">
+                                <span class="badge {% if quiz.is_active %}bg-success{% else %}bg-danger{% endif %} fs-6">
+                                    <i class="bi bi-circle-fill"></i> {% if quiz.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                                <span class="text-muted">
+                                    <i class="bi bi-book"></i> {{ quiz.subject.name }}
+                                </span>
+                                <span class="text-muted">
+                                    <i class="bi bi-clock"></i> {{ quiz.duration }} minutes
+                                </span>
+                                <span class="text-muted">
+                                    <i class="bi bi-question-circle"></i> {{ questions.count }} questions
+                                </span>
+                                {% if quiz.deadline %}
+                                <span class="text-muted">
+                                    <i class="bi bi-calendar-event"></i> Deadline: {{ quiz.deadline|date:"M d, Y g:i A" }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">
+                                    <i class="bi bi-calendar-x"></i> No deadline set
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button type="button" class="btn {% if quiz.is_active %}btn-danger{% else %}btn-success{% endif %} btn-lg" id="toggleActiveBtn">
+                                <i class="bi {% if quiz.is_active %}bi-pause-circle{% else %}bi-play-circle{% endif %}"></i>
+                                {% if quiz.is_active %}Deactivate Quiz{% else %}Activate Quiz{% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Edit Form -->
+            <form method="post" id="quizForm">
+                {% csrf_token %}
+                
+                <!-- Quiz Metadata -->
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-gear"></i> Quiz Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="title" class="form-label fw-bold">Quiz Title</label>
+                                <input type="text" class="form-control" id="title" name="title" value="{{ quiz.title }}" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="duration" class="form-label fw-bold">Duration (minutes)</label>
+                                <input type="number" class="form-control" id="duration" name="duration" value="{{ quiz.duration }}" min="1" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="deadline" class="form-label fw-bold">Deadline</label>
+                                <input type="datetime-local" class="form-control" id="deadline" name="deadline" 
+                                    {% if quiz.deadline %}value="{{ quiz.deadline|date:'Y-m-d\TH:i' }}"{% endif %}>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label for="description" class="form-label fw-bold">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="2">{{ quiz.description }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Questions List -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-list-ol"></i> Quiz Questions</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for question in questions %}
+                        <div class="question-block mb-4 pb-4 {% if not forloop.last %}border-bottom{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h6 class="text-primary fw-bold">Question {{ forloop.counter }}</h6>
+                                <span class="badge bg-info">{{ question.get_question_type_display }}</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="question_{{ question.id }}" class="form-label fw-bold">Question Text</label>
+                                <textarea class="form-control" id="question_{{ question.id }}" name="question_{{ question.id }}" 
+                                    rows="2" required>{{ question.text }}</textarea>
+                            </div>
+
+                            {% if question.question_type == 'multiple_choice' %}
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <label class="form-label fw-bold">Options</label>
+                                </div>
+                                {% for option in question.options %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="input-group">
+                                        <span class="input-group-text">{{ forloop.counter }}.</span>
+                                        <input type="text" class="form-control" name="option_{{ question.id }}_{{ forloop.counter0 }}" 
+                                            value="{{ option }}" required>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="answer_{{ question.id }}" class="form-label fw-bold">Correct Answer (Option Number)</label>
+                                <select class="form-select" id="answer_{{ question.id }}" name="answer_{{ question.id }}" required>
+                                    <option value="0" {% if question.correct_answer == '0' %}selected{% endif %}>Option 1</option>
+                                    <option value="1" {% if question.correct_answer == '1' %}selected{% endif %}>Option 2</option>
+                                    <option value="2" {% if question.correct_answer == '2' %}selected{% endif %}>Option 3</option>
+                                    <option value="3" {% if question.correct_answer == '3' %}selected{% endif %}>Option 4</option>
+                                </select>
+                            </div>
+                            {% elif question.question_type == 'true_false' %}
+                            <div class="mb-3">
+                                <label for="answer_{{ question.id }}" class="form-label fw-bold">Correct Answer</label>
+                                <select class="form-select" id="answer_{{ question.id }}" name="answer_{{ question.id }}" required>
+                                    <option value="0" {% if question.correct_answer == '0' %}selected{% endif %}>True</option>
+                                    <option value="1" {% if question.correct_answer == '1' %}selected{% endif %}>False</option>
+                                </select>
+                            </div>
+                            {% else %}
+                            <div class="mb-3">
+                                <label for="answer_{{ question.id }}" class="form-label fw-bold">Correct Answer</label>
+                                <input type="text" class="form-control" id="answer_{{ question.id }}" name="answer_{{ question.id }}" 
+                                    value="{{ question.correct_answer }}" required>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <button type="submit" id="saveBtn" class="d-none"></button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .question-block {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .badge {
+        padding: 8px 12px;
+    }
+</style>
+
+<script>
+    // Toggle quiz active/inactive
+    document.getElementById('toggleActiveBtn').addEventListener('click', function() {
+        const btn = this;
+        const isActive = {{ quiz.is_active|yesno:"true,false" }};
+        
+        if (confirm(`Are you sure you want to ${isActive ? 'deactivate' : 'activate'} this quiz?`)) {
+            fetch('{% url "toggle_quiz_active" quiz.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'Failed to toggle quiz status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating quiz status');
+            });
+        }
+    });
+</script>
+{% endblock %}
