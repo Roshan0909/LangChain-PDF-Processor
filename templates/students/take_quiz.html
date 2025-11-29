@@ -40,21 +40,28 @@
     }
     .progress-tracker {
         position: fixed;
-        top: 160px;
+        top: 260px;
         right: 20px;
         z-index: 1000;
         background: white;
-        padding: 15px 25px;
+        padding: 15px 20px;
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        min-width: 200px;
+        max-width: 180px;
     }
-    @media (max-width: 768px) {
+    .quiz-container {
+        margin-right: 220px;
+    }
+    @media (max-width: 1200px) {
+        .quiz-container {
+            margin-right: 0;
+        }
         .timer, .progress-tracker {
             position: relative;
             top: 0;
             right: 0;
             margin-bottom: 20px;
+            max-width: 100%;
         }
     }
 </style>
