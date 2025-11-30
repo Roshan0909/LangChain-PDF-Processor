@@ -151,6 +151,24 @@
     .message-bubble {
         word-break: break-word;
     }
+    #stopButton {
+        display: none;
+        background: #dc3545;
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    #stopButton:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+    }
+    #stopButton i {
+        margin-right: 6px;
+    }
 </style>
 
 <div class="chat-container">
@@ -264,8 +282,11 @@
             <input type="text" id="questionInput" class="form-control form-control-lg" 
                    placeholder="Ask a question... (e.g., What is photosynthesis?)" 
                    autocomplete="off" required>
-            <button type="submit" class="btn btn-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-width: 100px;">
+            <button type="submit" id="askButton" class="btn btn-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-width: 100px;">
                 <i class="bi bi-send"></i> Ask
+            </button>
+            <button type="button" id="stopButton" class="btn btn-lg">
+                <i class="bi bi-stop-circle"></i> Stop
             </button>
         </form>
     </div>
@@ -275,6 +296,9 @@
     const chatMessages = document.getElementById('chatMessages');
     const questionForm = document.getElementById('questionForm');
     const questionInput = document.getElementById('questionInput');
+    const askButton = document.getElementById('askButton');
+    const stopButton = document.getElementById('stopButton');
+    let abortController = null;
     
     // Remove welcome message on first question
     function removeWelcome() {
@@ -376,6 +400,19 @@
         return div.innerHTML.replace(/\n/g, '<br>');
     }
     
+    // Stop generating handler
+    stopButton.addEventListener('click', function() {
+        if (abortController) {
+            abortController.abort();
+            abortController = null;
+            hideTyping();
+            addBotMessage('Response generation stopped by user.');
+            askButton.style.display = 'block';
+            stopButton.style.display = 'none';
+            questionInput.disabled = false;
+        }
+    });
+    
     // Handle form submission
     questionForm.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -387,8 +424,14 @@
         addUserMessage(question);
         questionInput.value = '';
         
-        // Show typing indicator
+        // Show typing indicator and stop button
         showTyping();
+        askButton.style.display = 'none';
+        stopButton.style.display = 'block';
+        questionInput.disabled = true;
+        
+        // Create abort controller
+        abortController = new AbortController();
         
         try {
             const response = await fetch('{% url "knowledge_bot_ask" %}', {
@@ -397,12 +440,17 @@
                     'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ csrf_token }}'
                 },
-                body: JSON.stringify({ question: question })
+                body: JSON.stringify({ question: question }),
+                signal: abortController.signal
             });
             
             const data = await response.json();
             
             hideTyping();
+            askButton.style.display = 'block';
+            stopButton.style.display = 'none';
+            questionInput.disabled = false;
+            abortController = null;
             
             if (data.success) {
                 addBotMessage(data.answer, data.sources);
@@ -410,7 +458,15 @@
                 addBotMessage('Sorry, I encountered an error: ' + data.error);
             }
         } catch (error) {
+            if (error.name === 'AbortError') {
+                // Request was aborted, already handled
+                return;
+            }
             hideTyping();
+            askButton.style.display = 'block';
+            stopButton.style.display = 'none';
+            questionInput.disabled = false;
+            abortController = null;
             addBotMessage('Sorry, I encountered a network error. Please try again.');
             console.error('Error:', error);
         }
