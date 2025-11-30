@@ -59,12 +59,46 @@ def upload_pdf(request, subject_id):
             pdf_note.subject = subject
             pdf_note.uploaded_by = request.user
             pdf_note.save()
-            messages.success(request, f'PDF "{pdf_note.title}" uploaded successfully!')
+            messages.success(request, f'Document "{pdf_note.title}" uploaded successfully!')
             return redirect('teacher_subject_detail', subject_id=subject.id)
     else:
         form = PDFNoteForm()
     
     return render(request, 'teachers/upload_pdf.html', {'form': form, 'subject': subject})
+
+@login_required
+def delete_subject(request, subject_id):
+    if not request.user.is_teacher():
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    subject = get_object_or_404(Subject, id=subject_id, teacher=request.user)
+    
+    if request.method == 'POST':
+        subject_name = subject.name
+        subject.delete()
+        messages.success(request, f'Subject "{subject_name}" deleted successfully!')
+        return redirect('teacher_dashboard')
+    
+    return redirect('teacher_subject_detail', subject_id=subject_id)
+
+@login_required
+def delete_document(request, document_id):
+    if not request.user.is_teacher():
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    document = get_object_or_404(PDFNote, id=document_id, uploaded_by=request.user)
+    subject_id = document.subject.id
+    
+    if request.method == 'POST':
+        document_title = document.title
+        # Delete the file from storage
+        if document.pdf_file:
+            document.pdf_file.delete()
+        document.delete()
+        messages.success(request, f'Document "{document_title}" deleted successfully!')
+        return redirect('teacher_subject_detail', subject_id=subject_id)
+    
+    return redirect('teacher_subject_detail', subject_id=subject_id)
 
 @login_required
 def create_quiz(request):

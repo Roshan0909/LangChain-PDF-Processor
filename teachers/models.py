@@ -17,12 +17,26 @@ class Subject(models.Model):
 class PDFNote(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='notes')
     title = models.CharField(max_length=200)
-    pdf_file = models.FileField(upload_to='notes/%Y/%m/%d/')
+    pdf_file = models.FileField(upload_to='notes/%Y/%m/%d/')  # Now supports PDF, DOC, DOCX, PPT, PPTX
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
         return f"{self.title} - {self.subject.name}"
+    
+    def get_file_extension(self):
+        return self.pdf_file.name.split('.')[-1].lower() if self.pdf_file else ''
+    
+    def get_file_icon(self):
+        ext = self.get_file_extension()
+        icons = {
+            'pdf': 'bi-file-pdf',
+            'doc': 'bi-file-word',
+            'docx': 'bi-file-word',
+            'ppt': 'bi-file-ppt',
+            'pptx': 'bi-file-ppt',
+        }
+        return icons.get(ext, 'bi-file-earmark')
     
     class Meta:
         ordering = ['-created_at']

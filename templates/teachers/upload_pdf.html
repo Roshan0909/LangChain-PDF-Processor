@@ -1,39 +1,222 @@
 {% extends 'teachers/base_teacher.html' %}
 
-{% block title %}Upload PDF - {{ subject.name }}{% endblock %}
+{% block title %}Upload Document - {{ subject.name }}{% endblock %}
 
 {% block teacher_content %}
+<style>
+    .drag-drop-area {
+        border: 3px dashed #667eea;
+        border-radius: 15px;
+        padding: 60px 20px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        min-height: 250px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .drag-drop-area:hover {
+        border-color: #764ba2;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        transform: translateY(-2px);
+    }
+    .drag-drop-area.dragover {
+        border-color: #28a745;
+        background: rgba(40, 167, 69, 0.1);
+        border-width: 4px;
+    }
+    .drag-drop-area i {
+        font-size: 4rem;
+        color: #667eea;
+        margin-bottom: 20px;
+    }
+    .file-info {
+        display: none;
+        margin-top: 20px;
+        padding: 15px;
+        background: white;
+        border-radius: 10px;
+        border: 2px solid #667eea;
+    }
+    .file-info.show {
+        display: block;
+    }
+    .supported-formats {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+    .format-badge {
+        padding: 8px 16px;
+        background: white;
+        border-radius: 20px;
+        font-weight: 600;
+        color: #667eea;
+        border: 2px solid #667eea;
+        font-size: 0.9rem;
+    }
+</style>
+
 <div class="row justify-content-center">
-    <div class="col-md-8">
+    <div class="col-md-10">
         <div class="card shadow-lg">
-            <div class="card-header" style="background-color: #667eea; color: white;">
-                <h3>Upload PDF for {{ subject.name }}</h3>
+            <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h3><i class="bi bi-cloud-upload me-2"></i>Upload Document for {{ subject.name }}</h3>
             </div>
-            <div class="card-body">
-                <form method="post" enctype="multipart/form-data">
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data" id="uploadForm">
                     {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="{{ form.title.id_for_label }}" class="form-label">PDF Title</label>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.title.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-pencil me-2"></i>Document Title
+                        </label>
                         {{ form.title }}
                         {% if form.title.errors %}
-                            <div class="text-danger">{{ form.title.errors }}</div>
+                            <div class="alert alert-danger mt-2">{{ form.title.errors }}</div>
                         {% endif %}
                     </div>
-                    <div class="mb-3">
-                        <label for="{{ form.pdf_file.id_for_label }}" class="form-label">PDF File</label>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-file-earmark-arrow-up me-2"></i>Document File
+                        </label>
+                        
+                        <div class="drag-drop-area" id="dragDropArea">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                            <h5 class="mb-3">Drag & Drop your file here</h5>
+                            <p class="text-muted mb-3">or</p>
+                            <button type="button" class="btn btn-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;" onclick="document.getElementById('id_pdf_file').click()">
+                                <i class="bi bi-folder2-open me-2"></i>Browse Files
+                            </button>
+                            <div class="supported-formats mt-4">
+                                <span class="format-badge"><i class="bi bi-file-pdf"></i> PDF</span>
+                                <span class="format-badge"><i class="bi bi-file-word"></i> DOC</span>
+                                <span class="format-badge"><i class="bi bi-file-word"></i> DOCX</span>
+                                <span class="format-badge"><i class="bi bi-file-ppt"></i> PPT</span>
+                                <span class="format-badge"><i class="bi bi-file-ppt"></i> PPTX</span>
+                            </div>
+                            <small class="text-muted mt-3 d-block">Maximum file size: 50MB</small>
+                        </div>
+                        
                         {{ form.pdf_file }}
+                        
+                        <div class="file-info" id="fileInfo">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-file-earmark-check text-success" style="font-size: 2rem; margin-right: 15px;"></i>
+                                    <div>
+                                        <strong id="fileName">No file selected</strong>
+                                        <div class="text-muted" id="fileSize"></div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="clearFile()">
+                                    <i class="bi bi-x-circle"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                        
                         {% if form.pdf_file.errors %}
-                            <div class="text-danger">{{ form.pdf_file.errors }}</div>
+                            <div class="alert alert-danger mt-2">{{ form.pdf_file.errors }}</div>
                         {% endif %}
-                        <small class="form-text text-muted">Only PDF files are allowed.</small>
                     </div>
+                    
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn" style="background-color: #667eea; color: white;">Upload PDF</button>
-                        <a href="{% url 'teacher_subject_detail' subject.id %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <i class="bi bi-upload me-2"></i>Upload Document
+                        </button>
+                        <a href="{% url 'teacher_subject_detail' subject.id %}" class="btn btn-lg btn-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    const dragDropArea = document.getElementById('dragDropArea');
+    const fileInput = document.getElementById('id_pdf_file');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    
+    // Hide the default file input
+    fileInput.style.display = 'none';
+    
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dragDropArea.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    // Highlight drop area when dragging over it
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dragDropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dragDropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight(e) {
+        dragDropArea.classList.add('dragover');
+    }
+    
+    function unhighlight(e) {
+        dragDropArea.classList.remove('dragover');
+    }
+    
+    // Handle dropped files
+    dragDropArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            fileInput.files = files;
+            updateFileInfo(files[0]);
+        }
+    }
+    
+    // Handle file input change
+    fileInput.addEventListener('change', function(e) {
+        if (this.files.length > 0) {
+            updateFileInfo(this.files[0]);
+        }
+    });
+    
+    function updateFileInfo(file) {
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        fileInfo.classList.add('show');
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+    
+    function clearFile() {
+        fileInput.value = '';
+        fileInfo.classList.remove('show');
+        fileName.textContent = 'No file selected';
+        fileSize.textContent = '';
+    }
+</script>
 {% endblock %}

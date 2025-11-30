@@ -15,6 +15,17 @@ class PDFNoteForm(forms.ModelForm):
         model = PDFNote
         fields = ['title', 'pdf_file']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'PDF Title'}),
-            'pdf_file': forms.FileInput(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Document Title'}),
+            'pdf_file': forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf,.doc,.docx,.ppt,.pptx'}),
         }
+    
+    def clean_pdf_file(self):
+        file = self.cleaned_data.get('pdf_file')
+        if file:
+            ext = file.name.split('.')[-1].lower()
+            allowed = ['pdf', 'doc', 'docx', 'ppt', 'pptx']
+            if ext not in allowed:
+                raise forms.ValidationError(f'Only PDF, DOC, DOCX, PPT, and PPTX files are allowed. You uploaded: {ext}')
+            if file.size > 50 * 1024 * 1024:  # 50MB limit
+                raise forms.ValidationError('File size must be under 50MB')
+        return file
