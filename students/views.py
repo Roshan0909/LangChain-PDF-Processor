@@ -402,7 +402,12 @@ def knowledge_bot(request):
     if not request.user.is_student():
         return HttpResponseForbidden("You don't have permission to access this page.")
     
-    return render(request, 'students/knowledge_bot.html')
+    from .models import KnowledgeBotHistory
+    
+    # Get chat history for current student
+    chat_history = KnowledgeBotHistory.objects.filter(student=request.user).order_by('created_at')
+    
+    return render(request, 'students/knowledge_bot.html', {'chat_history': chat_history})
 
 @login_required
 def knowledge_bot_ask(request):
@@ -414,11 +419,22 @@ def knowledge_bot_ask(request):
         return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
     
     try:
+        from .models import KnowledgeBotHistory
+        
         data = json.loads(request.body)
         question = data.get('question', '').strip()
         
         if not question:
             return JsonResponse({'success': False, 'error': 'Question cannot be empty'}, status=400)
+        
+        # Get recent chat history for context
+        recent_history = KnowledgeBotHistory.objects.filter(
+            student=request.user
+        ).order_by('-created_at')[:5]
+        
+        history_context = ""
+        for hist in reversed(recent_history):
+            history_context += f"Previous Q: {hist.question}\nPrevious A: {hist.answer[:200]}...\n\n"
         
         # Search Wikipedia for relevant information
         wiki_context = search_wikipedia(question)
@@ -426,16 +442,25 @@ def knowledge_bot_ask(request):
         # Check if we got any results
         if not wiki_context.get('context'):
             # Try a simplified search with just key words
-            words = question.lower().replace('what is', '').replace('who is', '').replace('?', '').strip()
+            words = question.lower().replace('what is', '').replace('who is', '').replace('where is', '').replace('when is', '').replace('how', '').replace('?', '').strip()
             wiki_context = search_wikipedia(words)
         
-        # Generate answer
-        answer = generate_knowledge_answer(question, wiki_context)
+        # Generate answer using Gemini AI
+        answer = generate_knowledge_answer(question, wiki_context, history_context)
+        
+        # Save to history
+        history_entry = KnowledgeBotHistory.objects.create(
+            student=request.user,
+            question=question,
+            answer=answer,
+            sources=wiki_context.get('sources', [])
+        )
         
         return JsonResponse({
             'success': True,
             'answer': answer,
-            'sources': wiki_context.get('sources', [])
+            'sources': wiki_context.get('sources', []),
+            'timestamp': history_entry.created_at.strftime('%Y-%m-%d %H:%M:%S')
         })
         
     except Exception as e:
@@ -446,7 +471,35 @@ def search_wikipedia(query):
     try:
         import os
         from dotenv import load_dotenv
+        import google.generativeai as genai
+        
         load_dotenv()
+        
+        # Use Gemini AI to extract the main search topic from the question
+        genai.configure(api_key=os.getenv('API_KEY'))
+        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        
+        topic_prompt = f"""Extract the main topic/concept that should be searched on Wikipedia from this question.
+Return ONLY the search term(s) that would find the most relevant Wikipedia article.
+
+Examples:
+"What is photosynthesis?" → "photosynthesis"
+"Who was Albert Einstein?" → "Albert Einstein"
+"Define mitosis" → "mitosis"
+"Tell me about the pyramids" → "pyramids"
+"History of the internet" → "internet history"
+"Explain gravity" → "gravity"
+"What is quantum physics?" → "quantum physics"
+
+Question: "{query}"
+Search term:"""
+        
+        try:
+            topic_response = model.generate_content(topic_prompt)
+            search_query = topic_response.text.strip().strip('"\'').lower()
+        except:
+            # Fallback to original query if AI fails
+            search_query = query
         
         # Get credentials from environment
         client_id = os.getenv('WIKIPEDIA_CLIENT_ID')
@@ -464,7 +517,7 @@ def search_wikipedia(query):
             'action': 'query',
             'format': 'json',
             'list': 'search',
-            'srsearch': query,
+            'srsearch': search_query,
             'srlimit': 5,
             'srprop': 'snippet'
         }
@@ -536,14 +589,58 @@ def search_wikipedia(query):
     except Exception as e:
         return {'context': '', 'sources': []}
 
-def generate_knowledge_answer(question, wiki_context):
-    """Format answer using Wikipedia content only"""
+def generate_knowledge_answer(question, wiki_context, history_context=""):
+    """Format answer using Gemini AI with Wikipedia content"""
     try:
+        import os
+        from dotenv import load_dotenv
+        import google.generativeai as genai
+        
+        load_dotenv()
+        
         context = wiki_context.get('context', '').strip()
         
-        if context and len(context) > 50:  # Make sure we have substantial content
-            # Return the Wikipedia context directly
-            return context
+        if context and len(context) > 50:
+            # Use Gemini AI to format and improve the answer
+            genai.configure(api_key=os.getenv('API_KEY'))
+            model = genai.GenerativeModel('gemini-2.0-flash-exp')
+            
+            prompt = f"""You are a knowledgeable educational assistant providing definitions, history, and informational content from Wikipedia.
+
+Your role is to provide:
+- Definitions and explanations of terms and concepts
+- Historical information and background
+- Biographical information about people
+- General informational content
+
+You should NOT provide:
+- Step-by-step procedures or instructions
+- Causes or reasons (just define the topic)
+- Process explanations or "how to" guides
+
+Student's Question: {question}
+
+{f"Recent Conversation Context:\n{history_context}\n" if history_context else ""}Wikipedia Information:
+{context}
+
+Instructions:
+1. Provide definitions, explanations, and informational content
+2. Focus on WHAT something is, WHO someone was, and HISTORICAL context
+3. If asked about causes, processes, or "how to" - politely explain you provide definitions and information only
+4. Use clear structure with bullet points for key facts
+5. Make it educational and conversational
+6. Format with proper paragraphs (double line breaks)
+7. Include interesting facts and context where helpful
+8. Keep answers focused on defining and explaining the topic
+
+Format properly with clear paragraphs and structure.
+
+Provide the answer:"""
+            
+            response = model.generate_content(prompt)
+            answer = response.text.strip()
+            
+            return answer
         else:
             return ("I couldn't find relevant information on Wikipedia for your question. "
                    "Please try:\n\n"
@@ -553,4 +650,8 @@ def generate_knowledge_answer(question, wiki_context):
                    "Examples: 'photosynthesis', 'Albert Einstein', 'solar system', 'Python programming'")
         
     except Exception as e:
+        # Fallback to Wikipedia content if Gemini fails
+        context = wiki_context.get('context', '').strip()
+        if context and len(context) > 50:
+            return context
         return f"I apologize, but I encountered an error: {str(e)}"

@@ -1,10 +1,10 @@
 import os
 import time
 from PyPDF2 import PdfReader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from google import genai
 from langchain_community.vectorstores import FAISS
-from langchain.embeddings.base import Embeddings
+from langchain_core.embeddings import Embeddings
 from typing import List
 from dotenv import load_dotenv
 import hashlib

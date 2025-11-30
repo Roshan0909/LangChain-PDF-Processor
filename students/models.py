@@ -15,3 +15,17 @@ class ChatHistory(models.Model):
     class Meta:
         ordering = ['created_at']
         verbose_name_plural = "Chat Histories"
+
+class KnowledgeBotHistory(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='knowledge_bot_histories')
+    question = models.TextField()
+    answer = models.TextField()
+    sources = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.student.username} - {self.created_at}"
+    
+    class Meta:
+        ordering = ['created_at']
+        verbose_name_plural = "Knowledge Bot Histories"
