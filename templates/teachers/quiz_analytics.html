@@ -197,71 +197,138 @@
         
         <!-- Student Performance Tab -->
         <div id="studentsTab" class="analytics-tab" style="display: none;">
-            <div class="card shadow-lg">
-                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                    <h5 class="mb-0"><i class="bi bi-people"></i> Student Performance Overview</h5>
-                </div>
-                <div class="card-body">
-                    {% for stat in quiz_stats %}
-                        <div class="mb-4">
-                            <h6 class="border-bottom pb-2 mb-3">{{ stat.quiz.title }}</h6>
-                            {% with completed_attempts=stat.quiz.attempts.all|dictsort:"completed_at" %}
-                                {% if completed_attempts %}
-                                    <div class="table-responsive">
-                                        <table class="table table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>Student</th>
-                                                    <th>Score</th>
-                                                    <th>Percentage</th>
-                                                    <th>Grade</th>
-                                                    <th>Completed</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for attempt in completed_attempts %}
-                                                    {% if attempt.completed_at and attempt.score is not None and stat.total_questions > 0 %}
-                                                        <tr>
-                                                            <td><strong>{{ attempt.student.username }}</strong></td>
-                                                            <td>{{ attempt.score }}/{{ stat.total_questions }}</td>
-                                                            <td>
-                                                                {% widthratio attempt.score stat.total_questions 100 as percentage %}
-                                                                <div class="progress" style="height: 20px; width: 100px;">
-                                                                    <div class="progress-bar" style="width: {{ percentage }}%; background-color: {% if percentage|add:0 >= 90 %}#28a745{% elif percentage|add:0 >= 75 %}#667eea{% elif percentage|add:0 >= 50 %}#ffc107{% elif percentage|add:0 >= 35 %}#17a2b8{% else %}#dc3545{% endif %};" role="progressbar">
-                                                                        {{ percentage }}%
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                {% if percentage|add:0 >= 90 %}
-                                                                    <span class="badge bg-success">A (Pass)</span>
-                                                                {% elif percentage|add:0 >= 75 %}
-                                                                    <span class="badge bg-primary">B (Pass)</span>
-                                                                {% elif percentage|add:0 >= 50 %}
-                                                                    <span class="badge bg-warning text-dark">C (Pass)</span>
-                                                                {% elif percentage|add:0 >= 35 %}
-                                                                    <span class="badge bg-info text-dark">D (Pass)</span>
-                                                                {% else %}
-                                                                    <span class="badge bg-danger">F (Fail) - {{ percentage }}%</span>
-                                                                {% endif %}
-                                                            </td>
-                                                            <td><small>{{ attempt.completed_at|date:"M d, Y H:i" }}</small></td>
-                                                        </tr>
-                                                    {% endif %}
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                {% else %}
-                                    <div class="alert alert-info">
-                                        <i class="bi bi-info-circle"></i> No completed attempts yet for this quiz
-                                    </div>
-                                {% endif %}
-                            {% endwith %}
+            <div class="row">
+                {% for stat in quiz_stats %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm quiz-card" style="cursor: pointer; transition: all 0.3s;" 
+                             data-bs-toggle="modal" data-bs-target="#studentModal{{ stat.quiz.id }}"
+                             onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';"
+                             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='';">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0 flex-grow-1" style="color: #667eea;">
+                                        <i class="bi bi-clipboard-check"></i> {{ stat.quiz.title|truncatewords:6 }}
+                                    </h6>
+                                    <i class="bi bi-eye" style="color: #667eea;"></i>
+                                </div>
+                                <p class="text-muted small mb-2">
+                                    <i class="bi bi-book"></i> {{ stat.quiz.subject.name }}
+                                </p>
+                                <div class="d-flex gap-2 mb-2">
+                                    <span class="badge bg-primary">{{ stat.total_attempts }} attempts</span>
+                                    <span class="badge bg-success">{{ stat.avg_percentage }}% avg</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar" style="width: {{ stat.avg_percentage }}%; background-color: #667eea;"></div>
+                                </div>
+                            </div>
                         </div>
-                    {% endfor %}
-                </div>
+                    </div>
+                    
+                    <!-- Student Performance Modal -->
+                    <div class="modal fade" id="studentModal{{ stat.quiz.id }}" tabindex="-1" aria-labelledby="studentModalLabel{{ stat.quiz.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                            <div class="modal-content">
+                                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                    <div>
+                                        <h5 class="modal-title" id="studentModalLabel{{ stat.quiz.id }}">
+                                            <i class="bi bi-people"></i> Student Performance
+                                        </h5>
+                                        <small>{{ stat.quiz.title }}</small>
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-0">
+                                    {% with completed_attempts=stat.quiz.attempts.all %}
+                                        {% if completed_attempts %}
+                                            <div class="table-responsive">
+                                                <table class="table table-hover mb-0 align-middle">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th class="ps-3">Student</th>
+                                                            <th class="text-center">Score</th>
+                                                            <th>Percentage</th>
+                                                            <th class="text-center">Grade</th>
+                                                            <th class="text-center">Completed</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for attempt in completed_attempts %}
+                                                            {% if attempt.completed_at and attempt.score is not None and stat.total_questions > 0 %}
+                                                                <tr>
+                                                                    <td class="ps-3">
+                                                                        <div class="d-flex align-items-center">
+                                                                            <div class="rounded-circle text-white d-flex align-items-center justify-content-center me-2" 
+                                                                                 style="width: 32px; height: 32px; font-weight: bold; font-size: 14px;
+                                                                                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                                                                {{ attempt.student.username|slice:":1"|upper }}
+                                                                            </div>
+                                                                            <strong>{{ attempt.student.username }}</strong>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="text-center">
+                                                                        <span class="badge bg-light text-dark px-2 py-1">{{ attempt.score }}/{{ stat.total_questions }}</span>
+                                                                    </td>
+                                                                    <td>
+                                                                        <script>
+                                                                            var percentageValue{{ attempt.id }} = Math.round(({{ attempt.score }} / {{ stat.total_questions }}) * 100);
+                                                                            document.write('<div class="progress" style="height: 20px; min-width: 100px;">');
+                                                                            var bgColor = percentageValue{{ attempt.id }} >= 90 ? '#28a745' : 
+                                                                                        percentageValue{{ attempt.id }} >= 75 ? '#667eea' : 
+                                                                                        percentageValue{{ attempt.id }} >= 50 ? '#ffc107' : 
+                                                                                        percentageValue{{ attempt.id }} >= 35 ? '#17a2b8' : '#dc3545';
+                                                                            document.write('<div class="progress-bar fw-bold" style="width: ' + percentageValue{{ attempt.id }} + '%; background-color: ' + bgColor + ';" role="progressbar">');
+                                                                            document.write('<small>' + percentageValue{{ attempt.id }} + '%</small>');
+                                                                            document.write('</div></div>');
+                                                                        </script>
+                                                                    </td>
+                                                                    <td class="text-center">
+                                                                        <script>
+                                                                            var grade{{ attempt.id }} = percentageValue{{ attempt.id }} >= 90 ? 'A' : 
+                                                                                                        percentageValue{{ attempt.id }} >= 75 ? 'B' : 
+                                                                                                        percentageValue{{ attempt.id }} >= 50 ? 'C' : 
+                                                                                                        percentageValue{{ attempt.id }} >= 35 ? 'D' : 'F';
+                                                                            var badgeClass{{ attempt.id }} = percentageValue{{ attempt.id }} >= 90 ? 'bg-success' : 
+                                                                                                            percentageValue{{ attempt.id }} >= 75 ? 'bg-primary' : 
+                                                                                                            percentageValue{{ attempt.id }} >= 50 ? 'bg-warning text-dark' : 
+                                                                                                            percentageValue{{ attempt.id }} >= 35 ? 'bg-info text-dark' : 'bg-danger';
+                                                                            document.write('<span class="badge px-3 py-2 ' + badgeClass{{ attempt.id }} + '">' + grade{{ attempt.id }} + '</span>');
+                                                                        </script>
+                                                                    </td>
+                                                                    <td class="text-center">
+                                                                        <small class="text-muted">
+                                                                            {{ attempt.completed_at|date:"M d, Y" }}<br>
+                                                                            {{ attempt.completed_at|date:"g:i A" }}
+                                                                        </small>
+                                                                    </td>
+                                                                </tr>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        {% else %}
+                                            <div class="p-4 text-center text-muted">
+                                                <i class="bi bi-info-circle fs-3"></i>
+                                                <p class="mb-0 mt-2">No attempts yet for this quiz</p>
+                                            </div>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
+            {% if not quiz_stats %}
+                <div class="alert alert-info d-flex align-items-center">
+                    <i class="bi bi-info-circle me-2 fs-4"></i>
+                    <span>No quiz attempts yet</span>
+                </div>
+            {% endif %}
         </div>
     {% else %}
         <div class="alert alert-info">
