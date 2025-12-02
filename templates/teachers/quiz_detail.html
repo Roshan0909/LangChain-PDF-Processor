@@ -194,27 +194,41 @@
         const btn = this;
         const isActive = {{ quiz.is_active|yesno:"true,false" }};
         
-        if (confirm(`Are you sure you want to ${isActive ? 'deactivate' : 'activate'} this quiz?`)) {
-            fetch('{% url "toggle_quiz_active" quiz.id %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert(data.error || 'Failed to toggle quiz status');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while updating quiz status');
-            });
-        }
+        customConfirm(`Are you sure you want to ${isActive ? 'deactivate' : 'activate'} this quiz?`, function(result) {
+            if (result) {
+                fetch('{% url "toggle_quiz_active" quiz.id %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.error || 'Failed to toggle quiz status');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating quiz status');
+                });
+            }
+        });
+    });
+    
+    // Confirm before saving changes
+    document.getElementById('quizForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        customConfirm('Are you sure you want to save all changes to this quiz?', function(result) {
+            if (result) {
+                // Submit the form
+                e.target.submit();
+            }
+        });
     });
 
     // View Answer Sheet
