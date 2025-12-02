@@ -658,11 +658,11 @@ Provide the answer:"""
 
 @login_required
 def leaderboard(request):
-    """Display creative leaderboard with AI-powered suggestions"""
+    """Display creative leaderboard"""
     if not request.user.is_student():
         return HttpResponseForbidden("You don't have permission to access this page.")
     
-    from .leaderboard_utils import get_leaderboard_data, generate_personalized_suggestion, generate_overall_insights
+    from .leaderboard_utils import get_leaderboard_data
     
     # Get leaderboard data
     leaderboard_data = get_leaderboard_data()
@@ -674,21 +674,8 @@ def leaderboard(request):
             current_student_data = entry
             break
     
-    # Generate AI suggestion for current student
-    ai_suggestion = None
-    if current_student_data:
-        ai_suggestion = generate_personalized_suggestion(
-            current_student_data,
-            {'total_students': len(leaderboard_data)}
-        )
-    
-    # Generate overall insights
-    overall_insights = generate_overall_insights(leaderboard_data)
-    
     return render(request, 'students/leaderboard.html', {
         'leaderboard': leaderboard_data,
         'current_student_data': current_student_data,
-        'ai_suggestion': ai_suggestion,
-        'overall_insights': overall_insights,
         'total_students': len(leaderboard_data)
     })

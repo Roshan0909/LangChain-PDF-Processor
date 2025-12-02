@@ -115,47 +115,51 @@ def generate_personalized_suggestion(student_data, leaderboard_position):
         genai.configure(api_key=os.getenv('API_KEY'))
         model = genai.GenerativeModel('gemini-2.0-flash-exp')
         
-        prompt = f"""You are an encouraging educational AI coach helping students improve their academic performance.
+        # Add unique context based on actual performance changes
+        performance_trend = "improving" if student_data['recent_avg'] > student_data['avg_percentage'] else "steady"
+        if student_data['recent_avg'] < student_data['avg_percentage'] - 5:
+            performance_trend = "declining"
+        
+        prompt = f"""You are an encouraging educational AI coach. Generate ONE SHORT personalized tip (maximum 15 words).
 
-Student Performance Data:
-- Current Rank: #{student_data['rank']} out of {leaderboard_position['total_students']}
-- Engagement Score: {student_data['engagement_score']}/100
-- Average Quiz Score: {student_data['avg_percentage']}%
-- Total Quizzes Completed: {student_data['total_quizzes']}
-- Perfect Scores: {student_data['perfect_scores']}
-- Recent Performance (last 5 quizzes): {student_data['recent_avg']}%
-- Current Tier: {student_data['tier']['name']}
+Student: Rank #{student_data['rank']}/{leaderboard_position['total_students']}
+Score: {student_data['avg_percentage']}% average, {student_data['recent_avg']}% recent ({performance_trend})
+Completed: {student_data['total_quizzes']} quizzes, {student_data['perfect_scores']} perfect
+Tier: {student_data['tier']['name']}
 
-Generate a personalized, motivational suggestion to help this student improve. Keep it:
-1. Encouraging and positive (2-3 sentences max)
-2. Specific and actionable
-3. Focused on one key area for improvement
-4. Friendly and conversational
+Create a VERY SHORT (10-15 words), specific, actionable tip based on their performance trend.
 
-Format:
-🎯 **[Catchy Title]**
-[Encouraging message with specific actionable advice]
+Examples:
+- Top performer + improving: "Keep crushing it! Try teaching others to master concepts."
+- Mid-rank + steady: "Review wrong answers after each quiz to boost scores."
+- Lower rank: "Start with 15-min daily reviews before attempting quizzes."
+- Declining: "Take a break, then review basics before next quiz."
 
-Example styles:
-- If performing well: Celebrate success and suggest next challenge
-- If average: Encourage consistency and identify growth area
-- If struggling: Provide motivation and simple first steps
-- If improving: Acknowledge progress and maintain momentum
-
-DO NOT use generic advice. Make it personal based on their actual data.
-Keep the total response under 100 words."""
+NO emojis, NO formatting, NO titles. Just one practical sentence (max 15 words)."""
         
         response = model.generate_content(prompt)
-        return response.text.strip()
+        suggestion = response.text.strip().replace('**', '').replace('🎯', '').replace('*', '')
+        # Remove any line breaks and extra spaces
+        suggestion = ' '.join(suggestion.split())
+        # Truncate if too long
+        words = suggestion.split()
+        if len(words) > 15:
+            suggestion = ' '.join(words[:15]) + '...'
+        return suggestion
         
     except Exception as e:
-        # Fallback suggestions if AI fails
-        if student_data['avg_percentage'] >= 80:
-            return "🎯 **Outstanding Work!**\nYou're already excelling! Challenge yourself with tougher topics and help mentor classmates to reinforce your knowledge even further."
-        elif student_data['avg_percentage'] >= 60:
-            return "🎯 **You're on Track!**\nGreat progress! Focus on reviewing quiz mistakes and practicing weak areas. Consistency is key to reaching the next tier!"
+        print(f"AI suggestion error: {e}")
+        # Smart fallback based on actual data
+        if student_data['avg_percentage'] >= 85:
+            return "Excellent work! Try helping classmates to deepen your understanding."
+        elif student_data['avg_percentage'] >= 70:
+            return "Good progress! Review quiz mistakes to reach the next level."
+        elif student_data['recent_avg'] > student_data['avg_percentage']:
+            return "You're improving! Keep this momentum with daily practice sessions."
+        elif student_data['total_quizzes'] < 3:
+            return "Take more quizzes to build confidence and improve scores."
         else:
-            return "🎯 **Keep Building Momentum!**\nEvery expert was once a beginner. Start with smaller study sessions daily, and review material before quizzes. You've got this!"
+            return "Focus on mastering one topic at a time for better results."
 
 
 def generate_overall_insights(leaderboard_data):

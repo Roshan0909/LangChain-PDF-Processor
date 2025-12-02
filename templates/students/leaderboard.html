@@ -145,16 +145,6 @@
                 <span>⭐ {{ current_student_data.perfect_scores }}</span>
             </div>
         </div>
-        
-        {% if ai_suggestion %}
-        <div class="ai-tip" id="aiTip">
-            <div class="tip-icon">💡</div>
-            <div class="tip-content">{{ ai_suggestion|striptags }}</div>
-            <button class="refresh-tip" onclick="refreshSuggestion()">
-                <i class="bi bi-arrow-clockwise"></i>
-            </button>
-        </div>
-        {% endif %}
     </div>
     {% endif %}
     
@@ -767,49 +757,6 @@
         white-space: nowrap;
     }
     
-    /* AI Tip - Compact */
-    .ai-tip {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        border-radius: 15px;
-        padding: 1rem 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        color: white;
-    }
-    
-    .tip-icon {
-        font-size: 2rem;
-        flex-shrink: 0;
-    }
-    
-    .tip-content {
-        flex: 1;
-        font-size: 0.95rem;
-        line-height: 1.5;
-    }
-    
-    .refresh-tip {
-        background: rgba(255, 255, 255, 0.2);
-        border: 2px solid white;
-        color: white;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        flex-shrink: 0;
-    }
-    
-    .refresh-tip:hover {
-        background: white;
-        color: #667eea;
-        transform: rotate(180deg);
-    }
-    
     /* Leaderboard List */
     .leaderboard-list {
         position: relative;
@@ -1117,10 +1064,6 @@
             font-size: 1.7rem;
         }
         
-        .ai-tip {
-            flex-direction: column;
-            text-align: center;
-        }
     }
     
     @media (max-width: 576px) {
@@ -1159,47 +1102,5 @@
     }
 </style>
 
-<script>
-    function refreshSuggestion() {
-        const btn = event.target.closest('button');
-        const icon = btn.querySelector('i');
-        
-        // Add spinning animation
-        if (icon) {
-            icon.style.animation = 'spin 1s linear infinite';
-        }
-        btn.disabled = true;
-        btn.style.opacity = '0.6';
-        
-        // Make AJAX call to get new suggestion
-        fetch('{% url "leaderboard" %}', {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => {
-            // Just reload for now - in future can update dynamically
-            setTimeout(() => {
-                location.reload();
-            }, 500);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            setTimeout(() => {
-                location.reload();
-            }, 500);
-        });
-    }
-    
-    // Add spin animation
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-    `;
-    document.head.appendChild(style);
-</script>
+
 {% endblock %}
