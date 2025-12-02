@@ -5,14 +5,14 @@
 {% block teacher_content %}
 <style>
     .drag-drop-area {
-        border: 3px dashed #667eea;
-        border-radius: 15px;
-        padding: 60px 20px;
+        border: 2px dashed #667eea;
+        border-radius: 12px;
+        padding: 30px 20px;
         text-align: center;
         background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
         transition: all 0.3s ease;
         cursor: pointer;
-        min-height: 250px;
+        min-height: 180px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -28,10 +28,10 @@
         background: rgba(40, 167, 69, 0.1);
         border-width: 4px;
     }
-    .drag-drop-area i {
-        font-size: 4rem;
+    .drag-drop-area i.bi-cloud-arrow-up {
+        font-size: 2.5rem;
         color: #667eea;
-        margin-bottom: 20px;
+        margin-bottom: 12px;
     }
     .file-info {
         display: none;
@@ -89,19 +89,17 @@
                         
                         <div class="drag-drop-area" id="dragDropArea">
                             <i class="bi bi-cloud-arrow-up"></i>
-                            <h5 class="mb-3">Drag & Drop your file here</h5>
-                            <p class="text-muted mb-3">or</p>
-                            <button type="button" class="btn btn-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;" onclick="document.getElementById('id_pdf_file').click()">
-                                <i class="bi bi-folder2-open me-2"></i>Browse Files
+                            <h6 class="mb-2">Drag & Drop your file here</h6>
+                            <p class="text-muted mb-2" style="font-size: 0.9rem;">or</p>
+                            <button type="button" class="btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;" onclick="document.getElementById('id_pdf_file').click()">
+                                <i class="bi bi-folder2-open me-1"></i>Browse Files
                             </button>
-                            <div class="supported-formats mt-4">
-                                <span class="format-badge"><i class="bi bi-file-pdf"></i> PDF</span>
-                                <span class="format-badge"><i class="bi bi-file-word"></i> DOC</span>
-                                <span class="format-badge"><i class="bi bi-file-word"></i> DOCX</span>
-                                <span class="format-badge"><i class="bi bi-file-ppt"></i> PPT</span>
-                                <span class="format-badge"><i class="bi bi-file-ppt"></i> PPTX</span>
+                            <div class="supported-formats mt-3">
+                                <span class="format-badge" style="font-size: 0.8rem; padding: 5px 10px;"><i class="bi bi-file-pdf"></i> PDF</span>
+                                <span class="format-badge" style="font-size: 0.8rem; padding: 5px 10px;"><i class="bi bi-file-word"></i> DOC/DOCX</span>
+                                <span class="format-badge" style="font-size: 0.8rem; padding: 5px 10px;"><i class="bi bi-file-ppt"></i> PPT/PPTX</span>
                             </div>
-                            <small class="text-muted mt-3 d-block"><strong>Maximum file size: 200MB</strong> - Large files supported for extensive learning materials</small>
+                            <small class="text-muted mt-2 d-block" style="font-size: 0.85rem;">Max size: 200MB</small>
                         </div>
                         
                         {{ form.pdf_file }}
