@@ -123,6 +123,104 @@
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
     }
+    
+    /* Custom Alert Modal Styles */
+    .custom-alert-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(5px);
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .custom-alert-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        border-radius: 20px;
+        padding: 0;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 450px;
+        width: 90%;
+        z-index: 10001;
+        animation: slideDown 0.4s ease;
+        overflow: hidden;
+    }
+    
+    .custom-alert-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 25px;
+        text-align: center;
+    }
+    
+    .custom-alert-icon {
+        font-size: 60px;
+        margin-bottom: 10px;
+    }
+    
+    .custom-alert-header.warning .custom-alert-icon { color: #ffd700; }
+    .custom-alert-header.error .custom-alert-icon { color: #ff6b6b; }
+    .custom-alert-header.success .custom-alert-icon { color: #51cf66; }
+    .custom-alert-header.info .custom-alert-icon { color: #74c0fc; }
+    
+    .custom-alert-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+        margin: 0;
+    }
+    
+    .custom-alert-body {
+        padding: 30px;
+        text-align: center;
+    }
+    
+    .custom-alert-message {
+        font-size: 16px;
+        color: #4a5568;
+        line-height: 1.6;
+        margin-bottom: 25px;
+    }
+    
+    .custom-alert-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 40px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .custom-alert-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -60%);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%);
+        }
+    }
 </style>
 
 <div class="quiz-container">
@@ -264,6 +362,64 @@
 </div>
 
 <script>
+    // Custom Alert Function
+    function showAlert(message, type = 'warning', title = '') {
+        // Remove ALL existing alerts and modals before showing new one
+        const existingOverlays = document.querySelectorAll('.custom-alert-overlay');
+        const existingModals = document.querySelectorAll('.custom-alert-modal');
+        existingOverlays.forEach(el => el.remove());
+        existingModals.forEach(el => el.remove());
+        
+        // Set default titles based on type
+        const titles = {
+            'warning': title || 'Warning',
+            'error': title || 'Error',
+            'success': title || 'Success',
+            'info': title || 'Information'
+        };
+        
+        const icons = {
+            'warning': '⚠️',
+            'error': '❌',
+            'success': '✅',
+            'info': 'ℹ️'
+        };
+        
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-alert-overlay';
+        overlay.style.display = 'block';
+        overlay.setAttribute('data-alert-type', 'single');
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.className = 'custom-alert-modal';
+        modal.setAttribute('data-alert-type', 'single');
+        modal.innerHTML = `
+            <div class="custom-alert-header ${type}">
+                <div class="custom-alert-icon">${icons[type]}</div>
+                <h3 class="custom-alert-title">${titles[type]}</h3>
+            </div>
+            <div class="custom-alert-body">
+                <p class="custom-alert-message">${message}</p>
+                <button class="custom-alert-btn" onclick="closeCustomAlert()">OK</button>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        document.body.appendChild(modal);
+        
+        // Auto-close on overlay click
+        overlay.addEventListener('click', closeCustomAlert);
+    }
+    
+    function closeCustomAlert() {
+        const overlays = document.querySelectorAll('.custom-alert-overlay[data-alert-type="single"]');
+        const modals = document.querySelectorAll('.custom-alert-modal[data-alert-type="single"]');
+        overlays.forEach(el => el.remove());
+        modals.forEach(el => el.remove());
+    }
+    
     // Timer
     const duration = {{ quiz.duration }} * 60; // Convert to seconds
     let timeLeft = duration;
@@ -317,8 +473,11 @@
         }
         
         if (timeLeft <= 0) {
-            alert('Time is up! Submitting your quiz...');
-            submitQuiz();
+            showAlert('Time is up! Your quiz will be submitted automatically.', 'warning', 'Time Up');
+            setTimeout(() => {
+                closeCustomAlert();
+                submitQuiz();
+            }, 2000);
         } else {
             timeLeft--;
         }
@@ -327,6 +486,205 @@
     // Start timer
     {% if not already_attempted %}
         const timerInterval = setInterval(updateTimer, 1000);
+        
+        // Prevent navigation away from quiz
+        let quizSubmitted = false;
+        
+        // Intercept all navigation clicks to show custom styled dialog
+        document.addEventListener('click', function(e) {
+            if (quizSubmitted) return;
+            
+            // Check if clicked element or its parent is a link
+            let target = e.target;
+            while (target && target !== document) {
+                if (target.tagName === 'A' && target.href && !target.href.includes('#') && !target.hasAttribute('data-quiz-submit')) {
+                    e.preventDefault();
+                    showLeaveConfirmation(target.href);
+                    return;
+                }
+                target = target.parentElement;
+            }
+        }, true);
+        
+        // Show custom styled leave confirmation
+        function showLeaveConfirmation(url) {
+            const overlay = document.createElement('div');
+            overlay.className = 'custom-alert-overlay';
+            overlay.style.display = 'block';
+            
+            const modal = document.createElement('div');
+            modal.className = 'custom-alert-modal';
+            modal.innerHTML = `
+                <div class="custom-alert-header warning">
+                    <div class="custom-alert-icon">⚠️</div>
+                    <h3 class="custom-alert-title">Quiz In Progress</h3>
+                </div>
+                <div class="custom-alert-body">
+                    <p class="custom-alert-message">
+                        <strong>Are you sure you want to leave?</strong><br><br>
+                        Your quiz is still in progress. Leaving now will <strong>AUTO-SUBMIT</strong> your quiz with your current answers.<br><br>
+                        Time remaining: <span style="color: #667eea; font-weight: bold;">${document.getElementById('timer').textContent}</span>
+                    </p>
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button class="custom-alert-btn" style="background: #6c757d;" onclick="closeLeaveConfirmation()">
+                            <i class="bi bi-arrow-left me-1"></i> Stay on Quiz
+                        </button>
+                        <button class="custom-alert-btn" onclick="confirmLeave('${url}')">
+                            <i class="bi bi-box-arrow-right me-1"></i> Leave & Submit
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(modal);
+            
+            overlay.addEventListener('click', closeLeaveConfirmation);
+        }
+        
+        window.closeLeaveConfirmation = function() {
+            const overlay = document.querySelector('.custom-alert-overlay');
+            const modal = document.querySelector('.custom-alert-modal');
+            if (overlay) overlay.remove();
+            if (modal) modal.remove();
+        }
+        
+        window.confirmLeave = function(url) {
+            closeLeaveConfirmation();
+            quizSubmitted = true;
+            
+            // Submit quiz in background
+            const formData = new FormData(quizForm);
+            const answers = {};
+            for (let [key, value] of formData.entries()) {
+                if (key.startsWith('question_')) {
+                    const questionId = key.replace('question_', '');
+                    answers[questionId] = value;
+                }
+            }
+            
+            const data = JSON.stringify({ answers: answers });
+            const blob = new Blob([data], { type: 'application/json' });
+            navigator.sendBeacon('{% url "submit_quiz" quiz.id %}', blob);
+            
+            // Navigate to the URL
+            window.location.href = url;
+        }
+        
+        // Fallback for browser back/forward buttons and address bar navigation
+        window.addEventListener('beforeunload', function(e) {
+            if (!quizSubmitted) {
+                // Browser shows generic "Changes you made may not be saved" + this message
+                // Note: Cannot style this dialog due to browser security restrictions
+                const message = '⚠️ QUIZ IN PROGRESS ⚠️\n\nYour quiz will be AUTO-SUBMITTED if you leave!\n\nClick "Stay on Page" to continue your quiz.\nClick "Leave" to submit and exit.';
+                e.preventDefault();
+                e.returnValue = message;
+                return message;
+            }
+        });
+        
+        // Auto-submit when they actually leave the page
+        window.addEventListener('unload', function() {
+            if (!quizSubmitted) {
+                submitQuizOnLeave();
+            }
+        });
+        
+        // Also handle pagehide event (more reliable on mobile/modern browsers)
+        window.addEventListener('pagehide', function() {
+            if (!quizSubmitted) {
+                submitQuizOnLeave();
+            }
+        });
+        
+        // Function to submit quiz when leaving page
+        function submitQuizOnLeave() {
+            quizSubmitted = true;
+            
+            // Use sendBeacon for reliable submission even when navigating away
+            const formData = new FormData(quizForm);
+            const answers = {};
+            for (let [key, value] of formData.entries()) {
+                if (key.startsWith('question_')) {
+                    const questionId = key.replace('question_', '');
+                    answers[questionId] = value;
+                }
+            }
+            
+            const data = JSON.stringify({ answers: answers });
+            const blob = new Blob([data], { type: 'application/json' });
+            
+            // Try sendBeacon first (most reliable)
+            const beaconSent = navigator.sendBeacon('{% url "submit_quiz" quiz.id %}', blob);
+            
+            // Fallback to synchronous XHR if sendBeacon fails
+            if (!beaconSent) {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '{% url "submit_quiz" quiz.id %}', false); // Synchronous
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('X-CSRFToken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                try {
+                    xhr.send(data);
+                } catch(e) {
+                    console.error('Failed to submit quiz:', e);
+                }
+            }
+        }
+        
+        // Detect tab/window visibility changes
+        let isAlertShowing = false;
+        let lastAlertTime = 0;
+        document.addEventListener('visibilitychange', function() {
+            const now = Date.now();
+            // Prevent alerts if one was shown less than 2 seconds ago
+            if (now - lastAlertTime < 2000) return;
+            
+            if (document.hidden && !quizSubmitted && !isAlertShowing) {
+                // Show warning when they switch away
+                isAlertShowing = true;
+                lastAlertTime = now;
+                closeCustomAlert(); // Close any existing alert first
+                showAlert('⚠️ You switched to another tab or window! Please stay on the quiz page to avoid auto-submission.', 'warning', 'Tab Switch Detected');
+                setTimeout(() => { isAlertShowing = false; }, 2000);
+            } else if (!document.hidden && !quizSubmitted && !isAlertShowing) {
+                // Show alert when they come back
+                isAlertShowing = true;
+                lastAlertTime = now;
+                closeCustomAlert(); // Close any existing alert first
+                showAlert('Welcome back! Please continue with your quiz.', 'info', 'Returned to Quiz');
+                setTimeout(() => { isAlertShowing = false; }, 2000);
+            }
+        });
+        
+        // Note: Focus detection removed to avoid false positives
+        // Tab switching is handled by visibilitychange event above
+        
+        // Detect back button or navigation
+        window.addEventListener('popstate', function(e) {
+            if (!quizSubmitted) {
+                e.preventDefault();
+                submitQuiz();
+            }
+        });
+        
+        // Prevent right-click during quiz
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            showAlert('Right-click is disabled during the quiz.', 'info', 'Action Disabled');
+        });
+        
+        // Prevent common shortcuts (Ctrl+C, Ctrl+V, Ctrl+U, etc.)
+        document.addEventListener('keydown', function(e) {
+            // Prevent Ctrl+U (view source), Ctrl+Shift+I (dev tools), F12, Ctrl+Shift+J
+            if (
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+                (e.ctrlKey && e.key === 'u') ||
+                e.key === 'F12'
+            ) {
+                e.preventDefault();
+                showAlert('This action is disabled during the quiz.', 'info', 'Action Disabled');
+            }
+        });
     {% endif %}
     
     // Handle form submission
@@ -346,6 +704,8 @@
     });
     
     async function submitQuiz() {
+        // Mark as submitted to prevent multiple submissions
+        quizSubmitted = true;
         clearInterval(timerInterval);
         
         const formData = new FormData(quizForm);
@@ -478,11 +838,11 @@
                 const modal = new bootstrap.Modal(document.getElementById('resultModal'));
                 modal.show();
             } else {
-                alert('Error: ' + data.error);
+                showAlert('Error: ' + data.error, 'error', 'Submission Error');
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Failed to submit quiz. Please try again.');
+            showAlert('Failed to submit quiz. Please try again.', 'error', 'Network Error');
         }
     }
     
