@@ -121,22 +121,28 @@ def generate_quiz(request, pdf_id):
             
             num_questions = int(request.POST.get('num_questions', 10))
             duration = int(request.POST.get('duration', 30))
+            topics = request.POST.get('topics', '').strip()
             
             # Generate questions from PDF
-            questions_data, error = generate_quiz_from_pdf(pdf_note.pdf_file.path, num_questions)
+            questions_data, error = generate_quiz_from_pdf(pdf_note.pdf_file.path, num_questions, topics)
             
             if error:
                 messages.error(request, error)
                 return redirect('create_quiz')
             
             # Create quiz
+            quiz_description = f"Auto-generated quiz from {pdf_note.title}"
+            if topics:
+                quiz_description += f" (Topics: {topics})"
+            
             quiz = Quiz.objects.create(
                 title=f"Quiz: {pdf_note.title}",
                 subject=pdf_note.subject,
                 pdf_note=pdf_note,
-                description=f"Auto-generated quiz from {pdf_note.title}",
+                description=quiz_description,
                 duration=duration,
                 num_questions=num_questions,
+                topics=topics,
                 created_by=request.user,
                 is_active=True
             )

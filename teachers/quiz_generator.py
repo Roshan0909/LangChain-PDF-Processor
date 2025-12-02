@@ -26,10 +26,16 @@ def extract_text_from_pdf(pdf_path, max_pages=20):
         print(f"Error extracting PDF text: {e}")
         return None
 
-def generate_quiz_questions(pdf_text, num_questions=10):
+def generate_quiz_questions(pdf_text, num_questions=10, topics=None):
     """Generate MCQ questions from PDF text using Gemini AI"""
     
-    prompt = f"""You are a quiz generator. Based on the following text, generate exactly {num_questions} multiple choice questions.
+    # Build the prompt with topics if provided
+    if topics and topics.strip():
+        topic_instruction = f"\n\nIMPORTANT: Generate questions ONLY about the following topics: {topics}\nFocus exclusively on these topics and ignore other content in the text."
+    else:
+        topic_instruction = ""
+    
+    prompt = f"""You are a quiz generator. Based on the following text, generate exactly {num_questions} multiple choice questions.{topic_instruction}
 
 TEXT:
 {pdf_text[:15000]}
@@ -108,7 +114,7 @@ Rules:
         print(f"Error generating questions: {e}")
         return []
 
-def generate_quiz_from_pdf(pdf_path, num_questions=10):
+def generate_quiz_from_pdf(pdf_path, num_questions=10, topics=None):
     """Main function to generate quiz from PDF"""
     
     # Extract text from PDF
@@ -118,7 +124,7 @@ def generate_quiz_from_pdf(pdf_path, num_questions=10):
         return None, "Could not extract sufficient text from PDF"
     
     # Generate questions using AI
-    questions = generate_quiz_questions(pdf_text, num_questions)
+    questions = generate_quiz_questions(pdf_text, num_questions, topics)
     
     if not questions:
         return None, "Could not generate questions from PDF content"

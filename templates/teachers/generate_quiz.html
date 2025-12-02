@@ -48,6 +48,12 @@
                             <input type="number" class="form-control" id="duration" name="duration" value="30" min="5" max="120" required>
                         </div>
                         
+                        <div class="mb-3">
+                            <label for="topics" class="form-label">Specific Topics (Optional)</label>
+                            <textarea class="form-control" id="topics" name="topics" rows="3" placeholder="Enter specific topics separated by commas (e.g., Functions, Classes, Inheritance, Polymorphism)&#10;&#10;Leave empty to generate questions from the entire document"></textarea>
+                            <small class="text-muted"><i class="bi bi-info-circle"></i> If topics are specified, questions will be generated only from those topics. Otherwise, questions will be generated from the entire file.</small>
+                        </div>
+                        
                         <div class="alert alert-warning">
                             <i class="bi bi-clock"></i> <strong>Note:</strong> Quiz generation may take 30-60 seconds depending on the PDF size and number of questions.
                         </div>

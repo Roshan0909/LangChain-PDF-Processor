@@ -48,6 +48,7 @@ class Quiz(models.Model):
     description = models.TextField(blank=True)
     duration = models.IntegerField(help_text="Duration in minutes", default=30)
     num_questions = models.IntegerField(default=10)
+    topics = models.TextField(blank=True, help_text="Comma-separated topics (optional)")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_quizzes')
     created_at = models.DateTimeField(auto_now_add=True)
     deadline = models.DateTimeField(null=True, blank=True, help_text="Quiz deadline")
