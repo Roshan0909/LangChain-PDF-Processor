@@ -485,11 +485,150 @@
     
     // Start timer
     {% if not already_attempted %}
-        const timerInterval = setInterval(updateTimer, 1000);
-        
         // Prevent navigation away from quiz
         let quizSubmitted = false;
         let isSubmitting = false;
+        
+        // Fullscreen proctoring
+        let fullscreenEnabled = false;
+        let fullscreenExitCount = 0;
+        const MAX_FULLSCREEN_EXITS = 3;
+        
+        // Show fullscreen permission dialog on page load
+        setTimeout(() => {
+            showFullscreenPermissionDialog();
+        }, 500);
+        
+        function showFullscreenPermissionDialog() {
+            const overlay = document.createElement('div');
+            overlay.className = 'custom-alert-overlay';
+            overlay.style.display = 'block';
+            
+            const modal = document.createElement('div');
+            modal.className = 'custom-alert-modal';
+            modal.innerHTML = `
+                <div class="custom-alert-header info">
+                    <div class="custom-alert-icon">🔒</div>
+                    <h3 class="custom-alert-title">Fullscreen Proctoring Required</h3>
+                </div>
+                <div class="custom-alert-body">
+                    <p class="custom-alert-message">
+                        <strong>This quiz requires fullscreen mode for proctoring.</strong><br><br>
+                        • You must stay in fullscreen during the quiz<br>
+                        • Exiting fullscreen will trigger warnings<br>
+                        • After 3 exits, your quiz will be auto-submitted<br><br>
+                        Click OK to enable fullscreen and start the quiz.
+                    </p>
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button class="custom-alert-btn" onclick="enableFullscreen()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <i class="bi bi-arrows-fullscreen me-1"></i> Enable Fullscreen
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(modal);
+        }
+        
+        window.enableFullscreen = function() {
+            // Remove permission dialog
+            const overlays = document.querySelectorAll('.custom-alert-overlay');
+            const modals = document.querySelectorAll('.custom-alert-modal');
+            overlays.forEach(el => el.remove());
+            modals.forEach(el => el.remove());
+            
+            // Request fullscreen
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().then(() => {
+                    fullscreenEnabled = true;
+                    startQuizTimer();
+                }).catch(err => {
+                    console.log('Fullscreen request failed:', err);
+                    showAlert(
+                        '⚠️ Please allow fullscreen mode to start the quiz.<br><br>Click the button again or press F11.',
+                        'warning',
+                        'Fullscreen Required'
+                    );
+                    setTimeout(() => {
+                        showFullscreenPermissionDialog();
+                    }, 2000);
+                });
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+                fullscreenEnabled = true;
+                startQuizTimer();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+                fullscreenEnabled = true;
+                startQuizTimer();
+            }
+        }
+        
+        function startQuizTimer() {
+            // Start the timer only after fullscreen is enabled
+            window.timerInterval = setInterval(updateTimer, 1000);
+        }
+        
+        // Monitor fullscreen changes
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+        
+        function handleFullscreenChange() {
+            if (!document.fullscreenElement && fullscreenEnabled && !quizSubmitted && !isSubmitting) {
+                fullscreenExitCount++;
+                
+                if (fullscreenExitCount <= MAX_FULLSCREEN_EXITS) {
+                    const warningsLeft = MAX_FULLSCREEN_EXITS - fullscreenExitCount;
+                    
+                    if (warningsLeft > 0) {
+                        showAlert(
+                            `⚠️ <strong>Warning ${fullscreenExitCount}/${MAX_FULLSCREEN_EXITS}: You exited fullscreen!</strong><br><br>` +
+                            `${warningsLeft} warning${warningsLeft !== 1 ? 's' : ''} remaining before auto-submission.<br><br>` +
+                            `Re-entering fullscreen automatically...`,
+                            'warning',
+                            '🔒 Fullscreen Exit Detected'
+                        );
+                    } else {
+                        showAlert(
+                            '🚨 <strong>FINAL WARNING!</strong><br><br>' +
+                            'This is your last warning. One more fullscreen exit will AUTO-SUBMIT your quiz!<br><br>' +
+                            'Re-entering fullscreen automatically...',
+                            'error',
+                            '⚠️ Last Fullscreen Warning'
+                        );
+                    }
+                    
+                    // Re-enter fullscreen after warning
+                    setTimeout(() => {
+                        const elem = document.documentElement;
+                        if (elem.requestFullscreen) {
+                            elem.requestFullscreen().catch(err => console.log('Fullscreen re-entry failed:', err));
+                        } else if (elem.webkitRequestFullscreen) {
+                            elem.webkitRequestFullscreen();
+                        } else if (elem.msRequestFullscreen) {
+                            elem.msRequestFullscreen();
+                        }
+                    }, 2000);
+                } else {
+                    // Exceeded fullscreen exits - auto submit
+                    if (!quizSubmitted) {
+                        showAlert(
+                            '❌ <strong>Quiz Auto-Submitted!</strong><br><br>' +
+                            'You exceeded the maximum allowed fullscreen exits (3).<br>' +
+                            'Your quiz has been automatically submitted.',
+                            'error',
+                            '🚫 Auto-Submission'
+                        );
+                        setTimeout(async () => {
+                            await submitQuiz();
+                        }, 2000);
+                    }
+                }
+            }
+        }
         
         // Intercept all navigation clicks (links and buttons) to show custom styled dialog
         document.addEventListener('click', function(e) {
