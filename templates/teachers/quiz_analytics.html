@@ -360,6 +360,9 @@
 
 <script>
     function showTab(tabName) {
+        // Save current tab to localStorage
+        localStorage.setItem('quizAnalyticsActiveTab', tabName);
+        
         // Hide all tabs
         document.querySelectorAll('.analytics-tab').forEach(tab => {
             tab.style.display = 'none';
@@ -373,15 +376,21 @@
         // Show selected tab
         if (tabName === 'overview') {
             document.getElementById('overviewTab').style.display = 'block';
-            event.target.classList.add('active');
+            document.querySelector('[onclick="showTab(\'overview\')"]').classList.add('active');
         } else if (tabName === 'details') {
             document.getElementById('detailsTab').style.display = 'block';
-            event.target.classList.add('active');
+            document.querySelector('[onclick="showTab(\'details\')"]').classList.add('active');
         } else if (tabName === 'students') {
             document.getElementById('studentsTab').style.display = 'block';
-            event.target.classList.add('active');
+            document.querySelector('[onclick="showTab(\'students\')"]').classList.add('active');
         }
     }
+    
+    // Restore active tab on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedTab = localStorage.getItem('quizAnalyticsActiveTab') || 'overview';
+        showTab(savedTab);
+    });
 
     // Toggle quiz active/inactive
     document.addEventListener('DOMContentLoaded', function() {
@@ -415,6 +424,9 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
+                                // Save current tab before reload
+                                const currentTab = localStorage.getItem('quizAnalyticsActiveTab') || 'details';
+                                localStorage.setItem('quizAnalyticsActiveTab', currentTab);
                                 location.reload();
                             } else {
                                 alert(data.error || 'Failed to toggle quiz status');
