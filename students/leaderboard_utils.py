@@ -83,28 +83,37 @@ def get_rank_badge(rank):
         1: {'icon': '👑', 'name': 'Champion', 'color': '#FFD700'},
         2: {'icon': '🥈', 'name': 'Runner-up', 'color': '#C0C0C0'},
         3: {'icon': '🥉', 'name': 'Bronze Star', 'color': '#CD7F32'},
+        4: {'icon': '🌟', 'name': '4th Place', 'color': '#9B59B6'},
+        5: {'icon': '⭐', 'name': '5th Place', 'color': '#667eea'},
+        6: {'icon': '💫', 'name': '6th Place', 'color': '#3498db'},
+        7: {'icon': '✨', 'name': '7th Place', 'color': '#1abc9c'},
+        8: {'icon': '🔥', 'name': '8th Place', 'color': '#e74c3c'},
+        9: {'icon': '💎', 'name': '9th Place', 'color': '#00D9FF'},
+        10: {'icon': '🏅', 'name': '10th Place', 'color': '#f39c12'},
     }
     
-    if rank <= 3:
-        return badges[rank]
-    elif rank <= 10:
-        return {'icon': '⭐', 'name': 'Top 10', 'color': '#667eea'}
+    if rank <= 10:
+        return badges.get(rank, {'icon': '⭐', 'name': 'Top 10', 'color': '#667eea'})
+    elif rank <= 20:
+        return {'icon': '🎖️', 'name': f'{rank}th Place', 'color': '#95a5a6'}
     else:
-        return {'icon': '🎯', 'name': 'Achiever', 'color': '#764ba2'}
+        return {'icon': '🎯', 'name': f'{rank}th Place', 'color': '#7f8c8d'}
 
 
 def get_tier(engagement_score):
     """Determine tier based on engagement score"""
-    if engagement_score >= 90:
+    if engagement_score >= 85:
         return {'name': 'Diamond', 'color': '#00D9FF', 'icon': '💎'}
-    elif engagement_score >= 75:
+    elif engagement_score >= 70:
         return {'name': 'Platinum', 'color': '#E5E4E2', 'icon': '🌟'}
-    elif engagement_score >= 60:
+    elif engagement_score >= 55:
         return {'name': 'Gold', 'color': '#FFD700', 'icon': '⚡'}
-    elif engagement_score >= 45:
+    elif engagement_score >= 40:
         return {'name': 'Silver', 'color': '#C0C0C0', 'icon': '🔥'}
-    else:
+    elif engagement_score >= 25:
         return {'name': 'Bronze', 'color': '#CD7F32', 'icon': '📚'}
+    else:
+        return {'name': 'Beginner', 'color': '#95a5a6', 'icon': '🎓'}
 
 
 def generate_personalized_suggestion(student_data, leaderboard_position):
