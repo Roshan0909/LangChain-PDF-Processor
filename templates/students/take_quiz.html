@@ -307,7 +307,7 @@
             <!-- Submit Button -->
             <div class="card shadow-lg mb-4">
                 <div class="card-body text-center">
-                    <button type="submit" class="btn btn-lg" style="background-color: #667eea; color: white;">
+                    <button type="submit" class="btn btn-lg" style="background-color: #667eea; color: white;" data-quiz-submit="true">
                         <i class="bi bi-check-circle"></i> Submit Quiz
                     </button>
                     <p class="text-muted mt-3 mb-0">Make sure you've answered all questions before submitting</p>
@@ -490,16 +490,27 @@
         // Prevent navigation away from quiz
         let quizSubmitted = false;
         
-        // Intercept all navigation clicks to show custom styled dialog
+        // Intercept all navigation clicks (links and buttons) to show custom styled dialog
         document.addEventListener('click', function(e) {
             if (quizSubmitted) return;
             
-            // Check if clicked element or its parent is a link
+            // Check if clicked element or its parent is a link or button that navigates away
             let target = e.target;
             while (target && target !== document) {
+                // Check for links
                 if (target.tagName === 'A' && target.href && !target.href.includes('#') && !target.hasAttribute('data-quiz-submit')) {
                     e.preventDefault();
                     showLeaveConfirmation(target.href);
+                    return;
+                }
+                // Check for buttons that might navigate (in sidebar/nav)
+                if ((target.tagName === 'BUTTON' || target.tagName === 'A') && 
+                    (target.closest('.nav-link') || target.closest('.sidebar') || target.closest('.navbar')) &&
+                    !target.hasAttribute('data-quiz-submit') &&
+                    target.getAttribute('href') && 
+                    !target.getAttribute('href').includes('#')) {
+                    e.preventDefault();
+                    showLeaveConfirmation(target.getAttribute('href'));
                     return;
                 }
                 target = target.parentElement;
@@ -551,9 +562,19 @@
         
         window.confirmLeave = function(url) {
             closeLeaveConfirmation();
+            
+            // Submit quiz first before navigating
+            submitQuizBeforeLeaving(url);
+        }
+        
+        function submitQuizBeforeLeaving(targetUrl) {
+            if (quizSubmitted) {
+                window.location.href = targetUrl;
+                return;
+            }
             quizSubmitted = true;
             
-            // Submit quiz in background
+            // Collect answers
             const formData = new FormData(quizForm);
             const answers = {};
             for (let [key, value] of formData.entries()) {
@@ -563,12 +584,26 @@
                 }
             }
             
-            const data = JSON.stringify({ answers: answers });
-            const blob = new Blob([data], { type: 'application/json' });
-            navigator.sendBeacon('{% url "submit_quiz" quiz.id %}', blob);
-            
-            // Navigate to the URL
-            window.location.href = url;
+            // Submit with fetch and wait for response before navigating
+            fetch('{% url "submit_quiz" quiz.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ answers: answers }),
+                keepalive: true // Ensures request completes even if page is closing
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Navigate after successful submission
+                window.location.href = targetUrl;
+            })
+            .catch(error => {
+                console.error('Error submitting quiz:', error);
+                // Navigate anyway after error
+                window.location.href = targetUrl;
+            });
         }
         
         // Fallback for browser back/forward buttons and address bar navigation
@@ -599,9 +634,10 @@
         
         // Function to submit quiz when leaving page
         function submitQuizOnLeave() {
+            if (quizSubmitted) return; // Prevent double submission
             quizSubmitted = true;
             
-            // Use sendBeacon for reliable submission even when navigating away
+            // Collect answers
             const formData = new FormData(quizForm);
             const answers = {};
             for (let [key, value] of formData.entries()) {
@@ -611,20 +647,23 @@
                 }
             }
             
-            const data = JSON.stringify({ answers: answers });
-            const blob = new Blob([data], { type: 'application/json' });
+            // Prepare data with CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const submitData = new FormData();
+            submitData.append('csrfmiddlewaretoken', csrfToken);
+            submitData.append('answers', JSON.stringify(answers));
             
-            // Try sendBeacon first (most reliable)
-            const beaconSent = navigator.sendBeacon('{% url "submit_quiz" quiz.id %}', blob);
+            // Use sendBeacon with FormData (includes CSRF)
+            const beaconSent = navigator.sendBeacon('{% url "submit_quiz" quiz.id %}', submitData);
             
-            // Fallback to synchronous XHR if sendBeacon fails
+            // Fallback to synchronous XHR if sendBeacon not available or fails
             if (!beaconSent) {
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', '{% url "submit_quiz" quiz.id %}', false); // Synchronous
-                xhr.setRequestHeader('Content-Type', 'application/json');
-                xhr.setRequestHeader('X-CSRFToken', document.querySelector('[name=csrfmiddlewaretoken]').value);
                 try {
-                    xhr.send(data);
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '{% url "submit_quiz" quiz.id %}', false); // Synchronous
+                    xhr.setRequestHeader('X-CSRFToken', csrfToken);
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+                    xhr.send(JSON.stringify({ answers: answers }));
                 } catch(e) {
                     console.error('Failed to submit quiz:', e);
                 }
@@ -659,13 +698,108 @@
         // Note: Focus detection removed to avoid false positives
         // Tab switching is handled by visibilitychange event above
         
-        // Detect back button or navigation
+        // Intercept browser back button with custom styled dialog
+        // Add a dummy history entry to catch back button
+        history.pushState(null, null, location.href);
+        
         window.addEventListener('popstate', function(e) {
             if (!quizSubmitted) {
-                e.preventDefault();
-                submitQuiz();
+                // Push state again to keep user on page
+                history.pushState(null, null, location.href);
+                
+                // Show styled confirmation dialog
+                showBackButtonConfirmation();
             }
         });
+        
+        function showBackButtonConfirmation() {
+            const overlay = document.createElement('div');
+            overlay.className = 'custom-alert-overlay';
+            overlay.style.display = 'block';
+            
+            const modal = document.createElement('div');
+            modal.className = 'custom-alert-modal';
+            modal.innerHTML = `
+                <div class="custom-alert-header warning">
+                    <div class="custom-alert-icon">⚠️</div>
+                    <h3 class="custom-alert-title">Going Back?</h3>
+                </div>
+                <div class="custom-alert-body">
+                    <p class="custom-alert-message">
+                        <strong>Your quiz is still in progress!</strong><br><br>
+                        Going back will <strong>AUTO-SUBMIT</strong> your quiz with your current answers.<br><br>
+                        Time remaining: <span style="color: #667eea; font-weight: bold;">${document.getElementById('timer').textContent}</span>
+                    </p>
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button class="custom-alert-btn" style="background: #6c757d;" onclick="closeBackConfirmation()">
+                            <i class="bi bi-arrow-left me-1"></i> Stay on Quiz
+                        </button>
+                        <button class="custom-alert-btn" onclick="confirmGoBack()">
+                            <i class="bi bi-check-circle me-1"></i> Submit & Go Back
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(modal);
+            
+            overlay.addEventListener('click', closeBackConfirmation);
+        }
+        
+        window.closeBackConfirmation = function() {
+            const overlay = document.querySelector('.custom-alert-overlay');
+            const modal = document.querySelector('.custom-alert-modal');
+            if (overlay) overlay.remove();
+            if (modal) modal.remove();
+        }
+        
+        window.confirmGoBack = function() {
+            closeBackConfirmation();
+            
+            // Submit quiz first
+            submitQuizThenGoBack();
+        }
+        
+        function submitQuizThenGoBack() {
+            if (quizSubmitted) {
+                history.back();
+                return;
+            }
+            quizSubmitted = true;
+            
+            // Collect answers
+            const formData = new FormData(quizForm);
+            const answers = {};
+            for (let [key, value] of formData.entries()) {
+                if (key.startsWith('question_')) {
+                    const questionId = key.replace('question_', '');
+                    answers[questionId] = value;
+                }
+            }
+            
+            // Submit with fetch
+            fetch('{% url "submit_quiz" quiz.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ answers: answers }),
+                keepalive: true
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Go back after successful submission
+                // We need to go back twice because we added a history entry
+                history.go(-2);
+            })
+            .catch(error => {
+                console.error('Error submitting quiz:', error);
+                // Go back anyway
+                history.go(-2);
+            });
+        }
         
         // Prevent right-click during quiz
         document.addEventListener('contextmenu', function(e) {
