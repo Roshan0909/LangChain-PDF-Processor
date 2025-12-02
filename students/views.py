@@ -272,13 +272,21 @@ def quiz_report(request, attempt_id):
         }
         question_results.append(result)
     
-    percentage = (attempt.score / quiz.questions.count() * 100) if quiz.questions.count() > 0 else 0
+    total_questions = quiz.questions.count()
+    correct_count = attempt.score
+    wrong_count = total_questions - correct_count
+    percentage = (attempt.score / total_questions * 100) if total_questions > 0 else 0
+    wrong_percentage = (wrong_count / total_questions * 100) if total_questions > 0 else 0
     
     return render(request, 'students/quiz_report.html', {
         'attempt': attempt,
         'quiz': quiz,
         'question_results': question_results,
-        'percentage': round(percentage, 2)
+        'percentage': round(percentage, 2),
+        'total_questions': total_questions,
+        'correct_count': correct_count,
+        'wrong_count': wrong_count,
+        'wrong_percentage': round(wrong_percentage, 2)
     })
 
 @login_required

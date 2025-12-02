@@ -110,18 +110,14 @@
             <h5 class="mb-3">Performance Breakdown</h5>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Correct Answers: {{ attempt.score }}</label>
+                    <label class="form-label">Correct Answers: {{ correct_count }}</label>
                     <div class="progress" style="height: 30px;">
                         <div class="progress-bar bg-success" style="width: {{ percentage }}%;" role="progressbar">
-                            {{ attempt.score }} correct
+                            {{ correct_count }} correct
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6 mb-3">
-                    {% widthratio quiz.questions.count 1 1 as total_questions %}
-                    {% widthratio total_questions attempt.score -1 as wrong_count_neg %}
-                    {% widthratio wrong_count_neg 1 -1 as wrong_count %}
-                    {% widthratio wrong_count total_questions 100 as wrong_percentage %}
                     <label class="form-label">Wrong Answers: {{ wrong_count }}</label>
                     <div class="progress" style="height: 30px;">
                         <div class="progress-bar bg-danger" style="width: {{ wrong_percentage }}%;" role="progressbar">
