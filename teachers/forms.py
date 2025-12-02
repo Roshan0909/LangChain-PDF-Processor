@@ -26,6 +26,6 @@ class PDFNoteForm(forms.ModelForm):
             allowed = ['pdf', 'doc', 'docx', 'ppt', 'pptx']
             if ext not in allowed:
                 raise forms.ValidationError(f'Only PDF, DOC, DOCX, PPT, and PPTX files are allowed. You uploaded: {ext}')
-            if file.size > 50 * 1024 * 1024:  # 50MB limit
-                raise forms.ValidationError('File size must be under 50MB')
+            if file.size > 200 * 1024 * 1024:  # 200MB limit
+                raise forms.ValidationError('File size must be under 200MB')
         return file

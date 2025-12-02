@@ -113,9 +113,9 @@ def upload_and_chat(request):
         if not pdf_file.name.endswith('.pdf'):
             return JsonResponse({'error': 'Only PDF files are allowed'}, status=400)
         
-        # Check file size (10MB limit)
-        if pdf_file.size > 10 * 1024 * 1024:
-            return JsonResponse({'error': 'File size exceeds 10MB limit'}, status=400)
+        # Check file size (200MB limit)
+        if pdf_file.size > 200 * 1024 * 1024:
+            return JsonResponse({'error': 'File size exceeds 200MB limit'}, status=400)
         
         # Create a temporary PDFNote for the uploaded file
         # We'll create it under a special "Personal Uploads" subject

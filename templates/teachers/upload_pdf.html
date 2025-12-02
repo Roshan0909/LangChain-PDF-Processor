@@ -101,7 +101,7 @@
                                 <span class="format-badge"><i class="bi bi-file-ppt"></i> PPT</span>
                                 <span class="format-badge"><i class="bi bi-file-ppt"></i> PPTX</span>
                             </div>
-                            <small class="text-muted mt-3 d-block">Maximum file size: 50MB</small>
+                            <small class="text-muted mt-3 d-block"><strong>Maximum file size: 200MB</strong> - Large files supported for extensive learning materials</small>
                         </div>
                         
                         {{ form.pdf_file }}
@@ -218,5 +218,15 @@
         fileName.textContent = 'No file selected';
         fileSize.textContent = '';
     }
+    
+    // Add loading indicator for large files
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        const file = fileInput.files[0];
+        if (file && file.size > 50 * 1024 * 1024) { // If file is larger than 50MB
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading large file... This may take a few minutes';
+        }
+    });
 </script>
 {% endblock %}

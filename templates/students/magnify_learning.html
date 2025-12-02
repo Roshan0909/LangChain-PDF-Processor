@@ -25,7 +25,7 @@
                             <p class="text-muted small mt-1 mb-0" id="fileNameDisplay"></p>
                         </div>
                         <input type="file" class="form-control d-none" id="pdfFile" name="pdf_file" accept=".pdf" required>
-                        <small class="text-muted">Maximum file size: 10MB</small>
+                        <small class="text-muted">Maximum file size: 200MB (Large files supported)</small>
                     </div>
                     <div class="col-md-4">
                         <button type="submit" class="btn w-100" style="background-color: #667eea; color: white;">
@@ -143,16 +143,24 @@
         }
     });
     
-    // File size validation
+    // File size validation and display
     pdfFile.addEventListener('change', function() {
         if (this.files.length > 0) {
-            fileNameDisplay.textContent = '📄 ' + this.files[0].name;
+            const file = this.files[0];
+            const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+            fileNameDisplay.textContent = `📄 ${file.name} (${fileSize} MB)`;
             fileNameDisplay.style.color = '#667eea';
+            
+            // Warn for very large files
+            if (file.size > 100 * 1024 * 1024) {
+                fileNameDisplay.textContent += ' - Large file detected, processing may take several minutes';
+            }
         }
-        const maxSize = 10 * 1024 * 1024; // 10MB
+        const maxSize = 200 * 1024 * 1024; // 200MB
         if (this.files.length > 0 && this.files[0].size > maxSize) {
-            alert('File size exceeds 10MB. Please choose a smaller file.');
+            alert('File size exceeds 200MB. Please choose a smaller file.');
             this.value = '';
+            fileNameDisplay.textContent = '';
         }
     });
     
@@ -171,7 +179,14 @@
         // Show progress
         uploadProgress.classList.remove('d-none');
         progressBar.style.width = '0%';
-        progressText.textContent = 'Uploading...';
+        
+        // Show appropriate message based on file size
+        const fileSizeMB = file.size / (1024 * 1024);
+        if (fileSizeMB > 50) {
+            progressText.textContent = 'Uploading large file... This may take several minutes';
+        } else {
+            progressText.textContent = 'Uploading...';
+        }
         
         try {
             const xhr = new XMLHttpRequest();
@@ -191,10 +206,14 @@
                     const data = JSON.parse(xhr.responseText);
                     if (data.success) {
                         progressBar.style.width = '100%';
-                        progressText.textContent = 'Processing complete! Redirecting...';
+                        if (fileSizeMB > 50) {
+                            progressText.textContent = 'Upload complete! Processing large file for AI chat... Please wait';
+                        } else {
+                            progressText.textContent = 'Processing complete! Redirecting...';
+                        }
                         setTimeout(function() {
                             window.location.href = data.redirect_url;
-                        }, 1000);
+                        }, fileSizeMB > 50 ? 2000 : 1000); // Longer delay for large files
                     } else {
                         alert('Error: ' + data.error);
                         uploadProgress.classList.add('d-none');
