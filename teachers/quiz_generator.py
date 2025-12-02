@@ -26,7 +26,7 @@ def extract_text_from_pdf(pdf_path, max_pages=20):
         print(f"Error extracting PDF text: {e}")
         return None
 
-def generate_quiz_questions(pdf_text, num_questions=10, topics=None):
+def generate_quiz_questions(pdf_text, num_questions=10, topics=None, difficulty='medium'):
     """Generate MCQ questions from PDF text using Gemini AI"""
     
     # Build the prompt with topics if provided
@@ -35,7 +35,15 @@ def generate_quiz_questions(pdf_text, num_questions=10, topics=None):
     else:
         topic_instruction = ""
     
-    prompt = f"""You are a quiz generator. Based on the following text, generate exactly {num_questions} multiple choice questions.{topic_instruction}
+    # Add difficulty instruction
+    difficulty_instructions = {
+        'easy': '\n\nDIFFICULTY: EASY - Create simple, straightforward questions testing basic understanding and recall. Avoid complex scenarios or tricky wording.',
+        'medium': '\n\nDIFFICULTY: MEDIUM - Create moderately challenging questions that test comprehension and application of concepts.',
+        'hard': '\n\nDIFFICULTY: HARD - Create challenging questions requiring deep understanding, analysis, and critical thinking. Include complex scenarios and edge cases.'
+    }
+    difficulty_instruction = difficulty_instructions.get(difficulty, difficulty_instructions['medium'])
+    
+    prompt = f"""You are a quiz generator. Based on the following text, generate exactly {num_questions} multiple choice questions.{topic_instruction}{difficulty_instruction}
 
 TEXT:
 {pdf_text[:15000]}
@@ -114,7 +122,7 @@ Rules:
         print(f"Error generating questions: {e}")
         return []
 
-def generate_quiz_from_pdf(pdf_path, num_questions=10, topics=None):
+def generate_quiz_from_pdf(pdf_path, num_questions=10, topics=None, difficulty='medium'):
     """Main function to generate quiz from PDF"""
     
     # Extract text from PDF
@@ -124,7 +132,7 @@ def generate_quiz_from_pdf(pdf_path, num_questions=10, topics=None):
         return None, "Could not extract sufficient text from PDF"
     
     # Generate questions using AI
-    questions = generate_quiz_questions(pdf_text, num_questions, topics)
+    questions = generate_quiz_questions(pdf_text, num_questions, topics, difficulty)
     
     if not questions:
         return None, "Could not generate questions from PDF content"
