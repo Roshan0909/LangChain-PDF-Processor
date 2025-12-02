@@ -4,6 +4,36 @@
 
 {% block student_content %}
 <style>
+    /* Hide sidebar and navbar in fullscreen */
+    :fullscreen .sidebar,
+    :fullscreen .navbar,
+    :-webkit-full-screen .sidebar,
+    :-webkit-full-screen .navbar,
+    :-moz-full-screen .sidebar,
+    :-moz-full-screen .navbar,
+    :-ms-fullscreen .sidebar,
+    :-ms-fullscreen .navbar {
+        display: none !important;
+    }
+    
+    /* Adjust main content in fullscreen */
+    :fullscreen body,
+    :-webkit-full-screen body,
+    :-moz-full-screen body,
+    :-ms-fullscreen body {
+        margin: 0 !important;
+        padding: 20px !important;
+    }
+    
+    :fullscreen .quiz-container,
+    :-webkit-full-screen .quiz-container,
+    :-moz-full-screen .quiz-container,
+    :-ms-fullscreen .quiz-container {
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        padding: 0 40px !important;
+    }
+    
     .quiz-container {
         max-width: 900px;
         margin: 0 auto;
@@ -30,28 +60,89 @@
     }
     .timer {
         position: fixed;
-        top: 70px;
+        top: 80px;
         right: 20px;
         z-index: 1000;
         background: white;
-        padding: 15px 25px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border: 3px solid #667eea;
+        padding: 20px 30px;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        text-align: center;
+        min-width: 180px;
+    }
+    .timer h4 {
+        color: #667eea !important;
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: 2px;
+    }
+    .timer small {
+        color: #764ba2;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: block;
+        margin-top: 5px;
     }
     .progress-tracker {
         position: fixed;
-        top: 260px;
+        top: 220px;
         right: 20px;
         z-index: 1000;
         background: white;
         padding: 15px 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        max-width: 180px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        min-width: 200px;
+    }
+    .progress-tracker h6 {
+        color: #667eea;
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+    }
+    .stat-label {
+        color: #6c757d;
+    }
+    .stat-number {
+        font-weight: 700;
+        font-size: 1.1rem;
     }
     .quiz-container {
-        margin-right: 220px;
+        margin-right: 240px;
     }
+    
+    /* Fullscreen adjustments */
+    :fullscreen .timer,
+    :-webkit-full-screen .timer,
+    :-moz-full-screen .timer,
+    :-ms-fullscreen .timer,
+    :fullscreen .progress-tracker,
+    :-webkit-full-screen .progress-tracker,
+    :-moz-full-screen .progress-tracker,
+    :-ms-fullscreen .progress-tracker {
+        position: fixed !important;
+        right: 20px !important;
+    }
+    
+    :fullscreen .quiz-container,
+    :-webkit-full-screen .quiz-container,
+    :-moz-full-screen .quiz-container,
+    :-ms-fullscreen .quiz-container {
+        margin-right: 240px !important;
+    }
+    
     @media (max-width: 1200px) {
         .quiz-container {
             margin-right: 0;
@@ -61,7 +152,6 @@
             top: 0;
             right: 0;
             margin-bottom: 20px;
-            max-width: 100%;
         }
     }
     
@@ -233,33 +323,31 @@
     {% else %}
         <!-- Timer -->
         <div class="timer">
-            <div class="text-center">
-                <h4 class="mb-0" id="timer" style="color: #667eea;">{{ quiz.duration }}:00</h4>
-                <small class="text-muted">Time Remaining</small>
-            </div>
+            <h4 id="timer">{{ quiz.duration }}:00</h4>
+            <small>Time Remaining</small>
         </div>
         
         <!-- Progress Tracker -->
         <div class="progress-tracker">
-            <div class="text-center">
-                <h6 class="mb-3" style="color: #667eea;">Progress</h6>
-                <div class="mb-2">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-success"><i class="bi bi-check-circle-fill"></i> Attempted</span>
-                        <strong id="attemptedCount" class="text-success">0</strong>
-                    </div>
-                </div>
-                <div>
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-muted"><i class="bi bi-circle"></i> Remaining</span>
-                        <strong id="remainingCount" class="text-muted">{{ quiz.questions.count }}</strong>
-                    </div>
-                </div>
-                <hr>
-                <div class="progress mt-2" style="height: 8px;">
-                    <div id="progressBar" class="progress-bar" style="width: 0%; background-color: #667eea;" role="progressbar"></div>
-                </div>
-                <small class="text-muted d-block mt-2"><span id="progressPercent">0</span>% Complete</small>
+            <h6><i class="bi bi-list-check"></i> Progress</h6>
+            
+            <div class="stat-item">
+                <span class="stat-label"><i class="bi bi-check-circle-fill text-success"></i> Attempted</span>
+                <span class="stat-number text-success" id="attemptedCount">0</span>
+            </div>
+            
+            <div class="stat-item">
+                <span class="stat-label"><i class="bi bi-circle text-muted"></i> Remaining</span>
+                <span class="stat-number text-muted" id="remainingCount">{{ quiz.questions.count }}</span>
+            </div>
+            
+            <hr style="margin: 10px 0;">
+            
+            <div class="progress" style="height: 8px; border-radius: 5px;">
+                <div id="progressBar" class="progress-bar" style="width: 0%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" role="progressbar"></div>
+            </div>
+            <div style="text-align: center; margin-top: 8px;">
+                <small class="text-muted"><span id="progressPercent">0</span>% Complete</small>
             </div>
         </div>
         
@@ -538,6 +626,9 @@
             overlays.forEach(el => el.remove());
             modals.forEach(el => el.remove());
             
+            // Hide sidebar and navbar
+            hideSidebarAndNavbar();
+            
             // Request fullscreen
             const elem = document.documentElement;
             if (elem.requestFullscreen) {
@@ -566,6 +657,36 @@
             }
         }
         
+        function hideSidebarAndNavbar() {
+            const sidebar = document.querySelector('.sidebar');
+            const navbar = document.querySelector('.navbar');
+            const mainContent = document.querySelector('.main-content');
+            const container = document.querySelector('.container-fluid');
+            const row = document.querySelector('.row');
+            
+            if (sidebar) sidebar.style.display = 'none';
+            if (navbar) navbar.style.display = 'none';
+            if (mainContent) {
+                mainContent.style.marginLeft = '0';
+                mainContent.style.padding = '20px';
+            }
+            if (container) container.classList.remove('container-fluid');
+            if (row) row.classList.remove('row');
+        }
+        
+        function showSidebarAndNavbar() {
+            const sidebar = document.querySelector('.sidebar');
+            const navbar = document.querySelector('.navbar');
+            const mainContent = document.querySelector('.main-content');
+            
+            if (sidebar) sidebar.style.display = '';
+            if (navbar) navbar.style.display = '';
+            if (mainContent) {
+                mainContent.style.marginLeft = '';
+                mainContent.style.padding = '';
+            }
+        }
+        
         function startQuizTimer() {
             // Start the timer only after fullscreen is enabled
             window.timerInterval = setInterval(updateTimer, 1000);
@@ -578,6 +699,7 @@
         
         function handleFullscreenChange() {
             if (!document.fullscreenElement && fullscreenEnabled && !quizSubmitted && !isSubmitting) {
+                // User exited fullscreen
                 fullscreenExitCount++;
                 
                 if (fullscreenExitCount <= MAX_FULLSCREEN_EXITS) {
@@ -603,6 +725,7 @@
                     
                     // Re-enter fullscreen after warning
                     setTimeout(() => {
+                        hideSidebarAndNavbar(); // Hide again before re-entering
                         const elem = document.documentElement;
                         if (elem.requestFullscreen) {
                             elem.requestFullscreen().catch(err => console.log('Fullscreen re-entry failed:', err));
@@ -627,6 +750,9 @@
                         }, 2000);
                     }
                 }
+            } else if (document.fullscreenElement && !quizSubmitted) {
+                // Entered fullscreen - hide sidebar and navbar
+                hideSidebarAndNavbar();
             }
         }
         
