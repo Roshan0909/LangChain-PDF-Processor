@@ -107,7 +107,8 @@
                     
                     <!-- SUBMIT BUTTON - Gradient styled -->
                     <button type="submit" class="btn btn-gradient w-100 mb-3">
-                        <i class="bi bi-check-circle"></i> Create Account
+                        <i class="bi bi-check-circle me-1"></i>
+                        <span>Create Account</span>
                     </button>
                 </form>
                 
@@ -360,12 +361,20 @@
         font-size: 1.1rem;
         transition: all 0.3s ease;
         box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .btn-gradient:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         color: white;
+    }
+    
+    .btn-gradient i,
+    .btn-gradient span {
+        pointer-events: none;
     }
     
     /* GRADIENT TEXT LINK */
