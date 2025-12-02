@@ -659,11 +659,11 @@
             }
         }
         
-        // Detect tab/window visibility changes with 5 warnings limit
+        // Detect tab/window visibility changes with 3 warnings limit
         let isAlertShowing = false;
         let lastAlertTime = 0;
         let tabSwitchCount = 0;
-        const MAX_WARNINGS = 5;
+        const MAX_WARNINGS = 3;
         
         document.addEventListener('visibilitychange', function() {
             const now = Date.now();
@@ -704,7 +704,7 @@
                         closeCustomAlert();
                         showAlert(
                             '❌ <strong>Quiz Auto-Submitted!</strong><br><br>' +
-                            'You exceeded the maximum allowed tab switches (5).<br>' +
+                            'You exceeded the maximum allowed tab switches (3).<br>' +
                             'Your quiz has been automatically submitted.',
                             'error',
                             '🚫 Auto-Submission'
@@ -736,6 +736,30 @@
         
         // Note: Focus detection removed to avoid false positives
         // Tab switching is handled by visibilitychange event above
+        
+        // Warn on page refresh/close (beforeunload)
+        window.addEventListener('beforeunload', function(e) {
+            if (!quizSubmitted && !isSubmitting) {
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            }
+        });
+        
+        // Intercept browser back button
+        history.pushState(null, null, location.href);
+        window.addEventListener('popstate', function(e) {
+            if (!quizSubmitted && !isSubmitting) {
+                history.pushState(null, null, location.href);
+                showAlert(
+                    '⚠️ <strong>Going Back?</strong><br><br>' +
+                    'Your quiz is still in progress!<br>' +
+                    'Use the navigation links to leave the quiz safely.',
+                    'warning',
+                    'Quiz In Progress'
+                );
+            }
+        });
         
         // Prevent right-click during quiz
         document.addEventListener('contextmenu', function(e) {
