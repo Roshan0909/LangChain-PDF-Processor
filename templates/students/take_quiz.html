@@ -64,6 +64,65 @@
             max-width: 100%;
         }
     }
+    
+    /* Custom Confirmation Modal Styles */
+    .custom-confirm-modal .modal-content {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    .custom-confirm-modal .modal-header {
+        border: none;
+        padding: 30px 30px 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px 20px 0 0;
+    }
+    .custom-confirm-modal .modal-body {
+        padding: 30px;
+        text-align: center;
+        font-size: 1.1rem;
+    }
+    .custom-confirm-modal .modal-footer {
+        border: none;
+        padding: 0 30px 30px;
+        justify-content: center;
+        gap: 15px;
+    }
+    .custom-confirm-modal .warning-icon {
+        font-size: 4rem;
+        color: #f39c12;
+        margin-bottom: 15px;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+    .custom-confirm-modal .btn-confirm {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 12px 30px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: transform 0.2s;
+    }
+    .custom-confirm-modal .btn-confirm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    .custom-confirm-modal .btn-cancel {
+        background: #6c757d;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: transform 0.2s;
+    }
+    .custom-confirm-modal .btn-cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+    }
 </style>
 
 <div class="quiz-container">
@@ -161,6 +220,30 @@
 </div>
 
 <!-- Result Modal -->
+<!-- Confirmation Modal -->
+<div class="modal fade custom-confirm-modal" id="confirmSubmitModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-question-circle-fill"></i> Confirm Submission</h5>
+            </div>
+            <div class="modal-body">
+                <div class="warning-icon">⚠️</div>
+                <p class="mb-3"><strong>Are you sure you want to submit your quiz?</strong></p>
+                <p class="text-muted mb-0">You cannot change your answers after submission.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-cancel text-white" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-confirm text-white" id="confirmSubmitBtn">
+                    <i class="bi bi-check-circle"></i> Yes, Submit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="resultModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -250,9 +333,16 @@
     quizForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        if (confirm('Are you sure you want to submit? You cannot change your answers after submission.')) {
-            submitQuiz();
-        }
+        // Show custom confirmation modal
+        const confirmModal = new bootstrap.Modal(document.getElementById('confirmSubmitModal'));
+        confirmModal.show();
+    });
+    
+    // Handle confirmation button click
+    document.getElementById('confirmSubmitBtn').addEventListener('click', function() {
+        const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmSubmitModal'));
+        confirmModal.hide();
+        submitQuiz();
     });
     
     async function submitQuiz() {
@@ -289,23 +379,23 @@
                 if (percentage >= 90) {
                     grade = 'Excellent!';
                     emoji = '🌟';
-                    passStatus = '<span class="badge bg-success">PASS</span>';
+                    passStatus = '<span class="badge bg-success fs-5">PASS</span>';
                 } else if (percentage >= 75) {
                     grade = 'Good Job!';
                     emoji = '👍';
-                    passStatus = '<span class="badge bg-success">PASS</span>';
+                    passStatus = '<span class="badge bg-success fs-5">PASS</span>';
                 } else if (percentage >= 50) {
                     grade = 'Not Bad!';
                     emoji = '📚';
-                    passStatus = '<span class="badge bg-success">PASS</span>';
+                    passStatus = '<span class="badge bg-success fs-5">PASS</span>';
                 } else if (percentage >= 35) {
                     grade = 'Keep Practicing!';
                     emoji = '💪';
-                    passStatus = '<span class="badge bg-info">PASS</span>';
+                    passStatus = '<span class="badge bg-info fs-5">PASS</span>';
                 } else {
                     grade = 'Need More Study!';
                     emoji = '📖';
-                    passStatus = '<span class="badge bg-danger">FAIL</span>';
+                    passStatus = '<span class="badge bg-danger fs-5">FAIL</span>';
                 }
                 
                 // Build detailed report
