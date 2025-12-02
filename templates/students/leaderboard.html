@@ -1,0 +1,1205 @@
+{% extends 'students/base_student.html' %}
+
+{% block title %}Leaderboard - Student Campus{% endblock %}
+
+{% block student_content %}
+<div class="leaderboard-container">
+    
+    <!-- Floating Background Elements -->
+    <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+        <div class="shape shape-5"></div>
+    </div>
+    
+    <!-- Header Section -->
+    <div class="leaderboard-header">
+        <div class="header-content">
+            <h1 class="page-title">
+                <span class="trophy-icon">🏆</span>
+                Leaderboard
+                <span class="trophy-icon">🏆</span>
+            </h1>
+            <p class="subtitle">Compete, Learn, and Excel Together</p>
+        </div>
+        
+        <!-- Overall Class Insights -->
+        {% if overall_insights %}
+        <div class="insights-card float-animation">
+            <div class="insights-icon">💡</div>
+            <div class="insights-content">
+                <h3>Class Insights</h3>
+                <p>{{ overall_insights }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Winners Podium - 3D Style -->
+    {% if leaderboard|length >= 3 %}
+    <div class="winners-podium">
+        <div class="podium-header">
+            <h2><i class="bi bi-trophy-fill"></i> Top Performers</h2>
+        </div>
+        
+        <div class="podium-stage-3d">
+            <!-- 2nd Place - Silver -->
+            <div class="podium-position-3d second-place">
+                <div class="trophy-3d silver-trophy">
+                    <div class="trophy-cup">
+                        <div class="trophy-handles">
+                            <div class="handle left"></div>
+                            <div class="handle right"></div>
+                        </div>
+                        <div class="trophy-body silver-gradient">
+                            <div class="trophy-shine"></div>
+                            <div class="trophy-number">2</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pedestal-3d silver-pedestal">
+                    <div class="pedestal-top"></div>
+                    <div class="pedestal-body">
+                        <div class="student-info-3d">
+                            <h3>{{ leaderboard.1.student.username }}</h3>
+                            <div class="score-3d">{{ leaderboard.1.engagement_score }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 1st Place - Gold -->
+            <div class="podium-position-3d first-place">
+                <div class="trophy-3d gold-trophy">
+                    <div class="trophy-cup champion-cup">
+                        <div class="trophy-handles">
+                            <div class="handle left"></div>
+                            <div class="handle right"></div>
+                        </div>
+                        <div class="trophy-body gold-gradient">
+                            <div class="trophy-shine"></div>
+                            <div class="trophy-crown">👑</div>
+                            <div class="trophy-number">1</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pedestal-3d gold-pedestal">
+                    <div class="pedestal-top"></div>
+                    <div class="pedestal-body">
+                        <div class="student-info-3d">
+                            <h3>{{ leaderboard.0.student.username }}</h3>
+                            <div class="score-3d">{{ leaderboard.0.engagement_score }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 3rd Place - Bronze -->
+            <div class="podium-position-3d third-place">
+                <div class="trophy-3d bronze-trophy">
+                    <div class="trophy-cup">
+                        <div class="trophy-handles">
+                            <div class="handle left"></div>
+                            <div class="handle right"></div>
+                        </div>
+                        <div class="trophy-body bronze-gradient">
+                            <div class="trophy-shine"></div>
+                            <div class="trophy-number">3</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pedestal-3d bronze-pedestal">
+                    <div class="pedestal-top"></div>
+                    <div class="pedestal-body">
+                        <div class="student-info-3d">
+                            <h3>{{ leaderboard.2.student.username }}</h3>
+                            <div class="score-3d">{{ leaderboard.2.engagement_score }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Your Stats & AI Suggestion (Compact) -->
+    {% if current_student_data %}
+    <div class="your-stats-bar">
+        <div class="stats-compact">
+            <div class="your-position">
+                <span class="position-icon" style="background: {{ current_student_data.badge.color }};">
+                    {{ current_student_data.badge.icon }}
+                </span>
+                <div class="position-text">
+                    <strong>Your Rank: #{{ current_student_data.rank }}</strong>
+                    <span style="color: {{ current_student_data.tier.color }};">{{ current_student_data.tier.name }} Tier</span>
+                </div>
+            </div>
+            
+            <div class="quick-stats">
+                <span>📊 {{ current_student_data.engagement_score }}</span>
+                <span>🎯 {{ current_student_data.avg_percentage }}%</span>
+                <span>✅ {{ current_student_data.total_quizzes }}</span>
+                <span>⭐ {{ current_student_data.perfect_scores }}</span>
+            </div>
+        </div>
+        
+        {% if ai_suggestion %}
+        <div class="ai-tip" id="aiTip">
+            <div class="tip-icon">💡</div>
+            <div class="tip-content">{{ ai_suggestion|striptags }}</div>
+            <button class="refresh-tip" onclick="refreshSuggestion()">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Leaderboard List -->
+    <div class="leaderboard-list">
+        <div class="list-header">
+            <h2><i class="bi bi-trophy-fill"></i> Top Performers</h2>
+            <div class="total-count">{{ total_students }} Active Students</div>
+        </div>
+        
+        {% if leaderboard %}
+            {% for entry in leaderboard %}
+            <div class="leaderboard-item {% if entry.student.id == user.id %}current-user{% endif %} {% if entry.rank <= 3 %}top-three{% endif %}" 
+                 style="animation-delay: calc({{ forloop.counter0 }} * 0.1s);">
+                
+                <!-- Rank Badge -->
+                <div class="item-rank" style="background: {{ entry.badge.color }};">
+                    <span class="rank-icon">{{ entry.badge.icon }}</span>
+                    <span class="rank-num">#{{ entry.rank }}</span>
+                </div>
+                
+                <!-- Student Info -->
+                <div class="student-info">
+                    <div class="student-avatar" style="background: linear-gradient(135deg, {{ entry.tier.color }} 0%, #764ba2 100%);">
+                        {{ entry.student.username|slice:":1"|upper }}
+                    </div>
+                    <div class="student-details">
+                        <h3 class="student-name">
+                            {{ entry.student.username }}
+                            {% if entry.student.id == user.id %}
+                                <span class="you-badge">You</span>
+                            {% endif %}
+                        </h3>
+                        <p class="student-tier" style="color: {{ entry.tier.color }};">
+                            {{ entry.tier.icon }} {{ entry.tier.name }}
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Performance Metrics -->
+                <div class="performance-metrics">
+                    <div class="metric">
+                        <span class="metric-label">Score</span>
+                        <span class="metric-value">{{ entry.engagement_score }}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Average</span>
+                        <span class="metric-value">{{ entry.avg_percentage }}%</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Quizzes</span>
+                        <span class="metric-value">{{ entry.total_quizzes }}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Perfect</span>
+                        <span class="metric-value">{{ entry.perfect_scores }}</span>
+                    </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="progress-bar-container">
+                    <div class="progress-bar" style="width: {{ entry.engagement_score }}%; background: linear-gradient(90deg, {{ entry.tier.color }}, #764ba2);"></div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-data">
+                <i class="bi bi-inbox"></i>
+                <h3>No Leaderboard Data Yet</h3>
+                <p>Complete quizzes to see your ranking!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .leaderboard-container {
+        position: relative;
+        min-height: 100vh;
+        padding: 2rem;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        overflow: hidden;
+    }
+    
+    /* Floating Background Shapes */
+    .floating-shapes {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    .shape {
+        position: absolute;
+        opacity: 0.1;
+        border-radius: 50%;
+        animation: float-around 20s infinite ease-in-out;
+    }
+    
+    .shape-1 {
+        width: 200px;
+        height: 200px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        top: 10%;
+        left: 10%;
+        animation-delay: 0s;
+    }
+    
+    .shape-2 {
+        width: 150px;
+        height: 150px;
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        top: 60%;
+        right: 15%;
+        animation-delay: 3s;
+    }
+    
+    .shape-3 {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, #00D9FF, #667eea);
+        bottom: 20%;
+        left: 20%;
+        animation-delay: 5s;
+    }
+    
+    .shape-4 {
+        width: 180px;
+        height: 180px;
+        background: linear-gradient(135deg, #FF6584, #FFD700);
+        top: 30%;
+        right: 25%;
+        animation-delay: 7s;
+    }
+    
+    .shape-5 {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #764ba2, #667eea);
+        bottom: 40%;
+        right: 10%;
+        animation-delay: 10s;
+    }
+    
+    @keyframes float-around {
+        0%, 100% {
+            transform: translate(0, 0) rotate(0deg) scale(1);
+        }
+        25% {
+            transform: translate(30px, -30px) rotate(90deg) scale(1.1);
+        }
+        50% {
+            transform: translate(-20px, 40px) rotate(180deg) scale(0.9);
+        }
+        75% {
+            transform: translate(40px, 20px) rotate(270deg) scale(1.05);
+        }
+    }
+    
+    /* Header Section */
+    .leaderboard-header {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .header-content {
+        margin-bottom: 2rem;
+    }
+    
+    .page-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #FFD700 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        animation: title-glow 3s ease-in-out infinite;
+    }
+    
+    @keyframes title-glow {
+        0%, 100% {
+            filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.5));
+        }
+        50% {
+            filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.7));
+        }
+    }
+    
+    .trophy-icon {
+        display: inline-block;
+        animation: bounce 2s infinite;
+        font-size: 3rem;
+    }
+    
+    @keyframes bounce {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+    
+    .subtitle {
+        font-size: 1.3rem;
+        color: #667eea;
+        font-weight: 600;
+    }
+    
+    /* Insights Card */
+    .insights-card {
+        display: inline-flex;
+        align-items: center;
+        gap: 1rem;
+        background: white;
+        padding: 1.5rem 2rem;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .insights-icon {
+        font-size: 2.5rem;
+        flex-shrink: 0;
+    }
+    
+    .insights-content h3 {
+        color: #667eea;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+    
+    .insights-content p {
+        color: #555;
+        margin: 0;
+        line-height: 1.6;
+    }
+    
+    .float-animation {
+        animation: float-gentle 4s ease-in-out infinite;
+    }
+    
+    @keyframes float-gentle {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+    
+    /* 3D Podium Styles */
+    .winners-podium {
+        position: relative;
+        z-index: 1;
+        max-width: 1100px;
+        margin: 2rem auto;
+        background: white;
+        border-radius: 25px;
+        padding: 2.5rem 2rem 1rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .podium-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .podium-header h2 {
+        font-size: 2rem;
+        color: #2c3e50;
+        font-weight: 700;
+    }
+    
+    .podium-stage-3d {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 2rem;
+        perspective: 1000px;
+        padding-bottom: 1rem;
+    }
+    
+    .podium-position-3d {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        animation: fade-in-up 0.8s ease-out forwards;
+        opacity: 0;
+    }
+    
+    @keyframes fade-in-up {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .first-place {
+        animation-delay: 0.2s;
+    }
+    
+    .second-place {
+        animation-delay: 0.1s;
+    }
+    
+    .third-place {
+        animation-delay: 0.3s;
+    }
+    
+    /* 3D Trophy Cup */
+    .trophy-3d {
+        position: relative;
+        margin-bottom: -20px;
+        z-index: 2;
+        animation: trophy-float 3s ease-in-out infinite;
+    }
+    
+    @keyframes trophy-float {
+        0%, 100% {
+            transform: translateY(0) rotateY(0deg);
+        }
+        50% {
+            transform: translateY(-15px) rotateY(10deg);
+        }
+    }
+    
+    .trophy-cup {
+        position: relative;
+        width: 100px;
+        height: 120px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+    }
+    
+    .champion-cup {
+        width: 120px;
+        height: 140px;
+    }
+    
+    .trophy-handles {
+        position: absolute;
+        width: 100%;
+        height: 80px;
+        top: 20px;
+    }
+    
+    .handle {
+        position: absolute;
+        width: 30px;
+        height: 60px;
+        border: 5px solid;
+        border-radius: 50%;
+        opacity: 0.6;
+    }
+    
+    .handle.left {
+        left: -15px;
+        border-right: none;
+        border-color: rgba(255, 255, 255, 0.4);
+    }
+    
+    .handle.right {
+        right: -15px;
+        border-left: none;
+        border-color: rgba(255, 255, 255, 0.4);
+    }
+    
+    .champion-cup .handle {
+        width: 35px;
+        height: 70px;
+    }
+    
+    .trophy-body {
+        width: 80px;
+        height: 100px;
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        border-radius: 10px 10px 40% 40%;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.2), 
+                    inset 0 10px 20px rgba(255, 255, 255, 0.3);
+    }
+    
+    .champion-cup .trophy-body {
+        width: 100px;
+        height: 120px;
+    }
+    
+    .trophy-shine {
+        position: absolute;
+        top: 10%;
+        left: 15%;
+        width: 30%;
+        height: 40%;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), transparent);
+        border-radius: 50%;
+        filter: blur(8px);
+    }
+    
+    .trophy-crown {
+        position: absolute;
+        top: -15px;
+        font-size: 2rem;
+        animation: crown-bounce 2s ease-in-out infinite;
+    }
+    
+    @keyframes crown-bounce {
+        0%, 100% {
+            transform: translateY(0) rotate(-5deg);
+        }
+        50% {
+            transform: translateY(-8px) rotate(5deg);
+        }
+    }
+    
+    .trophy-number {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: white;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        z-index: 1;
+    }
+    
+    .champion-cup .trophy-number {
+        font-size: 3rem;
+        margin-top: 10px;
+    }
+    
+    /* Trophy Color Gradients */
+    .gold-gradient {
+        background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFED4E 100%) !important;
+    }
+    
+    .silver-gradient {
+        background: linear-gradient(135deg, #E8E8E8 0%, #C0C0C0 50%, #F5F5F5 100%) !important;
+    }
+    
+    .bronze-gradient {
+        background: linear-gradient(135deg, #E6A873 0%, #CD7F32 50%, #F4A460 100%) !important;
+    }
+    
+    /* 3D Pedestals */
+    .pedestal-3d {
+        width: 180px;
+        border-radius: 15px 15px 0 0;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    .pedestal-3d:hover {
+        transform: scale(1.05);
+    }
+    
+    .pedestal-top {
+        height: 15px;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 15px 15px 0 0;
+        box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.3);
+    }
+    
+    .pedestal-body {
+        padding: 1.5rem 1rem;
+        border-radius: 0 0 10px 10px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .pedestal-body::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 50%, rgba(0, 0, 0, 0.1));
+        pointer-events: none;
+    }
+    
+    /* Pedestal Colors & Heights */
+    .gold-pedestal .pedestal-body {
+        background: linear-gradient(135deg, #7CFC00 0%, #32CD32 100%);
+        height: 200px;
+        box-shadow: 0 10px 30px rgba(50, 205, 50, 0.4);
+    }
+    
+    .silver-pedestal .pedestal-body {
+        background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%);
+        height: 160px;
+        box-shadow: 0 10px 30px rgba(255, 105, 180, 0.3);
+    }
+    
+    .bronze-pedestal .pedestal-body {
+        background: linear-gradient(135deg, #FF8C94 0%, #FF6B6B 100%);
+        height: 130px;
+        box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+    }
+    
+    .student-info-3d {
+        text-align: center;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .student-info-3d h3 {
+        font-size: 1.1rem;
+        color: white;
+        font-weight: 700;
+        margin-bottom: 0.8rem;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        word-break: break-word;
+    }
+    
+    .gold-pedestal h3 {
+        font-size: 1.3rem;
+    }
+    
+    .score-3d {
+        font-size: 2rem;
+        font-weight: 900;
+        color: white;
+        text-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 15px;
+        display: inline-block;
+        backdrop-filter: blur(10px);
+    }
+    
+    .gold-pedestal .score-3d {
+        font-size: 2.3rem;
+    }
+    
+    /* Your Stats Bar - Compact */
+    .your-stats-bar {
+        position: relative;
+        z-index: 1;
+        max-width: 1200px;
+        margin: 2rem auto;
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stats-compact {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .your-position {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .position-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .position-text {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .position-text strong {
+        font-size: 1.1rem;
+        color: #2c3e50;
+    }
+    
+    .position-text span {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .quick-stats {
+        display: flex;
+        gap: 1.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #667eea;
+    }
+    
+    .quick-stats span {
+        white-space: nowrap;
+    }
+    
+    /* AI Tip - Compact */
+    .ai-tip {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 15px;
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        color: white;
+    }
+    
+    .tip-icon {
+        font-size: 2rem;
+        flex-shrink: 0;
+    }
+    
+    .tip-content {
+        flex: 1;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .refresh-tip {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid white;
+        color: white;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+    
+    .refresh-tip:hover {
+        background: white;
+        color: #667eea;
+        transform: rotate(180deg);
+    }
+    
+    /* Leaderboard List */
+    .leaderboard-list {
+        position: relative;
+        z-index: 1;
+        max-width: 1200px;
+        margin: 2rem auto;
+    }
+    
+    .list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding: 0 1rem;
+    }
+    
+    .list-header h2 {
+        font-size: 2rem;
+        color: #2c3e50;
+        font-weight: 700;
+    }
+    
+    .total-count {
+        background: #667eea;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    
+    /* Leaderboard Item */
+    .leaderboard-item {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        animation: slide-in 0.5s ease forwards;
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    
+    @keyframes slide-in {
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .leaderboard-item:hover {
+        transform: translateX(10px) scale(1.02);
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.2);
+    }
+    
+    .top-three {
+        border: 3px solid;
+        border-image: linear-gradient(135deg, #FFD700, #FFA500) 1;
+    }
+    
+    .current-user {
+        border: 3px solid #667eea;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    }
+    
+    /* Rank Badge */
+    .item-rank {
+        flex-shrink: 0;
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 800;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .rank-icon {
+        font-size: 2rem;
+    }
+    
+    .rank-num {
+        font-size: 1.2rem;
+    }
+    
+    /* Student Info */
+    .student-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex: 1;
+    }
+    
+    .student-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: white;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .student-details {
+        flex: 1;
+    }
+    
+    .student-name {
+        font-size: 1.3rem;
+        color: #2c3e50;
+        margin-bottom: 0.3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .you-badge {
+        background: #667eea;
+        color: white;
+        padding: 0.2rem 0.8rem;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .student-tier {
+        font-weight: 700;
+        font-size: 1rem;
+        margin: 0;
+    }
+    
+    /* Performance Metrics */
+    .performance-metrics {
+        display: flex;
+        gap: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .metric {
+        text-align: center;
+    }
+    
+    .metric-label {
+        display: block;
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 0.3rem;
+        font-weight: 600;
+    }
+    
+    .metric-value {
+        display: block;
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #667eea;
+    }
+    
+    /* Progress Bar */
+    .progress-bar-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: #e9ecef;
+        border-radius: 0 0 20px 20px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        transition: width 1s ease;
+        position: relative;
+    }
+    
+    .progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
+    
+    /* No Data State */
+    .no-data {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 20px;
+        color: #6c757d;
+    }
+    
+    .no-data i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 992px) {
+        .leaderboard-item {
+            flex-wrap: wrap;
+        }
+        
+        .performance-metrics {
+            width: 100%;
+            justify-content: space-around;
+        }
+        
+        .podium-stage {
+            gap: 1rem;
+        }
+        
+        .stats-compact {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .quick-stats {
+            flex-wrap: wrap;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .podium-stage-3d {
+            flex-direction: row;
+            gap: 1rem;
+            padding: 0 1rem;
+        }
+        
+        .trophy-cup {
+            width: 70px;
+            height: 90px;
+        }
+        
+        .champion-cup {
+            width: 85px;
+            height: 105px;
+        }
+        
+        .trophy-body {
+            width: 60px;
+            height: 75px;
+        }
+        
+        .champion-cup .trophy-body {
+            width: 75px;
+            height: 90px;
+        }
+        
+        .trophy-number {
+            font-size: 1.8rem;
+        }
+        
+        .champion-cup .trophy-number {
+            font-size: 2.2rem;
+        }
+        
+        .pedestal-3d {
+            width: 120px;
+        }
+        
+        .gold-pedestal .pedestal-body {
+            height: 150px;
+        }
+        
+        .silver-pedestal .pedestal-body {
+            height: 120px;
+        }
+        
+        .bronze-pedestal .pedestal-body {
+            height: 100px;
+        }
+        
+        .student-info-3d h3 {
+            font-size: 0.9rem;
+        }
+        
+        .score-3d {
+            font-size: 1.5rem;
+        }
+        
+        .gold-pedestal .score-3d {
+            font-size: 1.7rem;
+        }
+        
+        .ai-tip {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .page-title {
+            font-size: 2.5rem;
+        }
+        
+        .leaderboard-container {
+            padding: 1rem;
+        }
+        
+        .performance-metrics {
+            gap: 1rem;
+        }
+        
+        .metric-value {
+            font-size: 1.1rem;
+        }
+        
+        .winners-podium {
+            padding: 1rem;
+        }
+        
+        .podium-header h2 {
+            font-size: 1.5rem;
+        }
+        
+        .quick-stats {
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .your-stats-bar {
+            padding: 1rem;
+        }
+    }
+</style>
+
+<script>
+    function refreshSuggestion() {
+        const btn = event.target.closest('button');
+        const icon = btn.querySelector('i');
+        
+        // Add spinning animation
+        if (icon) {
+            icon.style.animation = 'spin 1s linear infinite';
+        }
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        
+        // Make AJAX call to get new suggestion
+        fetch('{% url "leaderboard" %}', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            // Just reload for now - in future can update dynamically
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+        });
+    }
+    
+    // Add spin animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+{% endblock %}
