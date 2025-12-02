@@ -223,7 +223,7 @@
     }
 </style>
 
-<div class="quiz-container">
+<div class="quiz-container" id="quizContainer">
     {% if already_attempted %}
         <div class="alert alert-warning">
             <h4><i class="bi bi-check-circle"></i> You've already completed this quiz!</h4>
@@ -489,10 +489,11 @@
         
         // Prevent navigation away from quiz
         let quizSubmitted = false;
+        let isSubmitting = false;
         
         // Intercept all navigation clicks (links and buttons) to show custom styled dialog
         document.addEventListener('click', function(e) {
-            if (quizSubmitted) return;
+            if (quizSubmitted || isSubmitting) return;
             
             // Check if clicked element or its parent is a link or button that navigates away
             let target = e.target;
@@ -606,28 +607,16 @@
             });
         }
         
-        // Fallback for browser back/forward buttons and address bar navigation
-        window.addEventListener('beforeunload', function(e) {
-            if (!quizSubmitted) {
-                // Browser shows generic "Changes you made may not be saved" + this message
-                // Note: Cannot style this dialog due to browser security restrictions
-                const message = '⚠️ QUIZ IN PROGRESS ⚠️\n\nYour quiz will be AUTO-SUBMITTED if you leave!\n\nClick "Stay on Page" to continue your quiz.\nClick "Leave" to submit and exit.';
-                e.preventDefault();
-                e.returnValue = message;
-                return message;
-            }
-        });
-        
         // Auto-submit when they actually leave the page
         window.addEventListener('unload', function() {
-            if (!quizSubmitted) {
+            if (!quizSubmitted && !isSubmitting) {
                 submitQuizOnLeave();
             }
         });
         
         // Also handle pagehide event (more reliable on mobile/modern browsers)
         window.addEventListener('pagehide', function() {
-            if (!quizSubmitted) {
+            if (!quizSubmitted && !isSubmitting) {
                 submitQuizOnLeave();
             }
         });
@@ -670,136 +659,83 @@
             }
         }
         
-        // Detect tab/window visibility changes
+        // Detect tab/window visibility changes with 5 warnings limit
         let isAlertShowing = false;
         let lastAlertTime = 0;
+        let tabSwitchCount = 0;
+        const MAX_WARNINGS = 5;
+        
         document.addEventListener('visibilitychange', function() {
             const now = Date.now();
             // Prevent alerts if one was shown less than 2 seconds ago
             if (now - lastAlertTime < 2000) return;
             
             if (document.hidden && !quizSubmitted && !isAlertShowing) {
+                tabSwitchCount++;
+                
                 // Show warning when they switch away
                 isAlertShowing = true;
                 lastAlertTime = now;
                 closeCustomAlert(); // Close any existing alert first
-                showAlert('⚠️ You switched to another tab or window! Please stay on the quiz page to avoid auto-submission.', 'warning', 'Tab Switch Detected');
+                
+                if (tabSwitchCount <= MAX_WARNINGS) {
+                    const warningsLeft = MAX_WARNINGS - tabSwitchCount;
+                    if (warningsLeft > 0) {
+                        showAlert(
+                            `⚠️ Warning ${tabSwitchCount}/${MAX_WARNINGS}: You switched to another tab!<br><br>` +
+                            `<strong>${warningsLeft} warning${warningsLeft !== 1 ? 's' : ''} remaining</strong> before auto-submission.<br><br>` +
+                            `Please stay on the quiz page!`,
+                            'warning',
+                            '🚨 Tab Switch Detected'
+                        );
+                    } else {
+                        // Last warning
+                        showAlert(
+                            '🚨 <strong>FINAL WARNING!</strong><br><br>' +
+                            'This is your last warning. One more tab switch will AUTO-SUBMIT your quiz!<br><br>' +
+                            'Stay focused on your quiz to avoid losing progress.',
+                            'error',
+                            '⚠️ Last Warning'
+                        );
+                    }
+                } else {
+                    // Exceeded warnings - auto submit
+                    if (!quizSubmitted) {
+                        closeCustomAlert();
+                        showAlert(
+                            '❌ <strong>Quiz Auto-Submitted!</strong><br><br>' +
+                            'You exceeded the maximum allowed tab switches (5).<br>' +
+                            'Your quiz has been automatically submitted.',
+                            'error',
+                            '🚫 Auto-Submission'
+                        );
+                        setTimeout(async () => {
+                            // Properly submit quiz using the main submit function
+                            await submitQuiz();
+                        }, 2000);
+                    }
+                    return; // Stop further processing
+                }
+                
                 setTimeout(() => { isAlertShowing = false; }, 2000);
-            } else if (!document.hidden && !quizSubmitted && !isAlertShowing) {
+            } else if (!document.hidden && !quizSubmitted && !isAlertShowing && tabSwitchCount > 0 && tabSwitchCount <= MAX_WARNINGS) {
                 // Show alert when they come back
                 isAlertShowing = true;
                 lastAlertTime = now;
                 closeCustomAlert(); // Close any existing alert first
-                showAlert('Welcome back! Please continue with your quiz.', 'info', 'Returned to Quiz');
+                const warningsLeft = MAX_WARNINGS - tabSwitchCount;
+                showAlert(
+                    `Welcome back! You have <strong>${warningsLeft} warning${warningsLeft !== 1 ? 's' : ''} remaining</strong>.<br><br>` +
+                    'Please stay focused to avoid auto-submission.',
+                    'info',
+                    '✅ Returned to Quiz'
+                );
                 setTimeout(() => { isAlertShowing = false; }, 2000);
             }
         });
         
         // Note: Focus detection removed to avoid false positives
         // Tab switching is handled by visibilitychange event above
-        
-        // Intercept browser back button with custom styled dialog
-        // Add a dummy history entry to catch back button
-        history.pushState(null, null, location.href);
-        
-        window.addEventListener('popstate', function(e) {
-            if (!quizSubmitted) {
-                // Push state again to keep user on page
-                history.pushState(null, null, location.href);
-                
-                // Show styled confirmation dialog
-                showBackButtonConfirmation();
-            }
-        });
-        
-        function showBackButtonConfirmation() {
-            const overlay = document.createElement('div');
-            overlay.className = 'custom-alert-overlay';
-            overlay.style.display = 'block';
-            
-            const modal = document.createElement('div');
-            modal.className = 'custom-alert-modal';
-            modal.innerHTML = `
-                <div class="custom-alert-header warning">
-                    <div class="custom-alert-icon">⚠️</div>
-                    <h3 class="custom-alert-title">Going Back?</h3>
-                </div>
-                <div class="custom-alert-body">
-                    <p class="custom-alert-message">
-                        <strong>Your quiz is still in progress!</strong><br><br>
-                        Going back will <strong>AUTO-SUBMIT</strong> your quiz with your current answers.<br><br>
-                        Time remaining: <span style="color: #667eea; font-weight: bold;">${document.getElementById('timer').textContent}</span>
-                    </p>
-                    <div style="display: flex; gap: 15px; justify-content: center;">
-                        <button class="custom-alert-btn" style="background: #6c757d;" onclick="closeBackConfirmation()">
-                            <i class="bi bi-arrow-left me-1"></i> Stay on Quiz
-                        </button>
-                        <button class="custom-alert-btn" onclick="confirmGoBack()">
-                            <i class="bi bi-check-circle me-1"></i> Submit & Go Back
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(overlay);
-            document.body.appendChild(modal);
-            
-            overlay.addEventListener('click', closeBackConfirmation);
-        }
-        
-        window.closeBackConfirmation = function() {
-            const overlay = document.querySelector('.custom-alert-overlay');
-            const modal = document.querySelector('.custom-alert-modal');
-            if (overlay) overlay.remove();
-            if (modal) modal.remove();
-        }
-        
-        window.confirmGoBack = function() {
-            closeBackConfirmation();
-            
-            // Submit quiz first
-            submitQuizThenGoBack();
-        }
-        
-        function submitQuizThenGoBack() {
-            if (quizSubmitted) {
-                history.back();
-                return;
-            }
-            quizSubmitted = true;
-            
-            // Collect answers
-            const formData = new FormData(quizForm);
-            const answers = {};
-            for (let [key, value] of formData.entries()) {
-                if (key.startsWith('question_')) {
-                    const questionId = key.replace('question_', '');
-                    answers[questionId] = value;
-                }
-            }
-            
-            // Submit with fetch
-            fetch('{% url "submit_quiz" quiz.id %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: JSON.stringify({ answers: answers }),
-                keepalive: true
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Go back after successful submission
-                // We need to go back twice because we added a history entry
-                history.go(-2);
-            })
-            .catch(error => {
-                console.error('Error submitting quiz:', error);
-                // Go back anyway
-                history.go(-2);
-            });
-        }
         
         // Prevent right-click during quiz
         document.addEventListener('contextmenu', function(e) {
@@ -825,13 +761,28 @@
     quizForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
+        // Mark that we're in submission process
+        isSubmitting = true;
+        quizSubmitted = true; // Mark as submitted immediately to prevent any warnings
+        
         // Show custom confirmation modal
         const confirmModal = new bootstrap.Modal(document.getElementById('confirmSubmitModal'));
         confirmModal.show();
     });
     
+    // Handle cancel button
+    document.querySelector('[data-bs-dismiss="modal"]').addEventListener('click', function() {
+        if (isSubmitting && !quizSubmitted) {
+            // User cancelled submission, restore state
+            isSubmitting = false;
+            quizSubmitted = false;
+        }
+    });
+    
     // Handle confirmation button click
     document.getElementById('confirmSubmitBtn').addEventListener('click', function() {
+        isSubmitting = true;
+        quizSubmitted = true; // Ensure it's marked as submitted
         const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmSubmitModal'));
         confirmModal.hide();
         submitQuiz();
@@ -865,6 +816,9 @@
             const data = await response.json();
             
             if (data.success) {
+                // Ensure quiz is marked as submitted to prevent any navigation warnings
+                quizSubmitted = true;
+                
                 const percentage = data.percentage;
                 let grade = '';
                 let emoji = '';
