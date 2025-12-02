@@ -9,11 +9,27 @@
     }
     .main-content {
         padding: 0 !important;
+        margin: 0 !important;
         overflow: hidden !important;
+        height: calc(100vh - 56px);
+    }
+    /* Hide toast notifications in chat page */
+    #toastContainer {
+        display: none !important;
+    }
+    .chat-container-wrapper {
+        width: 100%;
+        max-width: 1400px;
+        height: calc(100% - 60px);
+        margin: 0 auto;
+        padding: 15px 15px 30px 15px;
+    }
+    .card-footer {
+        padding-bottom: 20px !important;
     }
 </style>
-<div class="container-fluid" style="height: calc(100vh - 56px); overflow: hidden;">
-    <div class="card shadow-lg h-100" style="display: flex; flex-direction: column;">
+<div class="chat-container-wrapper">
+    <div class="card shadow-lg h-100" style="display: flex; flex-direction: column; border-radius: 10px; overflow: hidden;">
         <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; flex-shrink: 0;">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
