@@ -10,6 +10,8 @@ from langchain.prompts import PromptTemplate
 import pandas as pd
 import hashlib
 import google.generativeai as genai
+from docx import Document
+from pptx import Presentation
 
 # Load environment variables and configure API
 load_dotenv()
@@ -26,8 +28,26 @@ def hash_file(file):
 
 # Text extraction functions for various file types
 def extract_text_from_pdf(file):
-    pdf_reader = PdfReader(file)
-    return "".join(page.extract_text() for page in pdf_reader.pages if page.extract_text())
+    try:
+        # Try with strict=False to handle malformed PDFs
+        pdf_reader = PdfReader(file, strict=False)
+        text = ""
+        for page in pdf_reader.pages:
+            try:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text
+            except Exception as page_error:
+                print(f"Warning: Could not extract text from a page: {page_error}")
+                continue
+        
+        if not text.strip():
+            raise ValueError("No text could be extracted from the PDF")
+        return text
+    except Exception as e:
+        if "EOF marker not found" in str(e):
+            raise ValueError("The PDF file is corrupted or incomplete. Please re-upload a valid PDF file.")
+        raise ValueError(f"Error reading PDF: {str(e)}")
 
 def extract_text_from_txt(file):
     return file.read().decode("utf-8")
@@ -40,6 +60,41 @@ def extract_text_from_excel(file):
     df = pd.read_excel(file)
     return df.to_string()
 
+def extract_text_from_docx(file):
+    """Extract text from Word document (.docx)"""
+    try:
+        doc = Document(file)
+        text = ""
+        for paragraph in doc.paragraphs:
+            text += paragraph.text + "\n"
+        # Also extract text from tables
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    text += cell.text + "\t"
+                text += "\n"
+        if not text.strip():
+            raise ValueError("No text could be extracted from the Word document")
+        return text
+    except Exception as e:
+        raise ValueError(f"Error reading Word document: {str(e)}")
+
+def extract_text_from_pptx(file):
+    """Extract text from PowerPoint (.pptx)"""
+    try:
+        prs = Presentation(file)
+        text = ""
+        for slide_num, slide in enumerate(prs.slides, 1):
+            text += f"\n--- Slide {slide_num} ---\n"
+            for shape in slide.shapes:
+                if hasattr(shape, "text"):
+                    text += shape.text + "\n"
+        if not text.strip():
+            raise ValueError("No text could be extracted from the PowerPoint")
+        return text
+    except Exception as e:
+        raise ValueError(f"Error reading PowerPoint: {str(e)}")
+
 # Function to select the appropriate text extractor based on file type
 def extract_text(file, file_type):
     if file_type == "pdf":
@@ -50,6 +105,10 @@ def extract_text(file, file_type):
         return extract_text_from_csv(file)
     elif file_type == "xlsx":
         return extract_text_from_excel(file)
+    elif file_type in ["docx", "vnd.openxmlformats-officedocument.wordprocessingml.document"]:
+        return extract_text_from_docx(file)
+    elif file_type in ["pptx", "vnd.openxmlformats-officedocument.presentationml.presentation"]:
+        return extract_text_from_pptx(file)
     else:
         raise ValueError("Unsupported file type.")
 
@@ -95,9 +154,9 @@ def answer_question(user_question, vector_store):
 
 # Streamlit UI
 st.title("File-based Q&A Chatbot")
-st.write("Upload a file (PDF, TXT, CSV, or Excel) and ask questions about its content.")
+st.write("Upload a file (PDF, Word, PowerPoint, TXT, CSV, or Excel) and ask questions about its content.")
 
-uploaded_file = st.file_uploader("Upload your file", type=["pdf", "txt", "csv", "xlsx"])
+uploaded_file = st.file_uploader("Upload your file", type=["pdf", "txt", "csv", "xlsx", "docx", "pptx"])
 
 if uploaded_file:
     file_hash = hash_file(uploaded_file)  # Generate a unique hash for caching

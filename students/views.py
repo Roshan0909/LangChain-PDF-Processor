@@ -159,7 +159,7 @@ def generate_summary(request):
         return JsonResponse({'error': 'Permission denied'}, status=403)
     
     try:
-        from .summarizer_utils import summarize_text, extract_text_from_pdf_file, extract_text_from_docx_file
+        from .summarizer_utils import summarize_text, extract_text_from_pdf_file, extract_text_from_docx_file, extract_text_from_pptx_file
         
         text = request.POST.get('text', '').strip()
         summary_type = request.POST.get('summary_type', 'concise')
@@ -179,8 +179,12 @@ def generate_summary(request):
                     text = extract_text_from_docx_file(uploaded_file)
                     if not text:
                         return JsonResponse({'error': 'Could not extract text from Word document'}, status=400)
+                elif file_extension in ['pptx', 'ppt']:
+                    text = extract_text_from_pptx_file(uploaded_file)
+                    if not text:
+                        return JsonResponse({'error': 'Could not extract text from PowerPoint'}, status=400)
                 else:
-                    return JsonResponse({'error': 'Unsupported file format. Please upload PDF or Word document.'}, status=400)
+                    return JsonResponse({'error': 'Unsupported file format. Please upload PDF, Word, or PowerPoint file.'}, status=400)
         
         if not text or len(text.strip()) < 50:
             return JsonResponse({'error': 'Text is too short. Please provide at least 50 characters.'}, status=400)
@@ -210,9 +214,18 @@ def quiz(request):
     from teachers.models import Quiz
     quizzes = Quiz.objects.filter(is_active=True).select_related('subject', 'pdf_note').prefetch_related('attempts', 'questions')
     
-    # Attach user's attempt to each quiz
+    # Attach user's attempt and calculate percentage for each quiz
     for quiz_obj in quizzes:
-        quiz_obj.user_attempt = quiz_obj.attempts.filter(student=request.user, completed_at__isnull=False).first()
+        attempt = quiz_obj.attempts.filter(student=request.user, completed_at__isnull=False).first()
+        quiz_obj.user_attempt = attempt
+        if attempt:
+            total_questions = quiz_obj.questions.count()
+            if total_questions > 0:
+                quiz_obj.percentage = round((attempt.score / total_questions) * 100, 2)
+            else:
+                quiz_obj.percentage = 0
+        else:
+            quiz_obj.percentage = 0
     
     return render(request, 'students/quiz.html', {'quizzes': quizzes})
 

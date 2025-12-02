@@ -3,6 +3,7 @@ from google import genai
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from docx import Document
+from pptx import Presentation
 import io
 
 load_dotenv()
@@ -76,6 +77,26 @@ def extract_text_from_docx_file(docx_file):
         text = ""
         for paragraph in doc.paragraphs:
             text += paragraph.text + "\n"
+        # Also extract text from tables
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    text += cell.text + "\t"
+                text += "\n"
+        return text
+    except Exception as e:
+        return None
+
+def extract_text_from_pptx_file(pptx_file):
+    """Extract text from uploaded PowerPoint presentation"""
+    try:
+        prs = Presentation(pptx_file)
+        text = ""
+        for slide_num, slide in enumerate(prs.slides, 1):
+            text += f"\n--- Slide {slide_num} ---\n"
+            for shape in slide.shapes:
+                if hasattr(shape, "text"):
+                    text += shape.text + "\n"
         return text
     except Exception as e:
         return None

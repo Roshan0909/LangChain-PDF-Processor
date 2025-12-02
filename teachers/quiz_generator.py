@@ -1,5 +1,7 @@
 import os
 from PyPDF2 import PdfReader
+from docx import Document
+from pptx import Presentation
 from google import genai
 from dotenv import load_dotenv
 import json
@@ -12,18 +14,95 @@ client = genai.Client(api_key=API_KEY)
 def extract_text_from_pdf(pdf_path, max_pages=20):
     """Extract text from PDF (limit to first max_pages for speed)"""
     try:
-        pdf_reader = PdfReader(pdf_path)
+        # Try opening with strict=False to handle malformed PDFs
+        pdf_reader = PdfReader(pdf_path, strict=False)
         text = ""
         num_pages = min(len(pdf_reader.pages), max_pages)
         
         for i in range(num_pages):
-            page_text = pdf_reader.pages[i].extract_text()
-            if page_text:
-                text += page_text + "\n"
+            try:
+                page_text = pdf_reader.pages[i].extract_text()
+                if page_text:
+                    text += page_text + "\n"
+            except Exception as page_error:
+                print(f"Warning: Could not extract text from page {i+1}: {page_error}")
+                continue
         
+        if not text.strip():
+            print("Warning: No text could be extracted from the PDF")
+            return None
+            
         return text
     except Exception as e:
         print(f"Error extracting PDF text: {e}")
+        if "EOF marker not found" in str(e):
+            print("The PDF file appears to be corrupted or incomplete. Please try re-uploading the file.")
+        return None
+
+def extract_text_from_docx(docx_path):
+    """Extract text from Word document"""
+    try:
+        doc = Document(docx_path)
+        text = ""
+        for paragraph in doc.paragraphs:
+            text += paragraph.text + "\n"
+        # Also extract text from tables
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    text += cell.text + "\t"
+                text += "\n"
+        if not text.strip():
+            print("Warning: No text could be extracted from the Word document")
+            return None
+        return text
+    except Exception as e:
+        print(f"Error extracting Word document text: {e}")
+        return None
+
+def extract_text_from_pptx(pptx_path):
+    """Extract text from PowerPoint presentation"""
+    try:
+        prs = Presentation(pptx_path)
+        text = ""
+        for slide_num, slide in enumerate(prs.slides, 1):
+            text += f"\n--- Slide {slide_num} ---\n"
+            for shape in slide.shapes:
+                if hasattr(shape, "text"):
+                    text += shape.text + "\n"
+        if not text.strip():
+            print("Warning: No text could be extracted from the PowerPoint")
+            return None
+        return text
+    except Exception as e:
+        print(f"Error extracting PowerPoint text: {e}")
+        return None
+
+def extract_text_from_file(file_path, max_pages=20):
+    """Extract text from PDF, Word, or PowerPoint file"""
+    try:
+        # Check if file exists
+        if not os.path.exists(file_path):
+            print(f"Error: File not found at {file_path}")
+            return None
+        
+        # Get file extension
+        file_ext = file_path.split('.')[-1].lower()
+        
+        # Extract based on file type
+        if file_ext == 'pdf':
+            return extract_text_from_pdf(file_path, max_pages)
+        elif file_ext == 'docx':
+            return extract_text_from_docx(file_path)
+        elif file_ext == 'pptx':
+            return extract_text_from_pptx(file_path)
+        else:
+            print(f"Unsupported file type: {file_ext}")
+            return None
+            
+    except Exception as e:
+        print(f"Error extracting text from file: {e}")
+        print(f"File path: {file_path}")
         return None
 
 def generate_quiz_questions(pdf_text, num_questions=10, topics=None, difficulty='medium'):
@@ -123,18 +202,19 @@ Rules:
         return []
 
 def generate_quiz_from_pdf(pdf_path, num_questions=10, topics=None, difficulty='medium'):
-    """Main function to generate quiz from PDF"""
+    """Main function to generate quiz from PDF, Word, or PowerPoint file"""
     
-    # Extract text from PDF
-    pdf_text = extract_text_from_pdf(pdf_path)
+    # Extract text from file (supports PDF, DOCX, PPTX)
+    file_text = extract_text_from_file(pdf_path)
     
-    if not pdf_text or len(pdf_text) < 100:
-        return None, "Could not extract sufficient text from PDF"
+    if not file_text or len(file_text) < 100:
+        file_ext = pdf_path.split('.')[-1].upper()
+        return None, f"Could not extract sufficient text from {file_ext} file"
     
     # Generate questions using AI
-    questions = generate_quiz_questions(pdf_text, num_questions, topics, difficulty)
+    questions = generate_quiz_questions(file_text, num_questions, topics, difficulty)
     
     if not questions:
-        return None, "Could not generate questions from PDF content"
+        return None, "Could not generate questions from file content"
     
     return questions, None
