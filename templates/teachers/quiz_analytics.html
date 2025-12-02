@@ -385,32 +385,47 @@
 
     // Toggle quiz active/inactive
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.toggle-quiz-btn').forEach(btn => {
+        console.log('DOMContentLoaded - setting up toggle buttons');
+        const buttons = document.querySelectorAll('.toggle-quiz-btn');
+        console.log('Found toggle buttons:', buttons.length);
+        
+        buttons.forEach(btn => {
             btn.addEventListener('click', function() {
+                console.log('Toggle button clicked');
                 const quizId = this.getAttribute('data-quiz-id');
                 const isActive = this.getAttribute('data-is-active') === 'True';
+                console.log('Quiz ID:', quizId, 'Is Active:', isActive);
                 
-                if (confirm(`Are you sure you want to ${isActive ? 'deactivate' : 'activate'} this quiz?`)) {
-                    fetch(`/teacher/quiz/${quizId}/toggle/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            alert(data.error || 'Failed to toggle quiz status');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred while updating quiz status');
-                    });
+                if (typeof customConfirm === 'undefined') {
+                    console.error('customConfirm is not defined!');
+                    alert('Error: Custom confirm dialog not loaded');
+                    return;
                 }
+                
+                customConfirm(`Are you sure you want to ${isActive ? 'deactivate' : 'activate'} this quiz?`, function(result) {
+                    console.log('Confirm result:', result);
+                    if (result) {
+                        fetch(`/teacher/quiz/${quizId}/toggle/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                location.reload();
+                            } else {
+                                alert(data.error || 'Failed to toggle quiz status');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while updating quiz status');
+                        });
+                    }
+                });
             });
         });
     });

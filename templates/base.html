@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Student Campus{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -13,6 +14,117 @@
         .navbar {
             background-color: rgba(255, 255, 255, 0.95) !important;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* Custom styled confirm dialogs */
+        .custom-confirm-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        .custom-confirm-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 450px;
+            width: 90%;
+            z-index: 10000;
+            animation: slideDown 0.3s ease;
+        }
+        
+        .custom-confirm-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .custom-confirm-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        
+        .custom-confirm-message {
+            font-size: 16px;
+            color: #4a5568;
+            margin-bottom: 25px;
+            text-align: center;
+            line-height: 1.6;
+        }
+        
+        .custom-confirm-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .custom-confirm-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+        
+        .custom-confirm-btn-yes {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .custom-confirm-btn-yes:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .custom-confirm-btn-no {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .custom-confirm-btn-no:hover {
+            background: #cbd5e0;
+            transform: translateY(-2px);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -55%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
         }
     </style>
 </head>
@@ -68,6 +180,69 @@
                 }, 3000);
             });
         });
+        
+        // Custom styled confirm dialog
+        window.customConfirm = function(message, callback) {
+            console.log('customConfirm called with message:', message);
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'custom-confirm-overlay';
+            overlay.style.display = 'block';
+            
+            // Create dialog
+            const dialog = document.createElement('div');
+            dialog.className = 'custom-confirm-dialog';
+            
+            // Store callback first
+            window._confirmCallback = callback;
+            
+            dialog.innerHTML = `
+                <div class="custom-confirm-icon">
+                    <i class="bi bi-question-circle-fill"></i>
+                </div>
+                <div class="custom-confirm-title">Confirm Action</div>
+                <div class="custom-confirm-message">${message}</div>
+                <div class="custom-confirm-buttons">
+                    <button class="custom-confirm-btn custom-confirm-btn-no" id="customConfirmNo">
+                        <i class="bi bi-x-circle me-1"></i> No
+                    </button>
+                    <button class="custom-confirm-btn custom-confirm-btn-yes" id="customConfirmYes">
+                        <i class="bi bi-check-circle me-1"></i> Yes
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(dialog);
+            
+            // Add event listeners
+            document.getElementById('customConfirmNo').addEventListener('click', function() {
+                window.closeCustomConfirm(false);
+            });
+            
+            document.getElementById('customConfirmYes').addEventListener('click', function() {
+                window.closeCustomConfirm(true);
+            });
+            
+            // Close on overlay click
+            overlay.addEventListener('click', function() {
+                window.closeCustomConfirm(false);
+            });
+        };
+        
+        window.closeCustomConfirm = function(result) {
+            console.log('closeCustomConfirm called with result:', result);
+            const overlay = document.querySelector('.custom-confirm-overlay');
+            const dialog = document.querySelector('.custom-confirm-dialog');
+            
+            if (overlay) overlay.remove();
+            if (dialog) dialog.remove();
+            
+            if (window._confirmCallback) {
+                window._confirmCallback(result);
+                window._confirmCallback = null;
+            }
+        };
     </script>
 </body>
 </html>
