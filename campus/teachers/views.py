@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib import messages
-from django.db.models import Q, Max
+from django.db.models import Q, Max, Count
 from .models import Subject, PDFNote, Quiz, Question, ChatMessage
 from .forms import SubjectForm, PDFNoteForm
 from authentication.models import User
@@ -220,9 +220,28 @@ def quiz_detail(request, quiz_id):
         messages.success(request, 'Quiz updated successfully!')
         return redirect('quiz_detail', quiz_id=quiz.id)
     
+    # Get completed attempts with proctoring data
+    from .models import QuizAttempt, ProctoringSnapshot
+    attempts = QuizAttempt.objects.filter(
+        quiz=quiz,
+        completed_at__isnull=False
+    ).select_related('student').prefetch_related('snapshots').order_by('-completed_at')
+    
+    # Add violation count to each attempt
+    total_violations = 0
+    for attempt in attempts:
+        attempt.violation_count = attempt.snapshots.count()
+        total_violations += attempt.violation_count
+        if quiz.questions.count() > 0:
+            attempt.percentage = round((attempt.score / quiz.questions.count()) * 100, 2)
+        else:
+            attempt.percentage = 0
+    
     return render(request, 'teachers/quiz_detail.html', {
         'quiz': quiz,
-        'questions': questions
+        'questions': questions,
+        'attempts': attempts,
+        'total_violations': total_violations
     })
 
 @login_required
@@ -296,11 +315,32 @@ def quiz_analytics(request):
     # Calculate overall statistics
     overall_avg = round(sum(all_percentages) / len(all_percentages), 2) if all_percentages else 0
     
+    # Prepare proctoring data for all quizzes
+    proctoring_data = []
+    for quiz in quizzes:
+        # Get all attempts with violations for this quiz (both completed and in-progress)
+        attempts_with_violations = quiz.attempts.prefetch_related(
+            'snapshots', 'student'
+        ).annotate(
+            snapshot_count=Count('snapshots')
+        ).filter(snapshot_count__gt=0).order_by('-started_at')
+        
+        if attempts_with_violations.exists():
+            # Calculate total violations for this quiz
+            total_violations = sum(attempt.snapshots.count() for attempt in attempts_with_violations)
+            
+            proctoring_data.append({
+                'quiz': quiz,
+                'total_violations': total_violations,
+                'attempts_with_violations': attempts_with_violations
+            })
+    
     return render(request, 'teachers/quiz_analytics.html', {
         'quiz_stats': quiz_stats,
         'total_attempts': total_attempts_all,
         'unique_students': len(unique_students_set),
-        'overall_avg': overall_avg
+        'overall_avg': overall_avg,
+        'proctoring_data': proctoring_data
     })
 
 @login_required
@@ -461,3 +501,41 @@ def get_messages(request, user_id):
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+def proctoring_report(request, attempt_id):
+    """View proctoring report for a specific quiz attempt"""
+    if not request.user.is_teacher():
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    from .models import QuizAttempt, ProctoringSnapshot
+    
+    attempt = get_object_or_404(
+        QuizAttempt.select_related('student', 'quiz'),
+        id=attempt_id,
+        quiz__created_by=request.user
+    )
+    
+    # Get all proctoring snapshots for this attempt
+    snapshots = ProctoringSnapshot.objects.filter(attempt=attempt).order_by('timestamp')
+    
+    # If no violations, redirect back with message
+    if not snapshots.exists():
+        messages.info(request, 'No proctoring violations detected for this attempt.')
+        return redirect('quiz_detail', quiz_id=attempt.quiz.id)
+    
+    # Organize violations by type
+    violations_summary = {
+        'no_person': snapshots.filter(violation_type='no_person').count(),
+        'multiple_persons': snapshots.filter(violation_type='multiple_persons').count(),
+        'phone_detected': snapshots.filter(violation_type='phone_detected').count(),
+    }
+    
+    total_violations = sum(violations_summary.values())
+    
+    return render(request, 'teachers/proctoring_report.html', {
+        'attempt': attempt,
+        'snapshots': snapshots,
+        'violations_summary': violations_summary,
+        'total_violations': total_violations,
+    })

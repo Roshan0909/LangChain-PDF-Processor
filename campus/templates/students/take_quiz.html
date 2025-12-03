@@ -1347,14 +1347,18 @@
     const VIOLATION_COOLDOWN = 10000; // 10 seconds between violation snapshots
     const DETECTION_INTERVAL = 3000; // Check every 3 seconds
     const ATTEMPT_ID = {{ attempt_id }};
+    console.log('🆔 Quiz Attempt ID initialized:', ATTEMPT_ID);
     
     // Initialize camera proctoring
     async function initCameraProctoring() {
+        console.log('🎬 Initializing camera proctoring...');
+        console.log('Attempt ID:', ATTEMPT_ID);
         try {
             // Request camera access
             const video = document.getElementById('webcamFeed');
             const monitorDiv = document.getElementById('proctoringMonitor');
             
+            console.log('📹 Requesting camera access...');
             cameraStream = await navigator.mediaDevices.getUserMedia({ 
                 video: { width: 640, height: 480 } 
             });
@@ -1366,6 +1370,7 @@
             console.log('✓ Camera access granted');
             
             // Load TensorFlow.js COCO-SSD model
+            console.log('🤖 Loading AI detection model...');
             await loadDetectionModel();
             
             // Start detection loop
@@ -1452,6 +1457,8 @@
             // If violation detected and cooldown period passed
             if (violationType && (now - lastViolationTime > VIOLATION_COOLDOWN)) {
                 lastViolationTime = now;
+                console.log(`🚨 VIOLATION DETECTED: ${violationType}, persons: ${personCount}, phones: ${phoneCount}`);
+                console.log(`📸 Attempting to capture snapshot for attempt ID: ${ATTEMPT_ID}`);
                 await captureAndSaveSnapshot(violationType, personCount, phoneCount);
             }
             
@@ -1497,11 +1504,13 @@
             const data = await response.json();
             
             if (data.success) {
-                console.log(`✓ Violation snapshot saved: ${violationType}`);
+                console.log(`✓ Violation snapshot saved: ${violationType}`, data);
+            } else {
+                console.error('❌ Failed to save snapshot:', data);
             }
             
         } catch (error) {
-            console.error('Failed to save snapshot:', error);
+            console.error('❌ Failed to save snapshot - Exception:', error);
         }
     }
     
@@ -1534,6 +1543,10 @@
         
         await originalSubmitQuiz();
     }
+    {% else %}
+    console.log('⚠️ Camera proctoring NOT initialized');
+    console.log('Already attempted:', {{ already_attempted|yesno:"true,false" }});
+    console.log('Attempt ID:', '{{ attempt_id|default:"None" }}');
     {% endif %}
 </script>
 

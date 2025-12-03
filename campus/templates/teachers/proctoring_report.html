@@ -1,0 +1,258 @@
+{% extends 'teachers/base_teacher.html' %}
+
+{% block title %}Proctoring Report - {{ attempt.student.get_full_name }}{% endblock %}
+
+{% block teacher_content %}
+<div class="container-fluid p-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="mb-0">
+                    <i class="bi bi-camera-video text-warning"></i> Proctoring Report
+                </h2>
+                <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">
+                    <i class="bi bi-arrow-left"></i> Back to Quiz
+                </button>
+            </div>
+
+            <!-- Student & Quiz Info -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="mb-3"><i class="bi bi-person-circle"></i> Student Information</h5>
+                            <p class="mb-2"><strong>Name:</strong> {{ attempt.student.get_full_name|default:attempt.student.username }}</p>
+                            <p class="mb-2"><strong>Email:</strong> {{ attempt.student.email }}</p>
+                            <p class="mb-2"><strong>Quiz:</strong> {{ attempt.quiz.title }}</p>
+                            <p class="mb-0"><strong>Completed:</strong> {{ attempt.completed_at|date:"F d, Y g:i A" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="mb-3"><i class="bi bi-clipboard-data"></i> Quiz Performance</h5>
+                            <p class="mb-2"><strong>Score:</strong> 
+                                <span class="badge bg-primary fs-6">{{ attempt.score }}/{{ attempt.quiz.questions.count }}</span>
+                            </p>
+                            <p class="mb-2"><strong>Percentage:</strong> 
+                                {% with percentage=attempt.score|floatformat:0 %}
+                                {% widthratio attempt.score attempt.quiz.questions.count 100 as percent %}
+                                <span class="badge {% if percent >= 50 %}bg-success{% elif percent >= 35 %}bg-warning{% else %}bg-danger{% endif %} fs-6">
+                                    {{ percent }}%
+                                </span>
+                                {% endwith %}
+                            </p>
+                            <p class="mb-2"><strong>Tab Switches:</strong> 
+                                <span class="badge bg-info">{{ attempt.tab_switch_count }}</span>
+                            </p>
+                            <p class="mb-0"><strong>Fullscreen Exits:</strong> 
+                                <span class="badge bg-info">{{ attempt.fullscreen_exit_count }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Violations Summary -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Violations Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="violation-stat">
+                                <div class="stat-number text-danger">{{ total_violations }}</div>
+                                <div class="stat-label">Total Violations</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="violation-stat">
+                                <div class="stat-number text-warning">{{ violations_summary.no_person }}</div>
+                                <div class="stat-label">No Person Detected</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="violation-stat">
+                                <div class="stat-number text-warning">{{ violations_summary.multiple_persons }}</div>
+                                <div class="stat-label">Multiple Persons</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="violation-stat">
+                                <div class="stat-number text-warning">{{ violations_summary.phone_detected }}</div>
+                                <div class="stat-label">Phone Detected</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Violation Snapshots -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-images"></i> Captured Violations ({{ snapshots.count }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        {% for snapshot in snapshots %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="snapshot-card">
+                                <div class="snapshot-image">
+                                    <img src="{{ snapshot.image.url }}" alt="Violation Snapshot" class="img-fluid rounded">
+                                    <div class="snapshot-badge badge 
+                                        {% if snapshot.violation_type == 'no_person' %}bg-warning
+                                        {% elif snapshot.violation_type == 'multiple_persons' %}bg-danger
+                                        {% else %}bg-info
+                                        {% endif %}">
+                                        {% if snapshot.violation_type == 'no_person' %}
+                                            <i class="bi bi-person-x"></i> No Person
+                                        {% elif snapshot.violation_type == 'multiple_persons' %}
+                                            <i class="bi bi-people-fill"></i> Multiple Persons ({{ snapshot.person_count }})
+                                        {% else %}
+                                            <i class="bi bi-phone-fill"></i> Phone Detected ({{ snapshot.phone_count }})
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="snapshot-info">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <small class="text-muted d-block">
+                                                <i class="bi bi-clock"></i> {{ snapshot.timestamp|date:"g:i A" }}
+                                            </small>
+                                            <small class="text-muted">
+                                                <i class="bi bi-calendar3"></i> {{ snapshot.timestamp|date:"M d, Y" }}
+                                            </small>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewFullImage('{{ snapshot.image.url }}')">
+                                            <i class="bi bi-arrows-fullscreen"></i> View Full
+                                        </button>
+                                    </div>
+                                    <div class="mt-2">
+                                        {% if snapshot.violation_type == 'no_person' %}
+                                            <small class="text-muted">
+                                                <i class="bi bi-info-circle"></i> Student was not visible in front of camera
+                                            </small>
+                                        {% elif snapshot.violation_type == 'multiple_persons' %}
+                                            <small class="text-muted">
+                                                <i class="bi bi-info-circle"></i> {{ snapshot.person_count }} persons detected in frame
+                                            </small>
+                                        {% else %}
+                                            <small class="text-muted">
+                                                <i class="bi bi-info-circle"></i> {{ snapshot.phone_count }} mobile phone(s) detected
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Full Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Violation Snapshot</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="Full Size" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .violation-stat {
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .snapshot-card {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .snapshot-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .snapshot-image {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .snapshot-image img {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+    }
+    
+    .snapshot-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 0.85rem;
+        padding: 8px 12px;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .snapshot-info {
+        padding: 15px;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    @media (max-width: 768px) {
+        .violation-stat {
+            padding: 15px;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+        }
+        
+        .snapshot-image img {
+            height: 200px;
+        }
+    }
+</style>
+
+<script>
+    function viewFullImage(imageUrl) {
+        document.getElementById('modalImage').src = imageUrl;
+        const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}

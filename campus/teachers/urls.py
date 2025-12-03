@@ -17,4 +17,5 @@ urlpatterns = [
     path('chat/<int:user_id>/', views.teacher_chat_with, name='teacher_chat_with'),
     path('chat/send/<int:user_id>/', views.send_message, name='send_message'),
     path('chat/get/<int:user_id>/', views.get_messages, name='get_messages'),
+    path('proctoring/<int:attempt_id>/', views.proctoring_report, name='proctoring_report'),
 ]
