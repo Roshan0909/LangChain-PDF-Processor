@@ -215,10 +215,12 @@ def quiz(request):
     quizzes = Quiz.objects.filter(is_active=True).select_related('subject', 'pdf_note').prefetch_related('attempts', 'questions')
     
     # Attach user's attempt and calculate percentage for each quiz
+    completed_count = 0
     for quiz_obj in quizzes:
         attempt = quiz_obj.attempts.filter(student=request.user, completed_at__isnull=False).first()
         quiz_obj.user_attempt = attempt
         if attempt:
+            completed_count += 1
             total_questions = quiz_obj.questions.count()
             if total_questions > 0:
                 quiz_obj.percentage = round((attempt.score / total_questions) * 100, 2)
@@ -227,7 +229,10 @@ def quiz(request):
         else:
             quiz_obj.percentage = 0
     
-    return render(request, 'students/quiz.html', {'quizzes': quizzes})
+    return render(request, 'students/quiz.html', {
+        'quizzes': quizzes,
+        'completed_count': completed_count
+    })
 
 @login_required
 def take_quiz(request, quiz_id):
