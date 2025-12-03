@@ -92,11 +92,32 @@ class QuizAttempt(models.Model):
     total_points = models.IntegerField(default=0)
     answers = models.JSONField(default=dict)  # Store student answers
     
+    # Proctoring fields
+    proctoring_violations = models.JSONField(default=list, blank=True)  # Store violation logs
+    tab_switch_count = models.IntegerField(default=0)
+    fullscreen_exit_count = models.IntegerField(default=0)
+    
     def __str__(self):
         return f"{self.student.username} - {self.quiz.title}"
     
     class Meta:
         ordering = ['-started_at']
+
+
+class ProctoringSnapshot(models.Model):
+    """Store proctoring snapshots with violation details"""
+    attempt = models.ForeignKey(QuizAttempt, on_delete=models.CASCADE, related_name='snapshots')
+    image = models.ImageField(upload_to='proctoring/%Y/%m/%d/')
+    violation_type = models.CharField(max_length=50)  # 'multiple_persons', 'no_person', 'phone_detected'
+    person_count = models.IntegerField(default=0)
+    phone_count = models.IntegerField(default=0)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.attempt.student.username} - {self.violation_type} at {self.timestamp}"
+    
+    class Meta:
+        ordering = ['-timestamp']
 
 class ChatMessage(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')

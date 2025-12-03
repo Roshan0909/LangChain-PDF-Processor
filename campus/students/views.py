@@ -246,10 +246,21 @@ def take_quiz(request, quiz_id):
     # Check if already attempted
     existing_attempt = QuizAttempt.objects.filter(student=request.user, quiz=quiz, completed_at__isnull=False).first()
     
+    # Create or get current attempt for proctoring
+    current_attempt = None
+    if not existing_attempt:
+        current_attempt, created = QuizAttempt.objects.get_or_create(
+            student=request.user,
+            quiz=quiz,
+            completed_at__isnull=True,
+            defaults={'total_points': questions.count()}
+        )
+    
     return render(request, 'students/take_quiz.html', {
         'quiz': quiz,
         'questions': questions,
-        'already_attempted': existing_attempt
+        'already_attempted': existing_attempt,
+        'attempt_id': current_attempt.id if current_attempt else None
     })
 
 @login_required
@@ -705,3 +716,62 @@ def leaderboard(request):
         'current_student_data': current_student_data,
         'total_students': len(leaderboard_data)
     })
+
+@login_required
+@require_POST
+def save_proctoring_snapshot(request, attempt_id):
+    """Save proctoring snapshot with violation details"""
+    if not request.user.is_student():
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    try:
+        from teachers.models import QuizAttempt, ProctoringSnapshot
+        from django.core.files.base import ContentFile
+        import base64
+        
+        # Get the quiz attempt
+        attempt = get_object_or_404(QuizAttempt, id=attempt_id, student=request.user)
+        
+        # Parse the request data
+        data = json.loads(request.body)
+        image_data = data.get('image')  # Base64 image
+        violation_type = data.get('violation_type')
+        person_count = data.get('person_count', 0)
+        phone_count = data.get('phone_count', 0)
+        
+        if not image_data or not violation_type:
+            return JsonResponse({'error': 'Missing required data'}, status=400)
+        
+        # Decode base64 image
+        format, imgstr = image_data.split(';base64,')
+        ext = format.split('/')[-1]
+        image_file = ContentFile(base64.b64decode(imgstr), name=f'snapshot_{attempt.id}_{violation_type}.{ext}')
+        
+        # Save snapshot
+        snapshot = ProctoringSnapshot.objects.create(
+            attempt=attempt,
+            image=image_file,
+            violation_type=violation_type,
+            person_count=person_count,
+            phone_count=phone_count
+        )
+        
+        # Update attempt violation log
+        violation_log = {
+            'type': violation_type,
+            'timestamp': snapshot.timestamp.isoformat(),
+            'person_count': person_count,
+            'phone_count': phone_count
+        }
+        
+        attempt.proctoring_violations.append(violation_log)
+        attempt.save()
+        
+        return JsonResponse({
+            'success': True,
+            'snapshot_id': snapshot.id,
+            'message': 'Snapshot saved successfully'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

@@ -14,6 +14,7 @@ urlpatterns = [
     path('quiz/take/<int:quiz_id>/', views.take_quiz, name='take_quiz'),
     path('quiz/submit/<int:quiz_id>/', views.submit_quiz, name='submit_quiz'),
     path('quiz/report/<int:attempt_id>/', views.quiz_report, name='quiz_report'),
+    path('quiz/proctoring/<int:attempt_id>/', views.save_proctoring_snapshot, name='save_proctoring_snapshot'),
     path('chat/', views.student_chat, name='student_chat'),
     path('chat/<int:user_id>/', views.student_chat_with, name='student_chat_with'),
     path('knowledge-bot/', views.knowledge_bot, name='knowledge_bot'),

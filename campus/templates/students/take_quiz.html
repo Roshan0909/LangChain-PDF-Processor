@@ -71,6 +71,92 @@
         text-align: center;
         min-width: 180px;
     }
+    
+    /* Proctoring Monitor */
+    #proctoringMonitor {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+        width: 280px;
+    }
+    
+    .proctoring-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 10px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .proctoring-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        background: #51cf66;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.7;
+            transform: scale(1.1);
+        }
+    }
+    
+    .status-text {
+        color: white;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .detection-info {
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    #webcamFeed {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+    
+    #detectionStatus {
+        display: inline-block;
+    }
+    
+    /* Fullscreen adjustments for proctoring monitor */
+    :fullscreen #proctoringMonitor,
+    :-webkit-full-screen #proctoringMonitor,
+    :-moz-full-screen #proctoringMonitor,
+    :-ms-fullscreen #proctoringMonitor {
+        position: fixed !important;
+        bottom: 20px !important;
+        right: 20px !important;
+    }
+    
+    @media (max-width: 768px) {
+        #proctoringMonitor {
+            width: 220px;
+            bottom: 10px;
+            right: 10px;
+        }
+    }
     .timer h4 {
         color: #667eea !important;
         font-size: 2.2rem;
@@ -402,6 +488,21 @@
                 </div>
             </div>
         </form>
+        
+        <!-- Visible Webcam Feed for Proctoring -->
+        <div id="proctoringMonitor" style="display: none;">
+            <div class="proctoring-header">
+                <div class="proctoring-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Monitoring Active</span>
+                </div>
+                <div class="detection-info">
+                    <span id="detectionStatus">Analyzing...</span>
+                </div>
+            </div>
+            <video id="webcamFeed" autoplay playsinline></video>
+        </div>
+        <canvas id="snapshotCanvas" style="display: none;"></canvas>
     {% endif %}
 </div>
 
@@ -1236,5 +1337,210 @@
             button.innerHTML = '<i class="bi bi-file-text"></i> View Detailed Report';
         }
     }
+    
+    // ============ CAMERA PROCTORING WITH TENSORFLOW.JS ============
+    {% if not already_attempted and attempt_id %}
+    let cameraStream = null;
+    let detectionModel = null;
+    let isDetectionRunning = false;
+    let lastViolationTime = 0;
+    const VIOLATION_COOLDOWN = 10000; // 10 seconds between violation snapshots
+    const DETECTION_INTERVAL = 3000; // Check every 3 seconds
+    const ATTEMPT_ID = {{ attempt_id }};
+    
+    // Initialize camera proctoring
+    async function initCameraProctoring() {
+        try {
+            // Request camera access
+            const video = document.getElementById('webcamFeed');
+            const monitorDiv = document.getElementById('proctoringMonitor');
+            
+            cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { width: 640, height: 480 } 
+            });
+            video.srcObject = cameraStream;
+            
+            // Show the proctoring monitor
+            monitorDiv.style.display = 'block';
+            
+            console.log('✓ Camera access granted');
+            
+            // Load TensorFlow.js COCO-SSD model
+            await loadDetectionModel();
+            
+            // Start detection loop
+            startDetection();
+            
+        } catch (error) {
+            console.error('Camera proctoring error:', error);
+            showAlert(
+                'Camera access is required for proctoring. Please allow camera access to continue with the quiz.',
+                'warning',
+                'Camera Required'
+            );
+        }
+    }
+    
+    async function loadDetectionModel() {
+        try {
+            console.log('Loading detection model...');
+            // Load COCO-SSD model from CDN
+            detectionModel = await cocoSsd.load();
+            console.log('✓ Detection model loaded');
+        } catch (error) {
+            console.error('Failed to load detection model:', error);
+        }
+    }
+    
+    async function startDetection() {
+        if (!detectionModel || isDetectionRunning) return;
+        
+        isDetectionRunning = true;
+        detectViolations();
+    }
+    
+    async function detectViolations() {
+        if (!isDetectionRunning || quizSubmitted) return;
+        
+        try {
+            const video = document.getElementById('webcamFeed');
+            const statusElement = document.getElementById('detectionStatus');
+            
+            // Run detection
+            const predictions = await detectionModel.detect(video);
+            
+            // Count persons and phones
+            let personCount = 0;
+            let phoneCount = 0;
+            
+            predictions.forEach(prediction => {
+                if (prediction.class === 'person' && prediction.score > 0.5) {
+                    personCount++;
+                }
+                if (prediction.class === 'cell phone' && prediction.score > 0.5) {
+                    phoneCount++;
+                }
+            });
+            
+            // Update status display
+            if (personCount === 0) {
+                statusElement.textContent = '⚠️ No Person';
+                statusElement.style.color = '#ff6b6b';
+            } else if (personCount > 1) {
+                statusElement.textContent = `⚠️ ${personCount} Persons`;
+                statusElement.style.color = '#ff6b6b';
+            } else if (phoneCount > 0) {
+                statusElement.textContent = `⚠️ Phone Detected`;
+                statusElement.style.color = '#ff6b6b';
+            } else {
+                statusElement.textContent = '✓ All Good';
+                statusElement.style.color = '#51cf66';
+            }
+            
+            // Check for violations
+            const now = Date.now();
+            let violationType = null;
+            
+            if (personCount === 0) {
+                violationType = 'no_person';
+            } else if (personCount > 1) {
+                violationType = 'multiple_persons';
+            } else if (phoneCount > 0) {
+                violationType = 'phone_detected';
+            }
+            
+            // If violation detected and cooldown period passed
+            if (violationType && (now - lastViolationTime > VIOLATION_COOLDOWN)) {
+                lastViolationTime = now;
+                await captureAndSaveSnapshot(violationType, personCount, phoneCount);
+            }
+            
+        } catch (error) {
+            console.error('Detection error:', error);
+        }
+        
+        // Continue detection loop
+        setTimeout(detectViolations, DETECTION_INTERVAL);
+    }
+    
+    async function captureAndSaveSnapshot(violationType, personCount, phoneCount) {
+        try {
+            const video = document.getElementById('webcamFeed');
+            const canvas = document.getElementById('snapshotCanvas');
+            const context = canvas.getContext('2d');
+            
+            // Set canvas size to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw video frame to canvas
+            context.drawImage(video, 0, 0);
+            
+            // Convert canvas to base64 image
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Send to server
+            const response = await fetch(`/student/quiz/proctoring/${ATTEMPT_ID}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    image: imageData,
+                    violation_type: violationType,
+                    person_count: personCount,
+                    phone_count: phoneCount
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log(`✓ Violation snapshot saved: ${violationType}`);
+            }
+            
+        } catch (error) {
+            console.error('Failed to save snapshot:', error);
+        }
+    }
+    
+    // Start camera proctoring after fullscreen is enabled
+    const originalStartQuizTimer = startQuizTimer;
+    startQuizTimer = function() {
+        originalStartQuizTimer();
+        
+        // Initialize camera proctoring
+        setTimeout(() => {
+            initCameraProctoring();
+        }, 1000);
+    }
+    
+    // Stop camera when quiz is submitted
+    const originalSubmitQuiz = submitQuiz;
+    submitQuiz = async function() {
+        isDetectionRunning = false;
+        
+        // Stop camera stream
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+        }
+        
+        // Hide proctoring monitor
+        const monitorDiv = document.getElementById('proctoringMonitor');
+        if (monitorDiv) {
+            monitorDiv.style.display = 'none';
+        }
+        
+        await originalSubmitQuiz();
+    }
+    {% endif %}
 </script>
+
+<!-- Load TensorFlow.js and COCO-SSD Model -->
+{% if not already_attempted %}
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3"></script>
+{% endif %}
+
 {% endblock %}
