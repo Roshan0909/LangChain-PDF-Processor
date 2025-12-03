@@ -500,6 +500,10 @@
                     <span id="detectionStatus">Analyzing...</span>
                 </div>
             </div>
+            <div style="padding: 8px 15px; background: #f8f9fa; border-top: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center;">
+                <small class="text-muted"><i class="bi bi-exclamation-triangle"></i> Violations:</small>
+                <span id="violationCounter" class="badge bg-danger">0/5</span>
+            </div>
             <video id="webcamFeed" autoplay playsinline></video>
         </div>
         <canvas id="snapshotCanvas" style="display: none;"></canvas>
@@ -1344,6 +1348,8 @@
     let detectionModel = null;
     let isDetectionRunning = false;
     let lastViolationTime = 0;
+    let cameraViolationCount = 0;
+    const MAX_CAMERA_VIOLATIONS = 5;
     const VIOLATION_COOLDOWN = 10000; // 10 seconds between violation snapshots
     const DETECTION_INTERVAL = 3000; // Check every 3 seconds
     const ATTEMPT_ID = {{ attempt_id }};
@@ -1405,7 +1411,11 @@
     }
     
     async function detectViolations() {
-        if (!isDetectionRunning || quizSubmitted) return;
+        // Stop detection if max violations reached, quiz submitted, or detection disabled
+        if (!isDetectionRunning || quizSubmitted || cameraViolationCount >= MAX_CAMERA_VIOLATIONS) {
+            console.log('🛑 Detection stopped:', { isDetectionRunning, quizSubmitted, cameraViolationCount });
+            return;
+        }
         
         try {
             const video = document.getElementById('webcamFeed');
@@ -1457,17 +1467,103 @@
             // If violation detected and cooldown period passed
             if (violationType && (now - lastViolationTime > VIOLATION_COOLDOWN)) {
                 lastViolationTime = now;
+                cameraViolationCount++;
+                
                 console.log(`🚨 VIOLATION DETECTED: ${violationType}, persons: ${personCount}, phones: ${phoneCount}`);
-                console.log(`📸 Attempting to capture snapshot for attempt ID: ${ATTEMPT_ID}`);
+                console.log(`📸 Camera violation count: ${cameraViolationCount}/${MAX_CAMERA_VIOLATIONS}`);
+                
+                // Update violation counter display
+                const violationCounter = document.getElementById('violationCounter');
+                if (violationCounter) {
+                    violationCounter.textContent = `${cameraViolationCount}/${MAX_CAMERA_VIOLATIONS}`;
+                    if (cameraViolationCount >= MAX_CAMERA_VIOLATIONS - 1) {
+                        violationCounter.classList.remove('bg-danger');
+                        violationCounter.classList.add('bg-dark');
+                    }
+                }
+                
                 await captureAndSaveSnapshot(violationType, personCount, phoneCount);
+                
+                // Show warning based on violation count
+                if (cameraViolationCount >= MAX_CAMERA_VIOLATIONS) {
+                    // Stop detection immediately
+                    isDetectionRunning = false;
+                    
+                    // Final violation - Auto submit quiz immediately
+                    console.log('🛑 MAX VIOLATIONS REACHED - AUTO SUBMITTING QUIZ');
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Quiz Auto-Submitted!',
+                        html: `<strong>Violation ${cameraViolationCount}/${MAX_CAMERA_VIOLATIONS}</strong><br><br>` +
+                              getViolationMessage(violationType, personCount, phoneCount) + '<br><br>' +
+                              '<strong>Maximum camera violations reached!</strong><br>' +
+                              'Your quiz has been automatically submitted.',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                    
+                    // Auto submit quiz immediately after short delay
+                    setTimeout(() => {
+                        submitQuiz();
+                    }, 3000);
+                    
+                    return; // Exit detection loop
+                } else if (cameraViolationCount === MAX_CAMERA_VIOLATIONS - 1) {
+                    // Last warning before auto-submit
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'FINAL WARNING!',
+                        html: `<strong>Violation ${cameraViolationCount}/${MAX_CAMERA_VIOLATIONS}</strong><br><br>` +
+                              getViolationMessage(violationType, personCount, phoneCount) + '<br><br>' +
+                              '<strong style="color: #dc3545;">ONE MORE VIOLATION WILL AUTO-SUBMIT YOUR QUIZ!</strong>',
+                        confirmButtonText: 'I Understand',
+                        confirmButtonColor: '#f59e0b',
+                        allowOutsideClick: false
+                    });
+                } else {
+                    // Regular warning with violation count
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Proctoring Violation Detected',
+                        html: `<strong>Violation ${cameraViolationCount}/${MAX_CAMERA_VIOLATIONS}</strong><br><br>` +
+                              getViolationMessage(violationType, personCount, phoneCount) + '<br><br>' +
+                              `<strong>${MAX_CAMERA_VIOLATIONS - cameraViolationCount} more violation${MAX_CAMERA_VIOLATIONS - cameraViolationCount > 1 ? 's' : ''} will auto-submit your quiz!</strong>`,
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#667eea',
+                        timer: 6000,
+                        timerProgressBar: true,
+                        allowOutsideClick: false
+                    });
+                }
             }
             
         } catch (error) {
             console.error('Detection error:', error);
         }
         
-        // Continue detection loop
-        setTimeout(detectViolations, DETECTION_INTERVAL);
+        // Continue detection loop only if not at max violations
+        if (isDetectionRunning && cameraViolationCount < MAX_CAMERA_VIOLATIONS && !quizSubmitted) {
+            setTimeout(detectViolations, DETECTION_INTERVAL);
+        } else {
+            console.log('🛑 Detection loop terminated');
+        }
+    }
+    
+    function getViolationMessage(violationType, personCount, phoneCount) {
+        switch(violationType) {
+            case 'no_person':
+                return '❌ No person detected in front of camera.<br>Please ensure you are visible in the camera frame.';
+            case 'multiple_persons':
+                return `❌ Multiple persons detected (${personCount}).<br>Only you should be visible during the quiz.`;
+            case 'phone_detected':
+                return `❌ Mobile phone detected (${phoneCount}).<br>Put away all electronic devices immediately.`;
+            default:
+                return 'Proctoring violation detected.';
+        }
     }
     
     async function captureAndSaveSnapshot(violationType, personCount, phoneCount) {

@@ -14,6 +14,19 @@
         margin-bottom: 30px; 
         page-break-inside: avoid; 
     }
+    .violation-section {
+        transition: all 0.3s ease;
+    }
+    .violation-section:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        transform: translateY(-2px);
+    }
+    .snapshot-thumb img {
+        transition: transform 0.3s ease;
+    }
+    .snapshot-thumb:hover img {
+        transform: scale(1.05);
+    }
     @media print { 
         .no-print { display: none; }
         body { padding: 10px; }
@@ -339,42 +352,55 @@
             {% if proctoring_data %}
                 <div class="row">
                     {% for item in proctoring_data %}
-                        <div class="col-12 mb-4">
-                            <div class="card shadow-sm">
-                                <div class="card-header bg-warning text-dark">
+                        <div class="col-12 mb-5">
+                            <div class="card shadow-lg border-0">
+                                <div class="card-header text-white" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> {{ item.quiz.title }}</h5>
-                                            <small><i class="bi bi-book"></i> {{ item.quiz.subject.name }}</small>
+                                            <h4 class="mb-1"><i class="bi bi-clipboard-check"></i> {{ item.quiz.title }}</h4>
+                                            <div>
+                                                <span class="badge bg-white text-dark me-2">
+                                                    <i class="bi bi-book"></i> {{ item.quiz.subject.name }}
+                                                </span>
+                                                <span class="badge bg-white text-dark">
+                                                    <i class="bi bi-people"></i> {{ item.attempts_with_violations.count }} Student{{ item.attempts_with_violations.count|pluralize }}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <span class="badge bg-danger fs-5">{{ item.total_violations }} Violation{{ item.total_violations|pluralize }}</span>
+                                        <span class="badge bg-white text-danger fs-4 px-3 py-2">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> {{ item.total_violations }} Violation{{ item.total_violations|pluralize }}
+                                        </span>
                                     </div>
                                 </div>
-                                <div class="card-body">
+                                <div class="card-body p-4">
                                     {% for attempt in item.attempts_with_violations %}
-                                        <div class="violation-section mb-4 p-3" style="background: #fff8e1; border-left: 4px solid #ffc107; border-radius: 8px;">
+                                        <div class="violation-section mb-4 p-3 {% if attempt.completed_at %}bg-light{% else %}bg-warning bg-opacity-10{% endif %}" 
+                                             style="border-left: 4px solid {% if attempt.completed_at %}#198754{% else %}#ffc107{% endif %}; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                                             <div class="d-flex justify-content-between align-items-start mb-3">
                                                 <div>
                                                     <h6 class="mb-1">
                                                         <i class="bi bi-person-circle"></i> {{ attempt.student.get_full_name|default:attempt.student.username }}
-                                                        {% if not attempt.completed_at %}
-                                                            <span class="badge bg-warning text-dark ms-2">In Progress</span>
-                                                        {% endif %}
                                                     </h6>
                                                     <small class="text-muted">
                                                         {% if attempt.completed_at %}
                                                             <i class="bi bi-clock"></i> Completed: {{ attempt.completed_at|date:"M d, Y g:i A" }}
-                                                            | <i class="bi bi-trophy"></i> Score: {{ attempt.score }}/{{ item.quiz.questions.count }}
+                                                            | <i class="bi bi-trophy"></i> Score: <strong>{{ attempt.score }}/{{ item.quiz.questions.count }}</strong>
+                                                            ({{ attempt.score|floatformat:0 }}{% widthratio attempt.score item.quiz.questions.count 100 %}%)
                                                         {% else %}
                                                             <i class="bi bi-clock"></i> Started: {{ attempt.started_at|date:"M d, Y g:i A" }}
-                                                            | <span class="text-warning"><i class="bi bi-hourglass-split"></i> Not yet submitted</span>
                                                         {% endif %}
                                                     </small>
                                                 </div>
                                                 <div class="text-end">
-                                                    <span class="badge bg-danger me-1">{{ attempt.snapshots.count }} Snapshot{{ attempt.snapshots.count|pluralize }}</span>
-                                                    <span class="badge bg-info me-1">{{ attempt.tab_switch_count }} Tab Switch{{ attempt.tab_switch_count|pluralize:"es" }}</span>
-                                                    <span class="badge bg-secondary">{{ attempt.fullscreen_exit_count }} FS Exit{{ attempt.fullscreen_exit_count|pluralize }}</span>
+                                                    <span class="badge bg-danger me-1 px-2 py-1">
+                                                        <i class="bi bi-camera"></i> {{ attempt.snapshots.count }} Snapshot{{ attempt.snapshots.count|pluralize }}
+                                                    </span>
+                                                    <span class="badge bg-info me-1 px-2 py-1">
+                                                        <i class="bi bi-arrow-left-right"></i> {{ attempt.tab_switch_count }} Tab Switch{{ attempt.tab_switch_count|pluralize:"es" }}
+                                                    </span>
+                                                    <span class="badge bg-secondary px-2 py-1">
+                                                        <i class="bi bi-fullscreen-exit"></i> {{ attempt.fullscreen_exit_count }} FS Exit{{ attempt.fullscreen_exit_count|pluralize }}
+                                                    </span>
                                                 </div>
                                             </div>
                                             

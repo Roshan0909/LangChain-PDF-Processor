@@ -353,15 +353,27 @@ def submit_quiz(request, quiz_id):
             
             question_details.append(question_detail)
         
-        # Save attempt
-        attempt = QuizAttempt.objects.create(
+        # Update existing attempt or create new one
+        attempt, created = QuizAttempt.objects.update_or_create(
             quiz=quiz,
             student=request.user,
-            completed_at=timezone.now(),
-            score=score,
-            total_points=total_questions,
-            answers=answers
+            completed_at__isnull=True,
+            defaults={
+                'completed_at': timezone.now(),
+                'score': score,
+                'total_points': total_questions,
+                'answers': answers
+            }
         )
+        
+        # If no in-progress attempt exists, this means we need to create a new completed one
+        if not created and attempt.completed_at is None:
+            # This shouldn't happen, but just in case
+            attempt.completed_at = timezone.now()
+            attempt.score = score
+            attempt.total_points = total_questions
+            attempt.answers = answers
+            attempt.save()
         
         percentage = (score / total_questions * 100) if total_questions > 0 else 0
         

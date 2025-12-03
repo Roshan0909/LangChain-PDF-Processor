@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib import messages
-from django.db.models import Q, Max, Count
+from django.db import models
+from django.db.models import Q, Max, Count, Case, When
 from .models import Subject, PDFNote, Quiz, Question, ChatMessage
 from .forms import SubjectForm, PDFNoteForm
 from authentication.models import User
@@ -318,12 +319,21 @@ def quiz_analytics(request):
     # Prepare proctoring data for all quizzes
     proctoring_data = []
     for quiz in quizzes:
-        # Get all attempts with violations for this quiz (both completed and in-progress)
+        # Get all attempts with violations for this quiz
         attempts_with_violations = quiz.attempts.prefetch_related(
             'snapshots', 'student'
         ).annotate(
             snapshot_count=Count('snapshots')
-        ).filter(snapshot_count__gt=0).order_by('-started_at')
+        ).filter(snapshot_count__gt=0).order_by(
+            # Order by completed status (completed first), then by date (most recent first)
+            models.Case(
+                models.When(completed_at__isnull=False, then=0),
+                models.When(completed_at__isnull=True, then=1),
+                output_field=models.IntegerField(),
+            ),
+            '-completed_at',
+            '-started_at'
+        )
         
         if attempts_with_violations.exists():
             # Calculate total violations for this quiz
