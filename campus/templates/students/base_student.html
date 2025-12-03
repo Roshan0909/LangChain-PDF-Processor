@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Student Campus{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-top: 56px;
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            border: none;
+        }
+        .navbar-brand {
+            color: white !important;
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: 0.5px;
+        }
+        .navbar .btn-outline-danger {
+            border-color: white;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .navbar .btn-outline-danger:hover {
+            background-color: white;
+            color: #667eea;
+            border-color: white;
+        }
+        .navbar span {
+            color: white;
+            font-weight: 500;
+        }
+        .user-info {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 16px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+        }
+        .navbar-brand:hover {
+            transform: scale(1.05);
+            transition: transform 0.3s ease;
+        }
+        .navbar .bi {
+            font-size: 1.1rem;
+        }
+        .sidebar {
+            height: calc(100vh - 56px);
+            background-color: #667eea;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 56px;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar > div:first-child {
+            position: relative;
+            height: 100%;
+        }
+        .sidebar .nav {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding-top: 1rem;
+        }
+        .sidebar .nav-link {
+            color: #fff;
+            padding: 15px 20px;
+            border-radius: 5px;
+            margin: 5px 10px;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+        .sidebar .nav-link.active {
+            background-color: rgba(255,255,255,0.3);
+            font-weight: bold;
+        }
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        .logout-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 15px;
+            right: 15px;
+            background-color: transparent;
+            color: white;
+            border: 2px solid white;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: block;
+        }
+        .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-color: white;
+            transform: translateX(5px);
+        }
+        .main-content {
+            background-color: #fff;
+            min-height: 100vh;
+            padding: 30px;
+        }
+        
+        /* Toast Notification Styles */
+        .custom-toast {
+            min-width: 350px;
+            max-width: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            margin-bottom: 15px;
+            overflow: hidden;
+            animation: slideInRight 0.4s ease, fadeOut 0.4s ease 2.1s;
+            position: relative;
+        }
+        
+        .custom-toast::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+        }
+        
+        .custom-toast.toast-success::before { background: #10b981; }
+        .custom-toast.toast-error::before { background: #ef4444; }
+        .custom-toast.toast-warning::before { background: #f59e0b; }
+        .custom-toast.toast-info::before { background: #3b82f6; }
+        
+        .toast-content {
+            padding: 16px 20px;
+            padding-left: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .toast-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .toast-success .toast-icon { color: #10b981; }
+        .toast-error .toast-icon { color: #ef4444; }
+        .toast-warning .toast-icon { color: #f59e0b; }
+        .toast-info .toast-icon { color: #3b82f6; }
+        
+        .toast-message {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 500;
+            color: #1f2937;
+            line-height: 1.5;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .toast-close:hover {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                transform: translateX(400px);
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .custom-toast {
+                min-width: 280px;
+                max-width: calc(100vw - 40px);
+            }
+        }
+        
+        /* Hamburger Menu Button */
+        .hamburger-btn {
+            display: none;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .hamburger-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Mobile Sidebar Overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 56px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .sidebar-overlay.show {
+            display: block;
+            opacity: 1;
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 991px) {
+            .hamburger-btn {
+                display: block;
+            }
+            
+            body {
+                padding-top: 56px;
+            }
+            
+            .sidebar {
+                position: fixed;
+                top: 56px;
+                left: -280px;
+                width: 280px;
+                height: calc(100vh - 56px);
+                z-index: 1000;
+                transition: left 0.3s ease;
+                background-color: #667eea;
+            }
+            
+            .sidebar.show {
+                left: 0;
+                box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3);
+            }
+            
+            .main-content {
+                padding: 20px 15px;
+            }
+            
+            .user-info {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 15px 10px;
+            }
+            
+            .user-info span {
+                display: none;
+            }
+            
+            .user-info {
+                padding: 8px;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .user-info i {
+                margin: 0;
+                font-size: 1.2rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .navbar-brand {
+                font-size: 1rem;
+            }
+            
+            .navbar-brand .me-2 {
+                margin-right: 0.3rem !important;
+            }
+            
+            .main-content {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast Notification Container -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 11000;">
+        <div id="toastContainer"></div>
+    </div>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <button class="hamburger-btn" onclick="toggleSidebar()" type="button">
+                <i class="bi bi-list"></i>
+            </button>
+            <a class="navbar-brand fw-bold" href="{% url 'student_dashboard' %}">
+                <i class="bi bi-mortarboard-fill me-2"></i>Student Campus
+            </a>
+            <div class="ms-auto d-flex align-items-center gap-3">
+                <div class="user-info">
+                    <i class="bi bi-person-circle me-2"></i>
+                    <span>{{ user.username }}</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 p-0">
+                <div class="sidebar" id="sidebar">
+                    <nav class="nav flex-column">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}" href="{% url 'student_dashboard' %}">
+                            <i class="bi bi-house-door"></i> Dashboard
+                        </a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'magnify_learning' %}active{% endif %}" href="{% url 'magnify_learning' %}">
+                            <i class="bi bi-search"></i> Magify Learning
+                        </a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'summarizer' %}active{% endif %}" href="{% url 'summarizer' %}">
+                            <i class="bi bi-file-text"></i> Summarizer
+                        </a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'quiz' %}active{% endif %}" href="{% url 'quiz' %}">
+                            <i class="bi bi-question-circle"></i> Quiz
+                        </a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'leaderboard' %}active{% endif %}" href="{% url 'leaderboard' %}">
+                            <i class="bi bi-trophy-fill"></i> Leaderboard
+                        </a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'knowledge_bot' %}active{% endif %}" href="{% url 'knowledge_bot' %}">
+                            <i class="bi bi-robot"></i> Knowledge Bot
+                        </a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'student_chat' or request.resolver_match.url_name == 'student_chat_with' %}active{% endif %}" href="{% url 'student_chat' %}">
+                            <i class="bi bi-chat-dots"></i> Messages
+                        </a>
+                        <a class="nav-link logout-btn" href="{% url 'logout' %}">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 p-0">
+                <div class="main-content">
+                    {% block student_content %}
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                {% for message in messages %}
+                    showToast('{{ message|escapejs }}', '{{ message.tags }}');
+                {% endfor %}
+            });
+        </script>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toast Notification System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            
+            // Map Django message tags to toast types
+            const typeMap = {
+                'success': 'success',
+                'error': 'error',
+                'danger': 'error',
+                'warning': 'warning',
+                'info': 'info'
+            };
+            
+            const toastType = typeMap[type] || 'info';
+            
+            // Icon map
+            const icons = {
+                'success': '<i class="bi bi-check-circle-fill"></i>',
+                'error': '<i class="bi bi-x-circle-fill"></i>',
+                'warning': '<i class="bi bi-exclamation-triangle-fill"></i>',
+                'info': '<i class="bi bi-info-circle-fill"></i>'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `custom-toast toast-${toastType}`;
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <div class="toast-icon">${icons[toastType]}</div>
+                    <div class="toast-message">${message}</div>
+                    <button class="toast-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove after 2.5 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 2500);
+        }
+        
+        // Sidebar Toggle for Mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
+        
+        // Close sidebar when clicking on a link (mobile)
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const links = sidebar.querySelectorAll('.nav-link');
+            
+            links.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 991) {
+                        toggleSidebar();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
