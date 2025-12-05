@@ -8,12 +8,30 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
             min-height: 100vh;
         }
         .navbar {
             background-color: rgba(255, 255, 255, 0.95) !important;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* Cyan theme for all buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%) !important;
+            border: none !important;
+        }
+        .btn-primary:hover {
+            filter: brightness(0.95);
+        }
+        .btn-outline-primary {
+            border-color: #06B6D4 !important;
+            color: #06B6D4 !important;
+        }
+        .btn-outline-primary:hover {
+            background: #06B6D4 !important;
+            border-color: #06B6D4 !important;
+            color: white !important;
         }
         
         /* Custom styled confirm dialogs */
@@ -54,7 +72,7 @@
             align-items: center;
             justify-content: center;
             font-size: 32px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
             color: white;
         }
         
@@ -92,13 +110,13 @@
         }
         
         .custom-confirm-btn-yes {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
             color: white;
         }
         
         .custom-confirm-btn-yes:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 20px rgba(6, 182, 212, 0.4);
         }
         
         .custom-confirm-btn-no {
