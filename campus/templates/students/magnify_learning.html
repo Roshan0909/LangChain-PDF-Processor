@@ -3,110 +3,592 @@
 {% block title %}Magify Learning - Student{% endblock %}
 
 {% block student_content %}
-<div class="container">
-    <h2 class="mb-4">Magify Learning</h2>
-    <p class="lead text-muted mb-4">Ask questions about any PDF using AI-powered chat</p>
+<style>
+    /* Page Header */
+    .page-hero {
+        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+        border-radius: 0.75rem;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 16px rgba(6, 182, 212, 0.15);
+        border-top: 3px solid #06B6D4;
+        position: relative;
+        overflow: hidden;
+    }
     
-    <!-- Upload New File Section -->
-    <div class="card shadow-lg mb-4" style="border-left: 4px solid #667eea;">
-        <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-            <h5 class="mb-0"><i class="bi bi-cloud-upload"></i> Upload & Chat with New File</h5>
-        </div>
-        <div class="card-body">
-            <p class="text-muted">Upload your own PDF file and start chatting instantly</p>
-            <form id="uploadChatForm" enctype="multipart/form-data" class="mb-0">
-                {% csrf_token %}
-                <div class="row align-items-end">
-                    <div class="col-md-8 mb-3 mb-md-0">
-                        <label for="pdfFile" class="form-label">Choose PDF File</label>
-                        <div id="dropZonePdf" class="drop-zone-compact mb-2">
-                            <i class="bi bi-cloud-upload" style="font-size: 2rem; color: #667eea;"></i>
-                            <p class="mb-0 mt-1 small"><strong>Drag & Drop</strong> PDF or <button type="button" class="btn btn-link btn-sm p-0" onclick="document.getElementById('pdfFile').click()">Browse</button></p>
-                            <p class="text-muted small mt-1 mb-0" id="fileNameDisplay"></p>
+    .page-hero::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    
+    .page-hero h2 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 0.4rem;
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+    
+    .page-hero h2 i {
+        color: #06B6D4;
+        font-size: 1.4rem;
+    }
+    
+    .page-hero p {
+        color: #cbd5e1;
+        font-size: 0.9rem;
+        margin: 0;
+        font-weight: 500;
+    }
+    
+    /* Upload Card */
+    .upload-card {
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        border-top: 3px solid #06B6D4;
+        margin-bottom: 1.5rem;
+    }
+    
+    .upload-header {
+        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+        padding: 1rem 1.25rem;
+        color: white;
+        position: relative;
+    }
+    
+    .upload-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.4), transparent);
+    }
+    
+    .upload-header h5 {
+        font-size: 1rem;
+        font-weight: 800;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        letter-spacing: -0.3px;
+    }
+    
+    .upload-header h5 i {
+        color: #06B6D4;
+        font-size: 1.1rem;
+    }
+    
+    .upload-body {
+        padding: 1.25rem;
+    }
+    
+    .upload-description {
+        color: #64748B;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        font-weight: 500;
+    }
+    
+    /* Compact Upload Wrapper */
+    .upload-compact-wrapper {
+        display: flex;
+        gap: 0.75rem;
+        align-items: stretch;
+    }
+    
+    /* Compact Drop Zone */
+    .drop-zone-compact {
+        flex: 1;
+        border: 2px dashed #cbd5e1;
+        border-radius: 0.5rem;
+        padding: 0.85rem 1rem;
+        background: #f8fafc;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        min-height: 70px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .drop-zone-compact:hover {
+        border-color: #06B6D4;
+        background: white;
+        box-shadow: 0 2px 8px rgba(6, 182, 212, 0.1);
+    }
+    
+    .drop-zone-compact.drag-over {
+        border-color: #06B6D4;
+        background: linear-gradient(135deg, #E0F2FE 0%, #CFFAFE 100%);
+        border-style: solid;
+    }
+    
+    .drop-zone-content {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .drop-zone-icon-small {
+        font-size: 2rem;
+        color: #06B6D4;
+        flex-shrink: 0;
+    }
+    
+    .drop-zone-info {
+        flex: 1;
+    }
+    
+    .drop-zone-title {
+        font-size: 0.9rem;
+        color: #1E293B;
+        font-weight: 700;
+        margin: 0 0 0.15rem 0;
+    }
+    
+    .drop-zone-hint {
+        color: #64748B;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin: 0;
+    }
+    
+    .file-selected-display {
+        margin-top: 0.6rem;
+        padding: 0.5rem 0.75rem;
+        background: linear-gradient(135deg, #E0F2FE 0%, #CFFAFE 100%);
+        border-radius: 0.4rem;
+        color: #0F766E;
+        font-weight: 600;
+        font-size: 0.75rem;
+        display: none;
+        border-left: 3px solid #06B6D4;
+    }
+    
+    .file-selected-display.active {
+        display: block;
+    }
+    
+    .upload-note {
+        color: #64748B;
+        font-size: 0.7rem;
+        margin: 0.6rem 0 0 0;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    
+    .upload-note i {
+        color: #06B6D4;
+        font-size: 0.75rem;
+    }
+    
+    /* Compact Upload Button */
+    .btn-upload-compact {
+        background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+        color: white;
+        border: 0;
+        padding: 0.85rem 1.25rem;
+        font-weight: 700;
+        border-radius: 0.5rem;
+        transition: all 0.3s;
+        font-size: 0.85rem;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(6, 182, 212, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+        min-width: 140px;
+    }
+    
+    .btn-upload-compact:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(6, 182, 212, 0.35);
+        color: white;
+    }
+    
+    .btn-upload-compact:active {
+        transform: translateY(0);
+    }
+    
+    @media (max-width: 768px) {
+        .upload-compact-wrapper {
+            flex-direction: column;
+        }
+        
+        .btn-upload-compact {
+            width: 100%;
+        }
+    }
+    
+    /* Progress Bar */
+    .upload-progress {
+        margin-top: 1rem;
+        display: none;
+    }
+    
+    .upload-progress.active {
+        display: block;
+    }
+    
+    .progress-container {
+        background: #f1f5f9;
+        border-radius: 0.5rem;
+        height: 28px;
+        overflow: hidden;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .progress-bar-custom {
+        height: 100%;
+        background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+        transition: width 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 0.8rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-bar-custom::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(90deg, 
+            transparent, 
+            rgba(255, 255, 255, 0.3), 
+            transparent
+        );
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    /* Subject Cards */
+    .subject-card {
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        border-top: 3px solid #06B6D4;
+    }
+    
+    .subject-header {
+        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+        padding: 1rem 1.25rem;
+        color: white;
+        position: relative;
+    }
+    
+    .subject-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.4), transparent);
+    }
+    
+    .subject-header h4 {
+        font-size: 1.1rem;
+        font-weight: 800;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        letter-spacing: -0.3px;
+    }
+    
+    .subject-header h4 i {
+        color: #06B6D4;
+        font-size: 1.2rem;
+    }
+    
+    .subject-body {
+        padding: 1.25rem;
+    }
+    
+    /* PDF Item */
+    .pdf-item {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 0.85rem 1rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.3s;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .pdf-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .pdf-item:hover {
+        border-color: #06B6D4;
+        box-shadow: 0 2px 8px rgba(6, 182, 212, 0.15);
+        transform: translateX(3px);
+    }
+    
+    .pdf-info {
+        flex: 1;
+        min-width: 180px;
+    }
+    
+    .pdf-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #1E293B;
+        margin-bottom: 0.3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .pdf-title i {
+        color: #dc2626;
+        font-size: 1rem;
+    }
+    
+    .pdf-date {
+        color: #64748B;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    
+    .pdf-date i {
+        color: #06B6D4;
+        font-size: 0.8rem;
+    }
+    
+    .pdf-actions {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-chat {
+        background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+        color: white;
+        border: 0;
+        padding: 0.5rem 1rem;
+        font-weight: 700;
+        border-radius: 0.4rem;
+        transition: all 0.3s;
+        font-size: 0.8rem;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(6, 182, 212, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        text-decoration: none;
+    }
+    
+    .btn-chat:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        color: white;
+    }
+    
+    .btn-flashcards {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: 0;
+        padding: 0.5rem 1rem;
+        font-weight: 700;
+        border-radius: 0.4rem;
+        transition: all 0.3s;
+        font-size: 0.8rem;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        text-decoration: none;
+    }
+    
+    .btn-flashcards:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        color: white;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 2rem 1.5rem;
+        background: linear-gradient(135deg, #E0F2FE 0%, #CFFAFE 100%);
+        border-radius: 0.75rem;
+        border: 2px solid rgba(6, 182, 212, 0.3);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.1);
+    }
+    
+    .empty-state i {
+        font-size: 2.5rem;
+        color: #06B6D4;
+        margin-bottom: 0.75rem;
+        opacity: 0.8;
+        display: block;
+    }
+    
+    .empty-state p {
+        color: #0F766E;
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    @media (max-width: 768px) {
+        .pdf-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .pdf-actions {
+            width: 100%;
+        }
+        
+        .btn-chat,
+        .btn-flashcards {
+            flex: 1;
+            justify-content: center;
+        }
+        
+        .page-hero h2 {
+            font-size: 1.5rem;
+        }
+        
+        .drop-zone {
+            padding: 2rem 1.5rem;
+        }
+    }
+</style>
+
+<div class="page-hero">
+    <h2>
+        <i class="bi bi-stars"></i>
+        Magify Learning
+    </h2>
+    <p>Ask questions about any PDF using AI-powered chat and create interactive flashcards</p>
+</div>
+
+<div class="upload-card">
+    <div class="upload-header">
+        <h5><i class="bi bi-cloud-upload"></i> Upload & Chat with PDF</h5>
+    </div>
+    <div class="upload-body">
+        <form id="uploadChatForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="upload-compact-wrapper">
+                <div id="dropZonePdf" class="drop-zone-compact">
+                    <div class="drop-zone-content">
+                        <i class="bi bi-file-pdf drop-zone-icon-small"></i>
+                        <div class="drop-zone-info">
+                            <p class="drop-zone-title">Choose PDF File</p>
+                            <p class="drop-zone-hint">or drag & drop here</p>
                         </div>
-                        <input type="file" class="form-control d-none" id="pdfFile" name="pdf_file" accept=".pdf" required>
-                        <small class="text-muted">Maximum file size: 200MB (Large files supported)</small>
                     </div>
-                    <div class="col-md-4">
-                        <button type="submit" class="btn w-100" style="background-color: #667eea; color: white;">
-                            <i class="bi bi-upload"></i> Upload & Start Chat
-                        </button>
-                    </div>
+                    <div class="file-selected-display" id="fileNameDisplay"></div>
                 </div>
-            </form>
-            
-            <!-- Upload Progress -->
-            <div id="uploadProgress" class="mt-3 d-none">
-                <div class="progress" style="height: 25px;">
-                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
-                         style="width: 0%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" 
-                         role="progressbar">
-                        <span id="progressText">Uploading...</span>
-                    </div>
+                <input type="file" class="d-none" id="pdfFile" name="pdf_file" accept=".pdf" required>
+                <button type="submit" class="btn-upload-compact">
+                    <i class="bi bi-send-fill"></i> Start Chat
+                </button>
+            </div>
+            <p class="upload-note"><i class="bi bi-info-circle"></i> Max 200MB</p>
+        </form>
+        
+        <!-- Upload Progress -->
+        <div id="uploadProgress" class="upload-progress">
+            <div class="progress-container">
+                <div id="progressBar" class="progress-bar-custom" style="width: 0%;">
+                    <span id="progressText">Uploading...</span>
                 </div>
             </div>
         </div>
     </div>
-    
-    {% if subjects %}
-        {% for subject in subjects %}
-            {% if subject.notes.all %}
-                <div class="card shadow-lg mb-4">
-                    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                        <h4 class="mb-0"><i class="bi bi-book"></i> {{ subject.name }}</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            {% for note in subject.notes.all %}
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                    <div>
-                                        <h6 class="mb-1"><i class="bi bi-file-pdf-fill text-danger"></i> {{ note.title }}</h6>
-                                        <small class="text-muted">Uploaded on {{ note.created_at|date:"M d, Y" }}</small>
-                                    </div>
-                                    <div class="btn-group">
-                                        <a href="{% url 'pdf_chat' note.id %}" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-chat-dots"></i> Chat
-                                        </a>
-                                        <a href="{% url 'flashcards' note.id %}" class="btn btn-sm btn-outline-success">
-                                            <i class="bi bi-layers"></i> Flashcards
-                                        </a>
-                                    </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
-        {% endfor %}
-    {% else %}
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> No PDFs available yet. Please wait for your teachers to upload study materials.
-        </div>
-    {% endif %}
 </div>
 
-<style>
-    .drop-zone-compact {
-        border: 2px dashed #667eea;
-        border-radius: 8px;
-        padding: 15px 20px;
-        text-align: center;
-        transition: all 0.3s ease;
-        background-color: #f8f9fa;
-        cursor: pointer;
-    }
-    .drop-zone-compact:hover {
-        border-color: #764ba2;
-        background-color: #e9ecef;
-    }
-    .drop-zone-compact.drag-over {
-        border-color: #764ba2;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-        transform: scale(1.02);
-    }
-</style>
+{% if subjects %}
+    {% for subject in subjects %}
+        {% if subject.notes.all %}
+            <div class="subject-card">
+                <div class="subject-header">
+                    <h4>
+                        <i class="bi bi-book"></i>
+                        {{ subject.name }}
+                    </h4>
+                </div>
+                <div class="subject-body">
+                    {% for note in subject.notes.all %}
+                        <div class="pdf-item">
+                            <div class="pdf-info">
+                                <h6 class="pdf-title">
+                                    <i class="bi bi-file-pdf-fill"></i>
+                                    {{ note.title }}
+                                </h6>
+                                <p class="pdf-date">
+                                    <i class="bi bi-calendar"></i>
+                                    Uploaded on {{ note.created_at|date:"M d, Y" }}
+                                </p>
+                            </div>
+                            <div class="pdf-actions">
+                                <a href="{% url 'pdf_chat' note.id %}" class="btn-chat">
+                                    <i class="bi bi-chat-dots"></i>
+                                    Chat
+                                </a>
+                                <a href="{% url 'flashcards' note.id %}" class="btn-flashcards">
+                                    <i class="bi bi-layers"></i>
+                                    Flashcards
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+{% else %}
+    <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p>No PDFs available yet. Please wait for your teachers to upload study materials.</p>
+    </div>
+{% endif %}
 
 <script>
     const uploadChatForm = document.getElementById('uploadChatForm');
@@ -151,12 +633,12 @@
         if (this.files.length > 0) {
             const file = this.files[0];
             const fileSize = (file.size / (1024 * 1024)).toFixed(2);
-            fileNameDisplay.textContent = `📄 ${file.name} (${fileSize} MB)`;
-            fileNameDisplay.style.color = '#667eea';
+            fileNameDisplay.innerHTML = `<i class="bi bi-file-pdf-fill" style="color: #dc2626;"></i> ${file.name} <span style="color: #06B6D4;">(${fileSize} MB)</span>`;
+            fileNameDisplay.classList.add('active');
             
             // Warn for very large files
             if (file.size > 100 * 1024 * 1024) {
-                fileNameDisplay.textContent += ' - Large file detected, processing may take several minutes';
+                fileNameDisplay.innerHTML += '<br><small style="color: #f59e0b;">⚠️ Large file detected, processing may take several minutes</small>';
             }
         }
         const maxSize = 200 * 1024 * 1024; // 200MB
@@ -164,6 +646,7 @@
             alert('File size exceeds 200MB. Please choose a smaller file.');
             this.value = '';
             fileNameDisplay.textContent = '';
+            fileNameDisplay.classList.remove('active');
         }
     });
     
@@ -180,7 +663,7 @@
         }
         
         // Show progress
-        uploadProgress.classList.remove('d-none');
+        uploadProgress.classList.add('active');
         progressBar.style.width = '0%';
         
         // Show appropriate message based on file size
@@ -219,18 +702,18 @@
                         }, fileSizeMB > 50 ? 2000 : 1000); // Longer delay for large files
                     } else {
                         alert('Error: ' + data.error);
-                        uploadProgress.classList.add('d-none');
+                        uploadProgress.classList.remove('active');
                     }
                 } else {
                     alert('Upload failed. Please try again.');
-                    uploadProgress.classList.add('d-none');
+                    uploadProgress.classList.remove('active');
                 }
             });
             
             // Handle errors
             xhr.addEventListener('error', function() {
                 alert('Upload failed. Please check your connection and try again.');
-                uploadProgress.classList.add('d-none');
+                uploadProgress.classList.remove('active');
             });
             
             xhr.open('POST', '{% url "upload_and_chat" %}');
@@ -240,7 +723,7 @@
         } catch (error) {
             console.error('Error:', error);
             alert('Upload failed. Please try again.');
-            uploadProgress.classList.add('d-none');
+            uploadProgress.classList.remove('active');
         }
     });
 </script>
