@@ -106,10 +106,15 @@ def filter_quiz_reports(request):
             else:
                 percentage = 0
             
+            # Get student name - use full name if available, otherwise username
+            student_name = f"{attempt.student.first_name} {attempt.student.last_name}".strip()
+            if not student_name:
+                student_name = attempt.student.username
+            
             attempts_data.append({
                 'id': attempt.id,
                 'quiz_title': attempt.quiz.title,
-                'student_name': f"{attempt.student.first_name} {attempt.student.last_name}",
+                'student_name': student_name,
                 'score': score,
                 'total': total,
                 'percentage': round(percentage, 2),
@@ -212,9 +217,14 @@ def student_progress(request, student_id):
         
         progress_data = QuizAnalytics.get_student_progress(student_id, quiz_ids)
         
+        # Get student name - use full name if available, otherwise username
+        student_name = f"{student.first_name} {student.last_name}".strip()
+        if not student_name:
+            student_name = student.username
+        
         return JsonResponse({
             'success': True,
-            'student_name': f"{student.first_name} {student.last_name}",
+            'student_name': student_name,
             'progress': progress_data
         })
         
