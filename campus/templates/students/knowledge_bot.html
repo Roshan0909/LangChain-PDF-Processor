@@ -4,81 +4,78 @@
 
 {% block student_content %}
 <style>
-    body {
-        overflow: hidden !important;
+    :root {
+        --cyan-dark: #0f172a;
+        --cyan: #06B6D4;
+        --cyan-strong: #0891b2;
+        --cyan-soft: #e0f7fb;
     }
-    .main-content {
-        padding: 0 !important;
-        overflow: hidden !important;
-    }
+    body { overflow: hidden !important; }
+    .main-content { padding: 0 !important; overflow: hidden !important; }
     .chat-container {
         height: calc(100vh - 56px);
         display: flex;
         flex-direction: column;
         position: fixed;
         top: 56px;
-        left: 250px;
+        left: 250px; /* leave space for sidebar */
         right: 0;
         bottom: 0;
+        background: linear-gradient(160deg, #f0fbff 0%, #ffffff 100%);
     }
     .chat-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-strong) 100%);
         color: white;
-        padding: 20px;
+        padding: 16px 20px;
         flex-shrink: 0;
         z-index: 100;
         position: relative;
+        box-shadow: 0 6px 20px rgba(6, 182, 212, 0.25);
     }
     .chat-messages {
         flex: 1;
         overflow-y: auto;
-        padding: 24px;
-        background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+        padding: 20px;
+        background: radial-gradient(circle at 20% 20%, #f0fbff 0, #f7fdff 25%, #ffffff 60%);
     }
     .chat-input-area {
-        padding: 24px;
+        padding: 16px 20px;
         background: white;
-        border-top: 2px solid #e9ecef;
+        border-top: 2px solid #e9f4f8;
         flex-shrink: 0;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        box-shadow: 0 -2px 12px rgba(0,0,0,0.05);
     }
     .message {
-        margin-bottom: 24px;
+        margin-bottom: 16px;
         display: flex;
         align-items: flex-start;
-        animation: fadeIn 0.3s ease-in;
+        animation: fadeIn 0.25s ease-in;
     }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .message.user {
-        justify-content: flex-end;
-    }
-    .message.bot {
-        justify-content: flex-start;
-    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .message.user { justify-content: flex-end; }
+    .message.bot { justify-content: flex-start; }
     .message-bubble {
-        max-width: 75%;
-        padding: 16px 20px;
-        border-radius: 16px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        max-width: 78%;
+        padding: 14px 16px;
+        border-radius: 14px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+        word-break: break-word;
     }
     .message.user .message-bubble {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-strong) 100%);
         color: white;
-        border-bottom-right-radius: 4px;
+        border-bottom-right-radius: 5px;
     }
     .message.bot .message-bubble {
         background: white;
-        color: #333;
-        border: 1px solid #e9ecef;
-        border-bottom-left-radius: 4px;
+        color: #0f172a;
+        border: 1px solid #e5f2f6;
+        border-bottom-left-radius: 5px;
     }
     .bot-icon {
-        width: 40px;
-        height: 40px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-strong) 100%);
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -86,102 +83,70 @@
         color: white;
         margin-right: 10px;
         flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(6, 182, 212, 0.35);
     }
-    .typing-indicator {
-        display: none;
-        padding: 15px;
-    }
+    .typing-indicator { display: none; padding: 10px; }
     .typing-indicator span {
         display: inline-block;
-        width: 8px;
-        height: 8px;
+        width: 7px;
+        height: 7px;
         border-radius: 50%;
-        background: #667eea;
+        background: var(--cyan-strong);
         margin: 0 2px;
-        animation: typing 1.4s infinite;
+        animation: typing 1.2s infinite;
     }
-    .typing-indicator span:nth-child(2) {
-        animation-delay: 0.2s;
-    }
-    .typing-indicator span:nth-child(3) {
-        animation-delay: 0.4s;
-    }
-    @keyframes typing {
-        0%, 60%, 100% { transform: translateY(0); }
-        30% { transform: translateY(-10px); }
-    }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.18s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.36s; }
+    @keyframes typing { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
     .source-link {
         display: inline-block;
         margin-top: 10px;
-        padding: 5px 10px;
-        background: rgba(255,255,255,0.2);
-        border-radius: 5px;
-        color: white;
+        padding: 6px 10px;
+        background: rgba(6, 182, 212, 0.12);
+        border-radius: 6px;
+        color: var(--cyan-strong);
         text-decoration: none;
         font-size: 0.85rem;
     }
-    .source-link:hover {
-        background: rgba(255,255,255,0.3);
-        color: white;
-    }
-    .bot-message-content {
-        line-height: 1.8;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-    }
-    .bot-message-content p {
-        margin-bottom: 10px;
-    }
-    .bot-message-content ul, .bot-message-content ol {
-        margin-left: 20px;
-        margin-bottom: 10px;
-    }
+    .source-link:hover { background: rgba(6, 182, 212, 0.2); color: var(--cyan-dark); }
+    .bot-message-content { line-height: 1.7; white-space: pre-wrap; word-wrap: break-word; }
+    .bot-message-content p { margin-bottom: 10px; }
+    .bot-message-content ul, .bot-message-content ol { margin-left: 18px; margin-bottom: 10px; }
     .welcome-message {
         text-align: center;
-        padding: 60px 20px 40px;
-        color: #666;
-        max-width: 900px;
+        padding: 28px 14px 22px;
+        color: #3b4a5a;
+        max-width: 640px;
         margin: 0 auto;
     }
-    .welcome-message i {
-        font-size: 4rem;
-        color: #667eea;
-        margin-bottom: 20px;
-    }
-    .message-bubble {
-        word-break: break-word;
-    }
+    .welcome-message i { font-size: 3rem; color: var(--cyan); margin-bottom: 10px; }
     #stopButton {
         display: none;
         background: #dc3545;
         border: none;
         color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-weight: 600;
-        transition: all 0.3s;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 700;
+        transition: all 0.25s;
     }
-    #stopButton:hover {
-        background: #c82333;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
-    }
-    #stopButton i {
-        margin-right: 6px;
-    }
+    #stopButton:hover { background: #c82333; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3); }
+    #stopButton i { margin-right: 6px; }
 </style>
 
 <div class="chat-container">
     <div class="chat-header">
         <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center">
-                <i class="bi bi-robot me-3" style="font-size: 2rem;"></i>
+                <div class="bot-icon me-3" style="width: 42px; height: 42px;">
+                    <i class="bi bi-robot"></i>
+                </div>
                 <div>
-                    <h4 class="mb-1">Knowledge Bot</h4>
-                    <small style="display: block; margin-top: 4px;">Ask for definitions, history, and information about specific terms from Wikipedia</small>
+                    <h5 class="mb-1" style="font-weight: 800; letter-spacing: 0.2px;">Knowledge Bot</h5>
+                    <small style="display: block; margin-top: 2px; opacity: 0.9;">Fast Wikipedia-powered answers with crisp summaries</small>
                 </div>
             </div>
-            <button class="btn btn-sm btn-light" onclick="showUsageGuide()" title="Usage Guide">
+            <button class="btn btn-sm btn-light" onclick="showUsageGuide()" title="Usage Guide" style="border-radius: 10px; font-weight: 700; color: #0f172a;">
                 <i class="bi bi-question-circle"></i> Help
             </button>
         </div>
@@ -191,38 +156,38 @@
         {% if not chat_history %}
         <div class="welcome-message">
             <i class="bi bi-lightbulb-fill"></i>
-            <h4 class="mb-3">Welcome to Knowledge Bot!</h4>
-            <p class="text-muted mb-4">I search Wikipedia and use AI to provide well-formatted educational answers.</p>
+            <h4 class="mb-2" style="font-weight: 800; color: #0f172a; font-size: 1.25rem;">Welcome to Knowledge Bot</h4>
+            <p class="mb-3" style="color: #0b3b57; font-size: 0.95rem;">Wikipedia-powered answers with concise AI summaries.</p>
             
-            <div class="card shadow" style="max-width: 800px; margin: 0 auto; text-align: left; border: none; border-radius: 12px; overflow: hidden;">
-                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 24px;">
-                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i> What I Can Help With</h6>
+            <div class="card shadow" style="max-width: 640px; margin: 0 auto; text-align: left; border: none; border-radius: 12px; overflow: hidden;">
+                <div class="card-header" style="background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-strong) 100%); color: white; padding: 12px 16px;">
+                    <h6 class="mb-0" style="font-weight: 800; font-size: 0.95rem;"><i class="bi bi-info-circle me-2"></i> Best Uses</h6>
                 </div>
-                <div class="card-body p-4">
-                    <div class="row mb-3">
-                        <div class="col-md-6 mb-3">
+                <div class="card-body p-3" style="background: #f8fdff;">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
                             <div class="d-flex align-items-start">
-                                <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                                <i class="bi bi-check-circle-fill me-2 mt-1" style="color: #0ea5e9;"></i>
                                 <div>
-                                    <strong>Best For:</strong>
-                                    <ul class="mt-2 mb-0" style="font-size: 0.95rem; line-height: 1.8;">
-                                        <li>Definitions and explanations</li>
-                                        <li>Historical facts and events</li>
+                                    <strong style="font-size: 0.95rem;">Great for:</strong>
+                                    <ul class="mt-2 mb-0" style="font-size: 0.9rem; line-height: 1.4;">
+                                        <li>Definitions & explanations</li>
+                                        <li>Historical facts & events</li>
                                         <li>Scientific concepts</li>
-                                        <li>Biographies of famous people</li>
+                                        <li>Biographies</li>
                                         <li>General knowledge topics</li>
                                     </ul>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6">
                             <div class="d-flex align-items-start">
-                                <i class="bi bi-chat-square-text-fill text-info me-2 mt-1"></i>
+                                <i class="bi bi-chat-square-text-fill me-2 mt-1" style="color: #06b6d4;"></i>
                                 <div>
-                                    <strong>Example Questions:</strong>
-                                    <ul class="mt-2 mb-0" style="font-size: 0.95rem; line-height: 1.8;">
+                                    <strong style="font-size: 0.95rem;">Try asking:</strong>
+                                    <ul class="mt-2 mb-0" style="font-size: 0.9rem; line-height: 1.4;">
                                         <li>"What is photosynthesis?"</li>
-                                        <li>"Who was Albert Einstein?"</li>
+                                        <li>"Who was Ada Lovelace?"</li>
                                         <li>"Define mitosis"</li>
                                         <li>"Tell me about the pyramids"</li>
                                         <li>"History of the internet"</li>
@@ -232,18 +197,15 @@
                         </div>
                     </div>
                     
-                    <div class="alert alert-warning d-flex align-items-start mb-3" style="font-size: 0.9rem;">
+                    <div class="alert d-flex align-items-start mb-3" style="font-size: 0.85rem; background: #fff7e6; color: #b45309; border: 1px solid #fde9c3; padding: 10px 12px;">
                         <i class="bi bi-exclamation-triangle me-2 mt-1"></i>
                         <div>
-                            <strong>Note:</strong> I provide definitions, history, and informational content from Wikipedia. 
-                            I don't provide step-by-step procedures, causes, or process explanations.
+                            <strong>Note:</strong> I deliver definitions, history, and informational context. I skip step-by-step procedures or root-cause breakdowns.
                         </div>
                     </div>
                     
-                    <div class="p-3" style="background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
-                        <i class="bi bi-lightbulb-fill text-warning"></i> <strong>Pro Tip:</strong> 
-                        Ask questions like <strong>"What is..."</strong>, <strong>"Define..."</strong>, 
-                        <strong>"Tell me about..."</strong>, or <strong>"History of..."</strong> for best results!
+                    <div class="p-2" style="background: #e0f7fb; border-radius: 8px; border-left: 3px solid var(--cyan); font-size: 0.9rem;">
+                        <i class="bi bi-lightbulb-fill" style="color: #f59e0b;"></i> <strong>Pro Tip:</strong> Start with "What is...", "Define...", "Tell me about...", or "History of..." for clean answers.
                     </div>
                 </div>
             </div>
@@ -282,7 +244,7 @@
             <input type="text" id="questionInput" class="form-control form-control-lg" 
                    placeholder="Ask a question... (e.g., What is photosynthesis?)" 
                    autocomplete="off" required>
-            <button type="submit" id="askButton" class="btn btn-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-width: 100px;">
+            <button type="submit" id="askButton" class="btn btn-lg" style="background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-strong) 100%); color: white; min-width: 100px; border: none; box-shadow: 0 6px 16px rgba(6, 182, 212, 0.35);">
                 <i class="bi bi-send"></i> Ask
             </button>
             <button type="button" id="stopButton" class="btn btn-lg">
