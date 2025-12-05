@@ -2,19 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .forms import SignUpForm, LoginForm
-
-def signup_view(request):
-    if request.method == 'POST':
-        form = SignUpForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, f'Welcome {user.username}! Your account has been created.')
-            return redirect('dashboard')
-    else:
-        form = SignUpForm()
-    return render(request, 'authentication/signup.html', {'form': form})
+from .forms import LoginForm
 
 def login_view(request):
     if request.user.is_authenticated:
