@@ -38,12 +38,12 @@
     <div id="status" class="alert alert-info d-none"></div>
 
     <!-- Action Buttons -->
-    <div class="mb-4 d-flex gap-2">
-        <a href="{% url 'pdf_chat' note.id %}" class="btn btn-outline-dark btn-sm">
-            <i class="bi bi-chat-dots me-1"></i>Chat with PDF
+    <div class="action-buttons">
+        <a href="{% url 'pdf_chat' note.id %}" class="btn-action">
+            <i class="bi bi-chat-dots"></i>Chat with PDF
         </a>
-        <a href="{{ note.pdf_file.url }}" class="btn btn-outline-dark btn-sm" target="_blank">
-            <i class="bi bi-box-arrow-up-right me-1"></i>View Document
+        <a href="{{ note.pdf_file.url }}" class="btn-action" target="_blank">
+            <i class="bi bi-box-arrow-up-right"></i>View Document
         </a>
     </div>
 
@@ -54,89 +54,144 @@
 <style>
 /* Header Section */
 .flashcard-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+    border-top: 4px solid #06B6D4;
     color: white;
-    padding: 2rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 16px rgba(6, 182, 212, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.flashcard-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.flashcard-header h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    letter-spacing: -0.5px;
+}
+
+.flashcard-header h2 i {
+    color: #06B6D4;
+    font-size: 1.4rem;
+}
+
+.flashcard-header p {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    margin: 0;
+    font-weight: 500;
 }
 
 /* Generate Controls */
 .generate-section {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-top: 3px solid #06B6D4;
 }
 
 .generate-section h5 {
-    color: #2d3748;
-    font-weight: 600;
+    color: #1E293B;
+    font-weight: 800;
     margin-bottom: 0.5rem;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.generate-section h5 i {
+    color: #06B6D4;
+    font-size: 1.1rem;
 }
 
 .generate-section p {
-    color: #718096;
-    font-size: 0.9rem;
+    color: #64748B;
+    font-size: 0.85rem;
+    margin-bottom: 0;
 }
 
 /* Number Input */
 #numCards {
     border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    font-weight: 500;
+    border-radius: 0.5rem;
+    font-weight: 600;
     transition: all 0.3s ease;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.9rem;
 }
 
 #numCards:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+    border-color: #06B6D4;
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
 }
 
 /* Generate Button */
 #generateBtn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
     border: none;
-    border-radius: 8px;
-    font-weight: 600;
+    border-radius: 0.5rem;
+    font-weight: 700;
     transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
     font-size: 0.85rem;
+    padding: 0.65rem 1.5rem;
+    color: white;
+    box-shadow: 0 2px 8px rgba(6, 182, 212, 0.25);
 }
 
 #generateBtn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 16px rgba(6, 182, 212, 0.35);
 }
 
 #generateBtn:disabled {
-    opacity: 0.7;
+    opacity: 0.6;
     cursor: wait;
 }
 
 /* Status Alerts */
 .alert {
-    border-radius: 12px;
+    border-radius: 0.75rem;
     border: none;
-    font-weight: 500;
+    font-weight: 600;
     animation: slideIn 0.3s ease;
+    border-left: 4px solid #06B6D4;
 }
 
 .alert-info {
-    background-color: #dbeafe;
-    color: #1e40af;
+    background-color: #E0F2FE;
+    color: #0F766E;
 }
 
 .alert-success {
-    background-color: #dcfce7;
-    color: #15803d;
+    background-color: #DCFCE7;
+    color: #166534;
 }
 
 .alert-danger {
-    background-color: #fee2e2;
-    color: #b91c1c;
+    background-color: #FEE2E2;
+    color: #991B1B;
 }
 
 @keyframes slideIn {
@@ -148,6 +203,39 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.btn-action {
+    background: white;
+    border: 2px solid #e2e8f0;
+    color: #1E293B;
+    padding: 0.65rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-action:hover {
+    border-color: #06B6D4;
+    color: #06B6D4;
+    box-shadow: 0 2px 8px rgba(6, 182, 212, 0.15);
+}
+
+.btn-action i {
+    font-size: 0.9rem;
 }
 
 /* Flashcard Container */
@@ -165,17 +253,19 @@
 .flashcard-inner {
     position: relative;
     width: 100%;
-    min-height: 220px;
-    max-height: 220px;
-    transition: transform 0.8s;
+    min-height: 200px;
+    max-height: 200px;
+    transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     transform-style: preserve-3d;
     border: none;
-    border-radius: 16px;
-    box-shadow: 0 12px 24px rgba(102, 126, 234, 0.3);
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.1);
+    border-top: 3px solid #06B6D4;
 }
 
 .flashcard-inner:hover {
-    box-shadow: 0 16px 32px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 8px 20px rgba(6, 182, 212, 0.2);
+    transform: translateY(-4px);
 }
 
 .flashcard.flipped .flashcard-inner {
@@ -190,23 +280,23 @@
     backface-visibility: hidden;
     top: 0;
     left: 0;
-    padding: 24px;
+    padding: 1.25rem;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    gap: 12px;
+    gap: 0.75rem;
     box-sizing: border-box;
-    border-radius: 16px;
+    border-radius: 0.75rem;
     overflow: hidden;
 }
 
 .flashcard-front {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
     color: white;
 }
 
 .flashcard-back {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
     color: white;
     transform: rotateY(180deg);
 }
@@ -214,20 +304,19 @@
 /* Flashcard Content */
 .flashcard-face p {
     margin: 0;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     line-height: 1.5;
     font-weight: 500;
     word-wrap: break-word;
     word-break: break-word;
     overflow-wrap: break-word;
     hyphens: auto;
-    max-height: 120px;
+    max-height: 110px;
     overflow-y: auto;
     overflow-x: hidden;
     flex: 1;
 }
 
-/* Custom scrollbar for flashcard text */
 .flashcard-face p::-webkit-scrollbar {
     width: 4px;
 }
@@ -238,33 +327,34 @@
 }
 
 .flashcard-face p::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 4px;
 }
 
 .flashcard-face p::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.5);
 }
 
 .flashcard-face .badge-topic,
 .flashcard-face .badge {
-    font-size: 0.75rem;
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 0.4rem;
     font-weight: 700;
-    letter-spacing: 0.5px;
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
     text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .badge-topic {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.25);
     color: white;
-    border-radius: 6px;
-    padding: 4px 10px;
-    display: inline-block;
-    backdrop-filter: blur(4px);
 }
 
 .flashcard-back .badge {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.25);
     color: white;
 }
 
