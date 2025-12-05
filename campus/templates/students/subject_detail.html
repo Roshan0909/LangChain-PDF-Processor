@@ -3,57 +3,344 @@
 {% block title %}{{ subject.name }} - Student{% endblock %}
 
 {% block student_content %}
-<div class="card shadow-lg">
-    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-        <h3 class="mb-0"><i class="bi bi-book me-2"></i>{{ subject.name }}</h3>
-        <p class="mb-0 small">{{ subject.description }}</p>
-        <p class="mb-0 small"><strong><i class="bi bi-person me-1"></i>Teacher:</strong> {{ subject.teacher.username }}</p>
-    </div>
-    <div class="card-body">
-        <a href="{% url 'student_dashboard' %}" class="btn btn-sm btn-outline-secondary mb-3">
-            <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
-        </a>
-        
-        <h5><i class="bi bi-files me-2"></i>Documents ({{ notes.count }})</h5>
-        <hr>
-        
-        {% if notes %}
-            <div class="row g-3">
-                {% for note in notes %}
-                    <div class="col-md-6 col-lg-4">
-                        <div class="card h-100 shadow-sm hover-shadow">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-center mb-3">
-                                    <i class="{{ note.get_file_icon }} text-primary" style="font-size: 3rem;"></i>
-                                </div>
-                                <h6 class="card-title text-center">{{ note.title }}</h6>
-                                <p class="card-text small text-muted text-center">
-                                    <i class="bi bi-calendar me-1"></i>{{ note.created_at|date:"M d, Y" }}<br>
-                                    <i class="bi bi-file-earmark me-1"></i>{{ note.get_file_extension|upper }} File
-                                </p>
-                                <a href="{{ note.pdf_file.url }}" target="_blank" class="btn btn-primary w-100">
-                                    <i class="bi bi-eye me-1"></i>Open File
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="alert alert-info">
-                <i class="bi bi-info-circle me-2"></i>No documents available for this subject yet.
-            </div>
-        {% endif %}
-    </div>
-</div>
-
 <style>
-    .hover-shadow {
-        transition: all 0.3s ease;
+    /* Subject Header */
+    .subject-header-card {
+        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 16px rgba(6, 182, 212, 0.15);
+        border-top: 3px solid #06B6D4;
+        position: relative;
+        overflow: hidden;
     }
-    .hover-shadow:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.2) !important;
+    
+    .subject-header-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    
+    .subject-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 0.75rem;
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .subject-title i {
+        color: #06B6D4;
+        font-size: 1.6rem;
+    }
+    
+    .subject-description {
+        color: #cbd5e1;
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+        line-height: 1.6;
+    }
+    
+    .subject-teacher {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .subject-teacher i {
+        color: #06B6D4;
+    }
+    
+    /* Back Button */
+    .btn-back {
+        background: white;
+        color: #1E293B;
+        border: 0;
+        padding: 0.6rem 1.25rem;
+        font-weight: 700;
+        border-radius: 0.5rem;
+        transition: all 0.3s;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .btn-back:hover {
+        background: #f1f5f9;
+        color: #1E293B;
+        transform: translateX(-4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Section Title */
+    .section-title-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .section-title-bar h5 {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #1E293B;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        letter-spacing: -0.3px;
+    }
+    
+    .section-title-bar h5 i {
+        color: #06B6D4;
+        font-size: 1.4rem;
+    }
+    
+    .document-count {
+        background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+        color: white;
+        padding: 0.4rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+    
+    /* Document Cards */
+    .document-card {
+        background: white;
+        border: 0;
+        border-radius: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        border-top: 3px solid #06B6D4;
+        position: relative;
+    }
+    
+    .document-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 10px 28px rgba(6, 182, 212, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .document-card-body {
+        padding: 1.25rem 1rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .document-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #E0F2FE 0%, #CFFAFE 100%);
+        border-radius: 0.75rem;
+        margin-bottom: 0.75rem;
+        position: relative;
+    }
+    
+    .document-icon-wrapper i {
+        font-size: 1.8rem;
+        color: #06B6D4;
+    }
+    
+    .document-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #1E293B;
+        margin-bottom: 0.6rem;
+        line-height: 1.3;
+        letter-spacing: -0.2px;
+    }
+    
+    .document-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        font-size: 0.75rem;
+        color: #64748B;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .document-meta-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+    }
+    
+    .document-meta-item i {
+        color: #06B6D4;
+        font-size: 0.85rem;
+    }
+    
+    .document-footer {
+        width: 100%;
+        padding-top: 0.75rem;
+        border-top: 1px solid #f1f5f9;
+    }
+    
+    .btn-open-file {
+        background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+        color: white;
+        border: 0;
+        padding: 0.6rem 1.25rem;
+        font-weight: 700;
+        border-radius: 0.5rem;
+        transition: all 0.35s;
+        width: 100%;
+        font-size: 0.8rem;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(6, 182, 212, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-open-file:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 24px rgba(6, 182, 212, 0.35);
+        color: white;
+    }
+    
+    .btn-open-file:active {
+        transform: translateY(-1px);
+    }
+    
+    /* Empty State */
+    .empty-state-docs {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: linear-gradient(135deg, #E0F2FE 0%, #CFFAFE 100%);
+        border-radius: 1rem;
+        border: 2px solid rgba(6, 182, 212, 0.3);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.1);
+    }
+    
+    .empty-state-docs i {
+        font-size: 3.5rem;
+        color: #06B6D4;
+        margin-bottom: 1rem;
+        opacity: 0.8;
+        display: block;
+    }
+    
+    .empty-state-docs p {
+        color: #0F766E;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    /* Responsive Grid */
+    .documents-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1.25rem;
+    }
+    
+    @media (max-width: 768px) {
+        .subject-title {
+            font-size: 1.4rem;
+        }
+        
+        .documents-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .section-title-bar {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
     }
 </style>
+
+<div class="subject-header-card">
+    <h3 class="subject-title">
+        <i class="bi bi-book"></i>
+        {{ subject.name }}
+    </h3>
+    <p class="subject-description">{{ subject.description }}</p>
+    <p class="subject-teacher">
+        <i class="bi bi-person-fill"></i>
+        <strong>Teacher:</strong> {{ subject.teacher.username }}
+    </p>
+</div>
+
+<a href="{% url 'student_dashboard' %}" class="btn-back">
+    <i class="bi bi-arrow-left"></i>
+    Back to Dashboard
+</a>
+
+<div class="section-title-bar">
+    <h5>
+        <i class="bi bi-files"></i>
+        Documents
+    </h5>
+    <span class="document-count">{{ notes.count }} File{{ notes.count|pluralize }}</span>
+</div>
+
+{% if notes %}
+    <div class="documents-grid">
+        {% for note in notes %}
+            <div class="document-card">
+                <div class="document-card-body">
+                    <div class="document-icon-wrapper">
+                        <i class="{{ note.get_file_icon }}"></i>
+                    </div>
+                    <h6 class="document-title">{{ note.title }}</h6>
+                    <div class="document-meta">
+                        <div class="document-meta-item">
+                            <i class="bi bi-calendar"></i>
+                            {{ note.created_at|date:"M d, Y" }}
+                        </div>
+                        <div class="document-meta-item">
+                            <i class="bi bi-file-earmark"></i>
+                            {{ note.get_file_extension|upper }} File
+                        </div>
+                    </div>
+                    <div class="document-footer">
+                        <a href="{{ note.pdf_file.url }}" target="_blank" class="btn-open-file">
+                            <i class="bi bi-eye"></i>
+                            Open File
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state-docs">
+        <i class="bi bi-file-earmark-x"></i>
+        <p>No documents available for this subject yet.</p>
+    </div>
+{% endif %}
+
 {% endblock %}
