@@ -5,14 +5,14 @@
 
 {% block student_content %}
 <div class="container-fluid py-4">
-    <div class="row mb-4">
+    <div class="row mb-3">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="history-header">
                 <div>
                     <h2><i class="bi bi-clock-history me-2"></i>Practice Quiz History</h2>
-                    <p class="text-muted mb-0">View all your practice quiz attempts and progress</p>
+                    <p class="mb-0">View all your practice quiz attempts and progress</p>
                 </div>
-                <a href="{% url 'practice_quiz' %}" class="btn btn-primary">
+                <a href="{% url 'practice_quiz' %}" class="btn-back">
                     <i class="bi bi-arrow-left me-2"></i>Back to Practice Quizzes
                 </a>
             </div>
@@ -20,34 +20,26 @@
     </div>
 
     <!-- Statistics -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
-                            <i class="bi bi-file-text fs-4 text-primary"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted mb-0">Total Attempts</h6>
-                            <h3 class="mb-0">{{ total_attempts }}</h3>
-                        </div>
-                    </div>
+    <div class="row mb-3">
+        <div class="col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);">
+                    <i class="bi bi-file-text" style="color: #0891b2;"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Attempts</div>
+                    <div class="stat-value">{{ total_attempts }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle {% if overall_percentage >= 70 %}bg-success{% elif overall_percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %} bg-opacity-10 p-3 me-3">
-                            <i class="bi bi-graph-up fs-4 {% if overall_percentage >= 70 %}text-success{% elif overall_percentage >= 50 %}text-warning{% else %}text-danger{% endif %}"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted mb-0">Overall Average</h6>
-                            <h3 class="mb-0">{{ overall_percentage }}%</h3>
-                        </div>
-                    </div>
+        <div class="col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, {% if overall_percentage >= 70 %}#d1fae5, #a7f3d0{% elif overall_percentage >= 50 %}#fef3c7, #fde68a{% else %}#fee2e2, #fecaca{% endif %});">
+                    <i class="bi bi-graph-up" style="color: {% if overall_percentage >= 70 %}#065f46{% elif overall_percentage >= 50 %}#92400e{% else %}#7f1d1d{% endif %};"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Overall Average</div>
+                    <div class="stat-value">{{ overall_percentage }}%</div>
                 </div>
             </div>
         </div>
@@ -56,11 +48,11 @@
     <!-- Attempts History -->
     <div class="row">
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>All Attempts</h5>
+            <div class="history-table-card">
+                <div class="history-table-header">
+                    <h5><i class="bi bi-list-ul me-2"></i>All Attempts</h5>
                 </div>
-                <div class="card-body">
+                <div class="table-container">
                     {% if attempts %}
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
@@ -120,13 +112,11 @@
                             </table>
                         </div>
                     {% else %}
-                        <div class="text-center py-5">
-                            <i class="bi bi-journal-x display-1 text-muted"></i>
-                            <h5 class="mt-3 text-muted">No attempts yet</h5>
-                            <p class="text-muted">Start taking practice quizzes to see your history here!</p>
-                            <a href="{% url 'practice_quiz' %}" class="btn btn-primary mt-3">
-                                <i class="bi bi-plus-circle me-2"></i>Create Practice Quiz
-                            </a>
+                        <div class="empty-state">
+                            <i class="bi bi-journal-x"></i>
+                            <h5>No attempts yet</h5>
+                            <p>Start taking practice quizzes to see your history here!</p>
+                           
                         </div>
                     {% endif %}
                 </div>
@@ -136,16 +126,236 @@
 </div>
 
 <style>
-.card {
-    transition: transform 0.2s;
-}
-
-.table tbody tr {
-    transition: background-color 0.2s;
-}
-
-.table tbody tr:hover {
-    background-color: rgba(0, 123, 255, 0.05);
-}
+    .history-header {
+        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+        border-top: 3px solid #06B6D4;
+        border-radius: 0.7rem;
+        padding: 1.2rem 1.75rem;
+        margin-bottom: 1.2rem;
+        box-shadow: 0 3px 10px rgba(6, 182, 212, 0.15);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .history-header h2 {
+        color: white;
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin-bottom: 0.3rem;
+    }
+    
+    .history-header p {
+        color: #94a3b8;
+        margin-bottom: 0;
+        font-size: 0.9rem;
+    }
+    
+    .btn-back {
+        background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
+        color: white;
+        border: none;
+        padding: 0.65rem 1.3rem;
+        border-radius: 0.55rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 3px 10px rgba(6, 182, 212, 0.3);
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .btn-back:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+        color: white;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 0.7rem;
+        padding: 1rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(6, 182, 212, 0.15);
+        border-color: #06B6D4;
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+    
+    .stat-content {
+        flex: 1;
+    }
+    
+    .stat-label {
+        color: #64748b;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-bottom: 0.3rem;
+    }
+    
+    .stat-value {
+        font-size: 1.65rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+    }
+    
+    .history-table-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.7rem;
+        overflow: hidden;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    .history-table-header {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 2px solid #e2e8f0;
+        padding: 1rem 1.3rem;
+    }
+    
+    .history-table-header h5 {
+        color: #1e293b;
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin: 0;
+    }
+    
+    .table-container {
+        padding: 0;
+    }
+    
+    .table {
+        margin-bottom: 0;
+    }
+    
+    .table thead th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 700;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 0.8rem;
+    }
+    
+    .table tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .table tbody tr:hover {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    }
+    
+    .table tbody td {
+        padding: 0.85rem;
+        vertical-align: middle;
+        color: #334155;
+        font-size: 0.88rem;
+    }
+    
+    .badge {
+        padding: 0.35rem 0.7rem;
+        border-radius: 0.4rem;
+        font-weight: 700;
+        font-size: 0.75rem;
+    }
+    
+    .bg-success {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
+        color: #065f46 !important;
+    }
+    
+    .bg-warning {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+        color: #92400e !important;
+    }
+    
+    .bg-danger {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+        color: #7f1d1d !important;
+    }
+    
+    .bg-secondary {
+        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%) !important;
+        color: #3730a3 !important;
+    }
+    
+    .progress {
+        background: #e2e8f0;
+        border-radius: 0.4rem;
+    }
+    
+    .progress-bar {
+        border-radius: 0.4rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 1.2rem;
+    }
+    
+    .empty-state h5 {
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+    
+    .empty-state p {
+        color: #94a3b8;
+        margin-bottom: 1.5rem;
+    }
+    
+    .btn-create {
+        background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
+        color: white;
+        border: none;
+        padding: 0.65rem 1.3rem;
+        border-radius: 0.55rem;
+        font-weight: 700;
+        font-size: 0.9rem;
+        box-shadow: 0 3px 10px rgba(6, 182, 212, 0.3);
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-create:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+        color: white;
+    }
 </style>
 {% endblock %}

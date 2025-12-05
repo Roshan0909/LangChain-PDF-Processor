@@ -4,66 +4,303 @@
 {% block title %}Practice Quiz - Student Portal{% endblock %}
 
 {% block student_content %}
+<style>
+    .practice-header {
+        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+        border-top: 3px solid #06B6D4;
+        border-radius: 0.7rem;
+        padding: 1.2rem 1.75rem;
+        margin-bottom: 1.2rem;
+        box-shadow: 0 3px 10px rgba(6, 182, 212, 0.15);
+    }
+    
+    .practice-header h2 {
+        color: white;
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    .practice-header p {
+        color: #94a3b8;
+        margin-bottom: 0;
+        font-size: 0.9rem;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 0.7rem;
+        padding: 1rem;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(6, 182, 212, 0.15);
+        border-color: #06B6D4;
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+    
+    .stat-icon.cyan {
+        background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);
+        color: #0891b2;
+    }
+    
+    .stat-icon.green {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #059669;
+    }
+    
+    .stat-icon.blue {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #2563eb;
+    }
+    
+    .stat-value {
+        font-size: 1.65rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        color: #64748b;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    .create-btn {
+        background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
+        color: white;
+        border: none;
+        padding: 0.65rem 1.3rem;
+        border-radius: 0.55rem;
+        font-weight: 700;
+        font-size: 0.9rem;
+        box-shadow: 0 3px 10px rgba(6, 182, 212, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .create-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+        color: white;
+    }
+    
+    .quiz-table-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.6rem;
+        overflow: hidden;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    .quiz-table-header {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 2px solid #e2e8f0;
+        padding: 1rem 1.3rem;
+    }
+    
+    .quiz-table-header h5 {
+        color: #1e293b;
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin: 0;
+    }
+    
+    .table {
+        margin-bottom: 0;
+    }
+    
+    .table thead th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 700;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 0.8rem;
+    }
+    
+    .table tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .table tbody tr:hover {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    }
+    
+    .table tbody td {
+        padding: 0.85rem;
+        vertical-align: middle;
+        color: #334155;
+        font-size: 0.88rem;
+    }
+    
+    .badge-difficulty {
+        padding: 0.35rem 0.7rem;
+        border-radius: 0.4rem;
+        font-weight: 700;
+        font-size: 0.75rem;
+        letter-spacing: 0.2px;
+    }
+    
+    .badge-easy {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+    }
+    
+    .badge-medium {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+    }
+    
+    .badge-hard {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #7f1d1d;
+    }
+    
+    .badge-topic {
+        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+        color: #3730a3;
+        padding: 0.35rem 0.65rem;
+        border-radius: 0.4rem;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+    
+    .score-badge {
+        padding: 0.35rem 0.7rem;
+        border-radius: 0.4rem;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+    
+    .score-excellent {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+    }
+    
+    .score-good {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+    }
+    
+    .score-poor {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #7f1d1d;
+    }
+    
+    .action-btn-start {
+        background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
+        color: white;
+        border: none;
+        padding: 0.5rem 0.95rem;
+        border-radius: 0.45rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+    
+    .action-btn-start:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 1.2rem;
+    }
+    
+    .empty-state h5 {
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+    
+    .empty-state p {
+        color: #94a3b8;
+        margin-bottom: 1.5rem;
+    }
+</style>
+
 <div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2><i class="bi bi-pencil-square me-2"></i>Practice Quiz</h2>
-                    <p class="text-muted mb-0">Create custom quizzes on any topic and test your knowledge</p>
-                </div>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createQuizModal">
-                    <i class="bi bi-plus-circle me-2"></i>Create New Quiz
-                </button>
+    <div class="practice-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h2><i class="bi bi-pencil-square me-2"></i>Practice Quiz</h2>
+                <p>Create custom quizzes on any topic and test your knowledge</p>
             </div>
+            <button class="create-btn" data-bs-toggle="modal" data-bs-target="#createQuizModal">
+                <i class="bi bi-plus-circle me-2"></i>Create New Quiz
+            </button>
         </div>
     </div>
 
     <!-- Statistics Cards -->
-    <div class="row mb-4">
+    <div class="row mb-4 g-3">
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
-                            <i class="bi bi-file-text fs-4 text-primary"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted mb-0">Total Quizzes</h6>
-                            <h3 class="mb-0">{{ recent_quizzes|length }}</h3>
-                        </div>
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon cyan">
+                        <i class="bi bi-file-text-fill"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Total Quizzes</div>
+                        <div class="stat-value">{{ recent_quizzes|length }}</div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
-                            <i class="bi bi-check-circle fs-4 text-success"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted mb-0">Attempts</h6>
-                            <h3 class="mb-0">{% for quiz in recent_quizzes %}{{ quiz.attempt_count|default:0 }}{% if not forloop.last %}+{% endif %}{% endfor %}</h3>
-                        </div>
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon green">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Total Attempts</div>
+                        <div class="stat-value">{% for quiz in recent_quizzes %}{{ quiz.attempt_count|default:0 }}{% if not forloop.last %}+{% endif %}{% endfor %}</div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
-                            <i class="bi bi-graph-up fs-4 text-info"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted mb-0">View History</h6>
-                            <a href="{% url 'practice_quiz_history' %}" class="btn btn-sm btn-info">
-                                <i class="bi bi-clock-history me-1"></i>View All
-                            </a>
-                        </div>
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon blue">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="stat-label">View History</div>
+                        <a href="{% url 'practice_quiz_history' %}" class="btn btn-sm action-btn-start mt-2">
+                            <i class="bi bi-arrow-right-circle me-1"></i>View All
+                        </a>
                     </div>
                 </div>
             </div>
@@ -73,11 +310,11 @@
     <!-- Recent Practice Quizzes -->
     <div class="row">
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Your Practice Quizzes</h5>
+            <div class="quiz-table-card">
+                <div class="quiz-table-header">
+                    <h5><i class="bi bi-clock-history me-2"></i>Your Practice Quizzes</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     {% if recent_quizzes %}
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
@@ -108,35 +345,35 @@
                                             </td>
                                             <td>
                                                 {% if quiz.topic %}
-                                                    <span class="badge bg-secondary">{{ quiz.topic }}</span>
+                                                    <span class="badge-topic">{{ quiz.topic }}</span>
                                                 {% else %}
-                                                    <span class="text-muted">General</span>
+                                                    <span class="text-muted" style="font-style: italic;">General</span>
                                                 {% endif %}
                                             </td>
                                             <td>
                                                 {% if quiz.difficulty == 'easy' %}
-                                                    <span class="badge bg-success">Easy</span>
+                                                    <span class="badge-difficulty badge-easy">Easy</span>
                                                 {% elif quiz.difficulty == 'medium' %}
-                                                    <span class="badge bg-warning">Medium</span>
+                                                    <span class="badge-difficulty badge-medium">Medium</span>
                                                 {% else %}
-                                                    <span class="badge bg-danger">Hard</span>
+                                                    <span class="badge-difficulty badge-hard">Hard</span>
                                                 {% endif %}
                                             </td>
-                                            <td>{{ quiz.num_questions }}</td>
+                                            <td><strong style="color: #06B6D4;">{{ quiz.num_questions }}</strong></td>
                                             <td>
                                                 {% if quiz.latest_score is not None %}
-                                                    <span class="badge {% if quiz.latest_percentage >= 80 %}bg-success{% elif quiz.latest_percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %}">
+                                                    <span class="score-badge {% if quiz.latest_percentage >= 80 %}score-excellent{% elif quiz.latest_percentage >= 60 %}score-good{% else %}score-poor{% endif %}">
                                                         {{ quiz.latest_score }}/{{ quiz.num_questions }} ({{ quiz.latest_percentage }}%)
                                                     </span>
                                                 {% else %}
-                                                    <span class="text-muted">Not attempted</span>
+                                                    <span class="text-muted" style="font-style: italic;">Not attempted</span>
                                                 {% endif %}
                                             </td>
-                                            <td>{{ quiz.attempt_count }}</td>
-                                            <td>{{ quiz.created_at|date:"M d, Y" }}</td>
+                                            <td><strong>{{ quiz.attempt_count }}</strong></td>
+                                            <td style="color: #64748b;">{{ quiz.created_at|date:"M d, Y" }}</td>
                                             <td>
-                                                <a href="{% url 'take_practice_quiz' quiz.id %}" class="btn btn-sm btn-primary">
-                                                    <i class="bi bi-play-circle me-1"></i>
+                                                <a href="{% url 'take_practice_quiz' quiz.id %}" class="action-btn-start">
+                                                    <i class="bi bi-play-circle-fill me-1"></i>
                                                     {% if quiz.attempt_count > 0 %}Retake{% else %}Start{% endif %}
                                                 </a>
                                             </td>
@@ -146,13 +383,11 @@
                             </table>
                         </div>
                     {% else %}
-                        <div class="text-center py-5">
-                            <i class="bi bi-journal-text display-1 text-muted"></i>
-                            <h5 class="mt-3 text-muted">No practice quizzes yet</h5>
-                            <p class="text-muted">Create your first practice quiz to get started!</p>
-                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#createQuizModal">
-                                <i class="bi bi-plus-circle me-2"></i>Create Practice Quiz
-                            </button>
+                        <div class="empty-state">
+                            <i class="bi bi-journal-text"></i>
+                            <h5>No practice quizzes yet</h5>
+                            <p>Create your first practice quiz to get started!</p>
+                        
                         </div>
                     {% endif %}
                 </div>
@@ -163,95 +398,132 @@
 
 <!-- Create Quiz Modal -->
 <div class="modal fade" id="createQuizModal" tabindex="-1" aria-labelledby="createQuizModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="createQuizModalLabel">
-                    <i class="bi bi-plus-circle me-2"></i>Create Practice Quiz from Document
+    <div class="modal-dialog">
+        <div class="modal-content" style="border: none; border-radius: 0.7rem; overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border-top: 3px solid #06B6D4; color: white; padding: 1rem 1.3rem; border-bottom: none;">
+                <h5 class="modal-title" id="createQuizModalLabel" style="font-weight: 700; font-size: 1.05rem;">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Create Practice Quiz
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="background: #f8fafc; padding: 1.3rem;">
                 <form id="createQuizForm" enctype="multipart/form-data">
                     {% csrf_token %}
                     
                     <!-- Source Selection -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Select Document Source <span class="text-danger">*</span></label>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold" style="color: #1e293b; font-size: 0.85rem;">Document Source <span class="text-danger">*</span></label>
                         <div class="btn-group w-100" role="group">
                             <input type="radio" class="btn-check" name="source_type" id="sourceCourse" value="course" checked onchange="toggleSource('course')">
-                            <label class="btn btn-outline-primary" for="sourceCourse">
-                                <i class="bi bi-book me-2"></i>Course Materials
+                            <label class="btn" for="sourceCourse" style="border: 2px solid #06B6D4; color: #06B6D4; font-weight: 600; padding: 0.55rem; font-size: 0.85rem;">
+                                <i class="bi bi-book-fill me-1"></i>Course Materials
                             </label>
                             
                             <input type="radio" class="btn-check" name="source_type" id="sourceUpload" value="upload" onchange="toggleSource('upload')">
-                            <label class="btn btn-outline-primary" for="sourceUpload">
-                                <i class="bi bi-upload me-2"></i>Upload File
+                            <label class="btn" for="sourceUpload" style="border: 2px solid #06B6D4; color: #06B6D4; font-weight: 600; padding: 0.55rem; font-size: 0.85rem;">
+                                <i class="bi bi-upload me-1"></i>Upload File
                             </label>
                         </div>
                     </div>
+                    
+                    <style>
+                        .btn-check:checked + label {
+                            background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%) !important;
+                            color: white !important;
+                            border-color: #06B6D4 !important;
+                        }
+                        
+                        .custom-select-scrollable {
+                            cursor: pointer;
+                        }
+                        
+                        .custom-select-scrollable option {
+                            padding: 0.5rem 0.75rem;
+                            color: #334155;
+                            background: white;
+                        }
+                        
+                        .custom-select-scrollable option:hover,
+                        .custom-select-scrollable option:checked {
+                            background: linear-gradient(135deg, #e0f2fe 0%, #cffafe 100%) !important;
+                            color: #0891b2 !important;
+                            font-weight: 600;
+                        }
+                        
+                        .custom-select-scrollable optgroup {
+                            font-weight: 700;
+                            font-size: 0.8rem;
+                            color: #06B6D4;
+                            background: #f0f9ff;
+                            padding: 0.4rem 0.5rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        }
+                    </style>
 
                     <!-- Course Materials Selection -->
                     <div id="courseSection" class="mb-3">
-                        <label for="pdf_note_id" class="form-label">Select Course Document</label>
-                        <select class="form-select" id="pdf_note_id" name="pdf_note_id">
-                            <option value="">-- Select a document --</option>
+                        <label for="pdf_note_id" class="form-label" style="color: #1e293b; font-weight: 600; font-size: 0.85rem;">Course Document</label>
+                        <select class="form-select custom-select-scrollable" id="pdf_note_id" name="pdf_note_id" size="1" style="border: 2px solid #e2e8f0; border-radius: 0.5rem; padding: 0.5rem; font-size: 0.85rem; max-height: 200px; overflow-y: auto;">
+                            <option value="">-- Select document --</option>
                             {% for subject in subjects %}
-                                <optgroup label="{{ subject.name }}">
+                                <optgroup label="{{ subject.name }}" style="font-weight: 700; color: #06B6D4; background: #f0f9ff; padding: 0.3rem;">
                                     {% for note in subject.notes.all %}
-                                        <option value="{{ note.id }}">{{ note.title }}</option>
+                                        <option value="{{ note.id }}" style="padding: 0.4rem 0.8rem;">{{ note.title }}</option>
                                     {% endfor %}
                                 </optgroup>
                             {% endfor %}
                         </select>
-                        <small class="text-muted">Choose from available course materials</small>
+                        <small class="text-muted" style="font-size: 0.75rem;">Choose from course materials</small>
                     </div>
 
                     <!-- File Upload Section -->
                     <div id="uploadSection" class="mb-3" style="display: none;">
-                        <label for="file" class="form-label">Upload Your Document</label>
-                        <input type="file" class="form-control" id="file" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx">
-                        <small class="text-muted">Supported: PDF, DOC, DOCX, PPT, PPTX (Max 50MB)</small>
+                        <label for="file" class="form-label" style="color: #1e293b; font-weight: 600; font-size: 0.85rem;">Upload Document</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx" style="border: 2px solid #e2e8f0; border-radius: 0.5rem; padding: 0.5rem; font-size: 0.85rem;">
+                        <small class="text-muted" style="font-size: 0.75rem;">PDF, DOC, DOCX, PPT, PPTX (Max 50MB)</small>
                     </div>
 
-                    <hr>
+                    <hr style="border-color: #e2e8f0; margin: 1rem 0;">
 
                     <!-- Quiz Settings -->
                     <div class="mb-3">
-                        <label for="topics" class="form-label">Specific Topics (Optional)</label>
+                        <label for="topics" class="form-label" style="color: #1e293b; font-weight: 600; font-size: 0.85rem;">Topics (Optional)</label>
                         <input type="text" class="form-control" id="topics" name="topics" 
-                               placeholder="e.g., Functions, Arrays, Loops">
-                        <small class="text-muted">Leave blank to generate from entire document</small>
+                               placeholder="e.g., Functions, Arrays, Loops" style="border: 2px solid #e2e8f0; border-radius: 0.5rem; padding: 0.5rem; font-size: 0.85rem;">
+                        <small class="text-muted" style="font-size: 0.75rem;">Leave blank for entire document</small>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="difficulty" class="form-label">Difficulty Level</label>
-                            <select class="form-select" id="difficulty" name="difficulty">
-                                <option value="easy">Easy - Basic concepts</option>
-                                <option value="medium" selected>Medium - Moderate challenge</option>
-                                <option value="hard">Hard - Advanced topics</option>
+                            <label for="difficulty" class="form-label" style="color: #1e293b; font-weight: 600; font-size: 0.85rem;">Difficulty</label>
+                            <select class="form-select" id="difficulty" name="difficulty" style="border: 2px solid #e2e8f0; border-radius: 0.5rem; padding: 0.5rem; font-size: 0.85rem;">
+                                <option value="easy">Easy</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="hard">Hard</option>
                             </select>
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label for="num_questions" class="form-label">Number of Questions</label>
+                            <label for="num_questions" class="form-label" style="color: #1e293b; font-weight: 600; font-size: 0.85rem;">Questions</label>
                             <input type="number" class="form-control" id="num_questions" name="num_questions" 
-                                   min="3" max="20" value="5">
-                            <small class="text-muted">3-20 questions</small>
+                                   min="3" max="20" value="5" style="border: 2px solid #e2e8f0; border-radius: 0.5rem; padding: 0.5rem; font-size: 0.85rem;">
+                            <small class="text-muted" style="font-size: 0.75rem;">3-20 questions</small>
                         </div>
                     </div>
 
-                    <div class="alert alert-info mb-0">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <small><strong>Note:</strong> AI will extract content from your document and generate relevant multiple choice questions. This may take 10-30 seconds depending on document size.</small>
+                    <div class="alert mb-0" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 1px solid #06B6D4; border-radius: 0.5rem; color: #0c4a6e; padding: 0.65rem;">
+                        <i class="bi bi-info-circle-fill me-2" style="color: #0891b2; font-size: 0.85rem;"></i>
+                        <small style="font-size: 0.75rem;"><strong>Note:</strong> AI generates questions from your document (10-30 seconds).</small>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="generateQuiz()">
-                    <i class="bi bi-magic me-2"></i>Generate Quiz
+            <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 0.85rem 1.3rem; gap: 0.6rem;">
+                <button type="button" class="btn" data-bs-dismiss="modal" style="background: #64748b; color: white; border: none; padding: 0.5rem 1.1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.85rem;">
+                    <i class="bi bi-x-circle me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn" onclick="generateQuiz()" style="background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%); color: white; border: none; padding: 0.5rem 1.1rem; border-radius: 0.5rem; font-weight: 700; box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3); font-size: 0.85rem;">
+                    <i class="bi bi-magic me-1"></i>Generate Quiz
                 </button>
             </div>
         </div>
@@ -316,7 +588,7 @@ function generateQuiz() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(`✓ ${data.message}\n\nRedirecting to quiz...`);
+            // Redirect directly without alert
             window.location.href = `/student/practice-quiz/take/${data.quiz_id}/`;
         } else {
             alert('Error: ' + (data.error || 'Failed to generate quiz'));
@@ -332,22 +604,4 @@ function generateQuiz() {
     });
 }
 </script>
-
-<style>
-.card {
-    transition: transform 0.2s;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-}
-
-.table tbody tr {
-    transition: background-color 0.2s;
-}
-
-.table tbody tr:hover {
-    background-color: rgba(0, 123, 255, 0.05);
-}
-</style>
 {% endblock %}
