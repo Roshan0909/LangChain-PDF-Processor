@@ -4,6 +4,314 @@
 
 {% block teacher_content %}
 <style>
+    :root {
+        --chat-cyan: #06B6D4;
+        --chat-cyan-strong: #0891b2;
+        --chat-dark: #0f172a;
+    }
+    body { overflow-x: hidden; }
+    .analytics-tab { display: none; }
+    #overviewTab { display: block; }
+    .page-header {
+        background: linear-gradient(135deg, #e0f7fb 0%, #f0fbff 50%, #f8fdff 100%);
+        padding: 1.25rem 1rem;
+        margin-bottom: 1.25rem;
+        border-bottom: 1px solid rgba(6, 182, 212, 0.1);
+    }
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        letter-spacing: -0.4px;
+    }
+    .page-title i {
+        color: var(--chat-cyan);
+        font-size: 1.6rem;
+    }
+    .tab-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .tab-buttons .btn {
+        border: 2px solid #e2e8f0;
+        color: #64748B;
+        font-weight: 700;
+        border-radius: 0.5rem;
+        padding: 0.55rem 1rem;
+        transition: all 0.3s;
+    }
+    .tab-buttons .btn:hover {
+        border-color: var(--chat-cyan);
+        color: var(--chat-cyan);
+    }
+    .tab-buttons .btn.active {
+        background: linear-gradient(135deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 4px 10px rgba(6, 182, 212, 0.22);
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.05rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 3px 10px rgba(0, 0, 0, 0.06);
+        border-top: 3px solid var(--chat-cyan);
+        transition: all 0.25s ease;
+        text-align: center;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(6, 182, 212, 0.12);
+    }
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--chat-cyan);
+        margin-bottom: 0.35rem;
+        line-height: 1;
+    }
+    .stat-label {
+        color: #64748B;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        text-transform: uppercase;
+    }
+    .quiz-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1rem;
+        margin-top: 1.25rem;
+    }
+    .quiz-card {
+        background: white;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 3px 10px rgba(0, 0, 0, 0.08);
+        border-left: 3px solid var(--chat-cyan);
+        transition: all 0.25s ease;
+        display: flex;
+        flex-direction: column;
+    }
+    .quiz-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 22px rgba(6, 182, 212, 0.15);
+    }
+    .quiz-card-header {
+        background: linear-gradient(135deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%);
+        color: white;
+        padding: 1rem 1rem 0.9rem;
+        font-weight: 700;
+        font-size: 0.95rem;
+        line-height: 1.35;
+        min-height: 52px;
+        display: flex;
+        align-items: center;
+    }
+    .quiz-card-body {
+        padding: 1rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .quiz-subject {
+        color: #64748B;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 0.6rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .quiz-subject i {
+        color: var(--chat-cyan);
+    }
+    .quiz-stats {
+        display: flex;
+        gap: 0.4rem;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+    }
+    .quiz-badge {
+        display: inline-block;
+        padding: 0.3rem 0.65rem;
+        background: linear-gradient(135deg, #E0F2FE 0%, #CFFAFE 100%);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--chat-cyan);
+    }
+    .progress-section {
+        margin-bottom: 0.75rem;
+        flex: 1;
+    }
+    .progress-bar-container {
+        background: #f1f5f9;
+        border-radius: 0.4rem;
+        overflow: hidden;
+        height: 6px;
+        margin-top: 0.5rem;
+    }
+    .progress-bar {
+        background: linear-gradient(90deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%);
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+    .card-actions {
+        display: flex;
+        gap: 0.4rem;
+        margin-top: auto;
+    }
+    .card-action-btn {
+        flex: 1;
+        padding: 0.55rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.5rem;
+        background: white;
+        color: #64748B;
+        font-weight: 700;
+        font-size: 0.78rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+    }
+    /* Local confirm overrides */
+    .custom-confirm-overlay { background: rgba(15,23,42,0.55); backdrop-filter: blur(8px); }
+    .custom-confirm-dialog { max-width: 360px; width: 90%; padding: 14px 14px 12px; border-radius: 12px; box-shadow: 0 14px 34px rgba(6,182,212,0.22); border: 1px solid rgba(6,182,212,0.18); }
+    .custom-confirm-icon { width: 48px; height: 48px; font-size: 24px; margin-bottom: 10px; border-radius: 10px; background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%); box-shadow: 0 8px 18px rgba(6,182,212,0.28); }
+    .custom-confirm-title { font-size: 17px; margin-bottom: 6px; letter-spacing: -0.2px; color: #0f172a; }
+    .custom-confirm-message { font-size: 14px; margin-bottom: 14px; color: #334155; }
+    .custom-confirm-buttons { gap: 8px; }
+    .custom-confirm-btn { padding: 9px 10px; font-size: 13px; border-radius: 9px; }
+    .custom-confirm-btn-yes { background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%); color: #fff; box-shadow: 0 8px 16px rgba(6,182,212,0.25); }
+    .custom-confirm-btn-no { background: #fff; color: #0f172a; border: 2px solid #e2e8f0; }
+    /* Student performance cards */
+    .student-card {
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05), 0 6px 18px rgba(6,182,212,0.12);
+        border-left: 3px solid var(--chat-cyan);
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+    .student-card .card-body { padding: 1rem; }
+    .student-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 24px rgba(6,182,212,0.18);
+    }
+    .student-title { color: var(--chat-dark); font-weight: 700; }
+    .student-icon { color: var(--chat-cyan); }
+    .student-badge {
+        background: #e0f7fb;
+        color: var(--chat-dark);
+        border: 1px solid rgba(6,182,212,0.2);
+        border-radius: 999px;
+        font-weight: 700;
+        padding: 0.3rem 0.65rem;
+    }
+    .student-progress { height: 7px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+    .student-progress .progress-bar { background: linear-gradient(90deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%); }
+    .student-modal-header { background: linear-gradient(135deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%); color: #fff; }
+    .student-avatar { width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%); color: #fff; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
+    .badge-cyan { background: rgba(6,182,212,0.12); color: #0f172a; border: 1px solid rgba(6,182,212,0.25); }
+    .student-table thead th { background: #f8fafc; color: #0f172a; font-weight: 700; border-bottom: 1px solid #e2e8f0; }
+    .student-table td, .student-table th { padding: 0.65rem 0.75rem; vertical-align: middle; }
+    /* Quiz Details styles */
+    .detail-card {
+        border: none;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05), 0 6px 18px rgba(6,182,212,0.12);
+        border-left: 3px solid var(--chat-cyan);
+    }
+    .detail-header {
+        background: linear-gradient(135deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%);
+        color: #fff;
+        padding: 0.9rem 1rem;
+    }
+    .detail-header h5 { margin: 0; font-weight: 700; font-size: 1rem; }
+    .detail-header small { color: rgba(255,255,255,0.8); }
+    .detail-body { padding: 1rem; }
+    .detail-meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .info-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.65rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        color: #0f172a;
+        font-size: 0.85rem;
+    }
+    .status-badge {
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.85rem;
+    }
+    .status-badge.active { background: #ecfdf3; color: #15803d; border: 1px solid #bbf7d0; }
+    .status-badge.inactive { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+    .stat-chip {
+        background: #f8fafc;
+        border-radius: 0.6rem;
+        padding: 0.75rem;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+    }
+    .stat-chip h3 { margin: 0; font-size: 1.35rem; font-weight: 800; color: var(--chat-cyan); }
+    .stat-chip small { color: #64748B; font-weight: 600; }
+    .detail-progress {
+        background: #f1f5f9;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        height: 22px;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .detail-progress .progress-bar {
+        background: linear-gradient(90deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%);
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+    .detail-info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 0.35rem;
+    }
+    .detail-info-list li {
+        color: #0f172a;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .detail-info-list li i { color: var(--chat-cyan); }
+    .card-action-btn:hover {
+        border-color: var(--chat-cyan);
+        color: var(--chat-cyan);
+        background: rgba(6, 182, 212, 0.05);
+    }
     .correct-answer { 
         background-color: #d4edda; 
         padding: 10px; 
@@ -31,87 +339,109 @@
         .no-print { display: none; }
         body { padding: 10px; }
     }
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+        .quiz-cards-grid {
+            grid-template-columns: 1fr;
+        }
+        .page-title {
+            font-size: 1.4rem;
+        }
+        .tab-buttons {
+            flex-direction: column;
+        }
+        .tab-buttons .btn {
+            width: 100%;
+        }
+    }
 </style>
 
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Quiz Analytics Dashboard</h2>
-        <div class="btn-group" role="group">
-            <button type="button" class="btn btn-outline-primary active" onclick="showTab('overview')">
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+        <h2 class="page-title">
+            <i class="bi bi-graph-up"></i>
+            Quiz Analytics Dashboard
+        </h2>
+        <div class="tab-buttons">
+            <button type="button" class="btn active" data-tab="overview" onclick="showTab('overview')">
                 <i class="bi bi-graph-up"></i> Overview
             </button>
-            <button type="button" class="btn btn-outline-primary" onclick="showTab('details')">
+            <button type="button" class="btn" data-tab="details" onclick="showTab('details')">
                 <i class="bi bi-list-check"></i> Quiz Details
             </button>
-            <button type="button" class="btn btn-outline-primary" onclick="showTab('students')">
+            <button type="button" class="btn" data-tab="students" onclick="showTab('students')">
                 <i class="bi bi-people"></i> Student Performance
             </button>
-            <button type="button" class="btn btn-outline-primary" onclick="showTab('proctoring')">
+            <button type="button" class="btn" data-tab="proctoring" onclick="showTab('proctoring')">
                 <i class="bi bi-camera-video"></i> Proctoring Reports
             </button>
         </div>
     </div>
-    
+</div>
+
+<div style="padding: 0 1rem;">
     {% if quiz_stats %}
         <!-- Overview Tab -->
         <div id="overviewTab" class="analytics-tab">
-            <div class="row mb-4">
-                <div class="col-md-3 mb-3">
-                    <div class="card text-center h-100" style="border-left: 4px solid #667eea;">
-                        <div class="card-body">
-                            <h2 style="color: #667eea;">{{ quiz_stats|length }}</h2>
-                            <p class="text-muted mb-0">Total Quizzes</p>
-                        </div>
-                    </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ quiz_stats|length }}</div>
+                    <div class="stat-label">Total Quizzes</div>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card text-center h-100" style="border-left: 4px solid #764ba2;">
-                        <div class="card-body">
-                            <h2 style="color: #764ba2;">{{ total_attempts }}</h2>
-                            <p class="text-muted mb-0">Total Attempts</p>
-                        </div>
-                    </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ total_attempts }}</div>
+                    <div class="stat-label">Total Attempts</div>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card text-center h-100" style="border-left: 4px solid #28a745;">
-                        <div class="card-body">
-                            <h2 style="color: #28a745;">{{ unique_students }}</h2>
-                            <p class="text-muted mb-0">Active Students</p>
-                        </div>
-                    </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ unique_students }}</div>
+                    <div class="stat-label">Active Students</div>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card text-center h-100" style="border-left: 4px solid #ffc107;">
-                        <div class="card-body">
-                            <h2 style="color: #ffc107;">{{ overall_avg }}%</h2>
-                            <p class="text-muted mb-0">Average Score</p>
-                        </div>
-                    </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ overall_avg }}%</div>
+                    <div class="stat-label">Average Score</div>
                 </div>
             </div>
             
-            <div class="row">
+            <div class="quiz-cards-grid">
                 {% for stat in quiz_stats %}
-                    <div class="col-md-4 mb-3">
-                        <div class="card h-100" style="border-left: 3px solid #667eea;">
-                            <div class="card-body">
-                                <h6 class="card-title text-truncate" title="{{ stat.quiz.title }}">{{ stat.quiz.title }}</h6>
-                                <p class="text-muted small mb-2">{{ stat.quiz.subject.name }}</p>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span class="badge bg-primary">{{ stat.total_attempts }} attempts</span>
-                                    <span class="badge bg-success">{{ stat.avg_percentage }}%</span>
+                    <div class="quiz-card">
+                        <div class="quiz-card-header">
+                            <i class="bi bi-clipboard-check me-2"></i>
+                            {{ stat.quiz.title }}
+                        </div>
+                        <div class="quiz-card-body">
+                            <div class="quiz-subject">
+                                <i class="bi bi-book"></i>
+                                {{ stat.quiz.subject.name }}
+                            </div>
+                            
+                            <div class="quiz-stats">
+                                <span class="quiz-badge">
+                                    <i class="bi bi-play-circle"></i> {{ stat.total_attempts }} attempts
+                                </span>
+                                <span class="quiz-badge">
+                                    <i class="bi bi-percent"></i> {{ stat.avg_percentage }}% avg
+                                </span>
+                            </div>
+                            
+                            <div class="progress-section">
+                                <small style="color: #64748B; font-weight: 600;">Performance</small>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: {{ stat.avg_percentage }}%;"></div>
                                 </div>
-                                <div class="progress mb-3" style="height: 8px;">
-                                    <div class="progress-bar" style="width: {{ stat.avg_percentage }}%; background-color: #667eea;"></div>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-outline-info flex-fill" onclick="copyQuizContent{{ stat.quiz.id }}()" title="Copy Questions & Answers">
-                                        <i class="bi bi-clipboard"></i> Copy Q&A
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-success flex-fill" onclick="viewAnswerSheet{{ stat.quiz.id }}()" title="View Answer Sheet">
-                                        <i class="bi bi-eye"></i> View Answers
-                                    </button>
-                                </div>
+                            </div>
+                            
+                            <div class="card-actions">
+                                <button class="card-action-btn" onclick="copyQuizContent{{ stat.quiz.id }}()" title="Copy Questions & Answers">
+                                    <i class="bi bi-clipboard"></i>
+                                    <span>Copy Q&A</span>
+                                </button>
+                                <button class="card-action-btn" onclick="viewAnswerSheet{{ stat.quiz.id }}()" title="View Answer Sheet">
+                                    <i class="bi bi-eye"></i>
+                                    <span>Answers</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -122,21 +452,25 @@
         <!-- Quiz Details Tab -->
         <div id="detailsTab" class="analytics-tab" style="display: none;">
             {% for stat in quiz_stats %}
-                <div class="card shadow-lg mb-4">
-                    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="detail-card mb-4">
+                    <div class="detail-header">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h5 class="mb-0">{{ stat.quiz.title }}</h5>
-                                <small>{{ stat.quiz.subject.name }}</small>
-                                {% if stat.quiz.deadline %}
-                                    <div class="mt-1"><i class="bi bi-calendar-event"></i> Deadline: {{ stat.quiz.deadline|date:"M d, Y g:i A" }}</div>
-                                {% endif %}
+                                <div class="detail-meta mt-1">
+                                    <span class="info-chip"><i class="bi bi-book"></i>{{ stat.quiz.subject.name }}</span>
+                                    {% if stat.quiz.deadline %}
+                                        <span class="info-chip"><i class="bi bi-calendar-event"></i>Deadline: {{ stat.quiz.deadline|date:"M d, Y g:i A" }}</span>
+                                    {% else %}
+                                        <span class="info-chip"><i class="bi bi-calendar-x"></i>No deadline</span>
+                                    {% endif %}
+                                </div>
                             </div>
                             <div class="d-flex gap-2 align-items-center">
                                 {% if stat.quiz.is_active %}
-                                    <span class="badge bg-success fs-6"><i class="bi bi-circle-fill"></i> Active</span>
+                                    <span class="status-badge active"><i class="bi bi-circle-fill"></i> Active</span>
                                 {% else %}
-                                    <span class="badge bg-secondary fs-6"><i class="bi bi-circle-fill"></i> Inactive</span>
+                                    <span class="status-badge inactive"><i class="bi bi-circle-fill"></i> Inactive</span>
                                 {% endif %}
                                 <div class="btn-group">
                                     <a href="{% url 'quiz_detail' stat.quiz.id %}" class="btn btn-light btn-sm" title="Edit Quiz">
@@ -151,58 +485,61 @@
                             </div>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <div class="row mb-4">
-                            <div class="col-md-3">
-                                <div class="text-center p-3" style="background-color: #f8f9fa; border-radius: 10px;">
-                                    <h3 class="mb-0" style="color: #667eea;">{{ stat.total_attempts }}</h3>
-                                    <small class="text-muted">Total Attempts</small>
+                    <div class="detail-body">
+                        <div class="row mb-3 g-2">
+                            <div class="col-6 col-md-3">
+                                <div class="stat-chip">
+                                    <h3 class="mb-1">{{ stat.total_attempts }}</h3>
+                                    <small>Total Attempts</small>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="text-center p-3" style="background-color: #f8f9fa; border-radius: 10px;">
-                                    <h3 class="mb-0" style="color: #764ba2;">{{ stat.total_questions }}</h3>
-                                    <small class="text-muted">Questions</small>
+                            <div class="col-6 col-md-3">
+                                <div class="stat-chip">
+                                    <h3 class="mb-1">{{ stat.total_questions }}</h3>
+                                    <small>Questions</small>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="text-center p-3" style="background-color: #f8f9fa; border-radius: 10px;">
-                                    <h3 class="mb-0" style="color: #28a745;">{{ stat.avg_score }}</h3>
-                                    <small class="text-muted">Avg Score</small>
+                            <div class="col-6 col-md-3">
+                                <div class="stat-chip">
+                                    <h3 class="mb-1">{{ stat.avg_score }}</h3>
+                                    <small>Avg Score</small>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="text-center p-3" style="background-color: #f8f9fa; border-radius: 10px;">
-                                    <h3 class="mb-0" style="color: #ffc107;">{{ stat.quiz.duration }}</h3>
-                                    <small class="text-muted">Minutes</small>
+                            <div class="col-6 col-md-3">
+                                <div class="stat-chip">
+                                    <h3 class="mb-1">{{ stat.quiz.duration }}</h3>
+                                    <small>Minutes</small>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="mb-3">
-                            <h6>Performance Overview</h6>
-                            <div class="progress" style="height: 30px;">
-                                <div class="progress-bar" style="width: {{ stat.avg_percentage }}%; background-color: #667eea;" role="progressbar">
-                                    <strong>{{ stat.avg_percentage }}% Average</strong>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0 text-secondary">Performance Overview</h6>
+                                <span class="fw-bold" style="color: var(--chat-cyan);">{{ stat.avg_percentage }}%</span>
+                            </div>
+                            <div class="detail-progress">
+                                <div class="progress-bar" style="width: {{ stat.avg_percentage }}%;" role="progressbar">
+                                    <span class="ms-2">{{ stat.avg_percentage }}% Average</span>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="row">
+                        <div class="row g-3">
                             <div class="col-md-6">
-                                <h6>Quiz Information</h6>
-                                <ul class="list-unstyled">
-                                    <li><i class="bi bi-file-pdf"></i> <strong>PDF:</strong> {{ stat.quiz.pdf_note.title }}</li>
-                                    <li><i class="bi bi-calendar"></i> <strong>Created:</strong> {{ stat.quiz.created_at|date:"M d, Y" }}</li>
-                                    <li><i class="bi bi-person"></i> <strong>Creator:</strong> {{ stat.quiz.created_by.username }}</li>
+                                <h6 class="text-secondary">Quiz Information</h6>
+                                <ul class="detail-info-list">
+                                    <li><i class="bi bi-file-pdf"></i> PDF: {{ stat.quiz.pdf_note.title }}</li>
+                                    <li><i class="bi bi-calendar"></i> Created: {{ stat.quiz.created_at|date:"M d, Y" }}</li>
+                                    <li><i class="bi bi-person"></i> Creator: {{ stat.quiz.created_by.username }}</li>
                                 </ul>
                             </div>
                             <div class="col-md-6">
-                                <h6>Statistics</h6>
-                                <ul class="list-unstyled">
-                                    <li><i class="bi bi-graph-up"></i> <strong>Highest Score:</strong> {{ stat.highest_score }}/{{ stat.total_questions }}</li>
-                                    <li><i class="bi bi-graph-down"></i> <strong>Lowest Score:</strong> {{ stat.lowest_score }}/{{ stat.total_questions }}</li>
-                                    <li><i class="bi bi-people"></i> <strong>Unique Students:</strong> {{ stat.unique_students }}</li>
+                                <h6 class="text-secondary">Statistics</h6>
+                                <ul class="detail-info-list">
+                                    <li><i class="bi bi-graph-up"></i> Highest: {{ stat.highest_score }}/{{ stat.total_questions }}</li>
+                                    <li><i class="bi bi-graph-down"></i> Lowest: {{ stat.lowest_score }}/{{ stat.total_questions }}</li>
+                                    <li><i class="bi bi-people"></i> Unique Students: {{ stat.unique_students }}</li>
                                 </ul>
                             </div>
                         </div>
@@ -213,29 +550,26 @@
         
         <!-- Student Performance Tab -->
         <div id="studentsTab" class="analytics-tab" style="display: none;">
-            <div class="row">
+            <div class="row g-3">
                 {% for stat in quiz_stats %}
-                    <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="card h-100 shadow-sm quiz-card" style="cursor: pointer; transition: all 0.3s;" 
-                             data-bs-toggle="modal" data-bs-target="#studentModal{{ stat.quiz.id }}"
-                             onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';"
-                             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='';">
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="student-card h-100" data-bs-toggle="modal" data-bs-target="#studentModal{{ stat.quiz.id }}">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="mb-0 flex-grow-1" style="color: #667eea;">
-                                        <i class="bi bi-clipboard-check"></i> {{ stat.quiz.title|truncatewords:6 }}
+                                    <h6 class="mb-0 flex-grow-1 student-title">
+                                        <i class="bi bi-clipboard-check student-icon"></i> {{ stat.quiz.title|truncatewords:6 }}
                                     </h6>
-                                    <i class="bi bi-eye" style="color: #667eea;"></i>
+                                    <i class="bi bi-eye student-icon"></i>
                                 </div>
                                 <p class="text-muted small mb-2">
                                     <i class="bi bi-book"></i> {{ stat.quiz.subject.name }}
                                 </p>
-                                <div class="d-flex gap-2 mb-2">
-                                    <span class="badge bg-primary">{{ stat.total_attempts }} attempts</span>
-                                    <span class="badge bg-success">{{ stat.avg_percentage }}% avg</span>
+                                <div class="d-flex gap-2 mb-2 flex-wrap">
+                                    <span class="student-badge">{{ stat.total_attempts }} attempts</span>
+                                    <span class="student-badge">{{ stat.avg_percentage }}% avg</span>
                                 </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar" style="width: {{ stat.avg_percentage }}%; background-color: #667eea;"></div>
+                                <div class="student-progress">
+                                    <div class="progress-bar" style="width: {{ stat.avg_percentage }}%;"></div>
                                 </div>
                             </div>
                         </div>
@@ -245,7 +579,7 @@
                     <div class="modal fade" id="studentModal{{ stat.quiz.id }}" tabindex="-1" aria-labelledby="studentModalLabel{{ stat.quiz.id }}" aria-hidden="true">
                         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                             <div class="modal-content">
-                                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                <div class="modal-header student-modal-header">
                                     <div>
                                         <h5 class="modal-title" id="studentModalLabel{{ stat.quiz.id }}">
                                             <i class="bi bi-people"></i> Student Performance
@@ -254,12 +588,12 @@
                                     </div>
                                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                <div class="modal-body p-0">
+                                <div class="modal-body" style="padding: 0.75rem 0.75rem 0.25rem;">
                                     {% with completed_attempts=stat.quiz.attempts.all %}
                                         {% if completed_attempts %}
                                             <div class="table-responsive">
-                                                <table class="table table-hover mb-0 align-middle">
-                                                    <thead class="table-light">
+                                                <table class="table table-hover mb-0 align-middle student-table">
+                                                    <thead>
                                                         <tr>
                                                             <th class="ps-3">Student</th>
                                                             <th class="text-center">Score</th>
@@ -274,9 +608,7 @@
                                                                 <tr>
                                                                     <td class="ps-3">
                                                                         <div class="d-flex align-items-center">
-                                                                            <div class="rounded-circle text-white d-flex align-items-center justify-content-center me-2" 
-                                                                                 style="width: 32px; height: 32px; font-weight: bold; font-size: 14px;
-                                                                                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                                                            <div class="student-avatar me-2">
                                                                                 {{ attempt.student.username|slice:":1"|upper }}
                                                                             </div>
                                                                             <strong>{{ attempt.student.username }}</strong>
@@ -288,11 +620,11 @@
                                                                     <td>
                                                                         <script>
                                                                             var percentageValue{{ attempt.id }} = Math.round(({{ attempt.score }} / {{ stat.total_questions }}) * 100);
-                                                                            document.write('<div class="progress" style="height: 20px; min-width: 100px;">');
-                                                                            var bgColor = percentageValue{{ attempt.id }} >= 90 ? '#28a745' : 
-                                                                                        percentageValue{{ attempt.id }} >= 75 ? '#667eea' : 
-                                                                                        percentageValue{{ attempt.id }} >= 50 ? '#ffc107' : 
-                                                                                        percentageValue{{ attempt.id }} >= 35 ? '#17a2b8' : '#dc3545';
+                                                                            document.write('<div class="progress" style="height: 18px; min-width: 110px; background:#f1f5f9;">');
+                                                                            var bgColor = percentageValue{{ attempt.id }} >= 90 ? '#22c55e' : 
+                                                                                        percentageValue{{ attempt.id }} >= 75 ? '#06B6D4' : 
+                                                                                        percentageValue{{ attempt.id }} >= 50 ? '#fbbf24' : 
+                                                                                        percentageValue{{ attempt.id }} >= 35 ? '#0ea5e9' : '#ef4444';
                                                                             document.write('<div class="progress-bar fw-bold" style="width: ' + percentageValue{{ attempt.id }} + '%; background-color: ' + bgColor + ';" role="progressbar">');
                                                                             document.write('<small>' + percentageValue{{ attempt.id }} + '%</small>');
                                                                             document.write('</div></div>');
@@ -305,9 +637,9 @@
                                                                                                         percentageValue{{ attempt.id }} >= 50 ? 'C' : 
                                                                                                         percentageValue{{ attempt.id }} >= 35 ? 'D' : 'F';
                                                                             var badgeClass{{ attempt.id }} = percentageValue{{ attempt.id }} >= 90 ? 'bg-success' : 
-                                                                                                            percentageValue{{ attempt.id }} >= 75 ? 'bg-primary' : 
+                                                                                                            percentageValue{{ attempt.id }} >= 75 ? 'badge-cyan' : 
                                                                                                             percentageValue{{ attempt.id }} >= 50 ? 'bg-warning text-dark' : 
-                                                                                                            percentageValue{{ attempt.id }} >= 35 ? 'bg-info text-dark' : 'bg-danger';
+                                                                                                            percentageValue{{ attempt.id }} >= 35 ? 'bg-info text-dark' : 'bg-danger text-white';
                                                                             document.write('<span class="badge px-3 py-2 ' + badgeClass{{ attempt.id }} + '">' + grade{{ attempt.id }} + '</span>');
                                                                         </script>
                                                                     </td>
@@ -494,30 +826,25 @@
     function showTab(tabName) {
         // Save current tab to localStorage
         localStorage.setItem('quizAnalyticsActiveTab', tabName);
-        
+
         // Hide all tabs
         document.querySelectorAll('.analytics-tab').forEach(tab => {
             tab.style.display = 'none';
         });
-        
-        // Remove active class from all buttons
-        document.querySelectorAll('.btn-group .btn').forEach(btn => {
+
+        // Remove active class from all tab buttons
+        document.querySelectorAll('.tab-buttons .btn').forEach(btn => {
             btn.classList.remove('active');
         });
-        
-        // Show selected tab
-        if (tabName === 'overview') {
-            document.getElementById('overviewTab').style.display = 'block';
-            document.querySelector('[onclick="showTab(\'overview\')"]').classList.add('active');
-        } else if (tabName === 'details') {
-            document.getElementById('detailsTab').style.display = 'block';
-            document.querySelector('[onclick="showTab(\'details\')"]').classList.add('active');
-        } else if (tabName === 'students') {
-            document.getElementById('studentsTab').style.display = 'block';
-            document.querySelector('[onclick="showTab(\'students\')"]').classList.add('active');
-        } else if (tabName === 'proctoring') {
-            document.getElementById('proctoringTab').style.display = 'block';
-            document.querySelector('[onclick="showTab(\'proctoring\')"]').classList.add('active');
+
+        // Show selected tab and highlight current button
+        const targetTab = document.getElementById(`${tabName}Tab`);
+        if (targetTab) {
+            targetTab.style.display = 'block';
+        }
+        const targetBtn = document.querySelector(`.tab-buttons .btn[data-tab="${tabName}"]`);
+        if (targetBtn) {
+            targetBtn.classList.add('active');
         }
     }
     
