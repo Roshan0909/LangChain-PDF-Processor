@@ -787,4 +787,114 @@
         }
     }
 </style>
+
+<script>
+    // Show loading screen on form submission
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.querySelector('.login-form');
+        const loginBtn = document.querySelector('.login-btn');
+        
+        if (loginForm) {
+            loginForm.addEventListener('submit', function(e) {
+                // Show loading overlay
+                showLoadingScreen();
+            });
+        }
+    });
+    
+    function showLoadingScreen() {
+        // Create loading overlay
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'loading-overlay';
+        loadingOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #1a2a4a 50%, #06B6D4 100%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        `;
+        
+        loadingOverlay.innerHTML = `
+            <style>
+                @keyframes grid-flow { 0% { transform: translate(0, 0); } 100% { transform: translate(50px, 50px); } }
+                @keyframes orb-pulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 0.8; } }
+                @keyframes ring-spin { 0% { transform: rotate(0deg); opacity: 1; } 100% { transform: rotate(360deg); opacity: 1; } }
+                @keyframes gear-rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                @keyframes scan { 0% { top: 20%; } 50% { top: 50%; } 100% { top: 80%; } }
+                @keyframes dot-pulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.4); opacity: 1; } }
+                @keyframes particle-float { 0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; } 50% { transform: translate(40px, -40px) scale(1.5); opacity: 0.8; } }
+                
+                .loading-wrapper { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 60px; }
+                .cyber-loader { position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; }
+                .loader-ring { position: absolute; border: 2px solid transparent; border-radius: 50%; background: linear-gradient(135deg, #06B6D4 0%, #0891b2 50%, transparent 100%) border-box; }
+                .outer-ring { width: 200px; height: 200px; animation: ring-spin 3s linear infinite; }
+                .middle-ring { width: 140px; height: 140px; animation: ring-spin 2.5s linear infinite reverse; }
+                .inner-ring { width: 80px; height: 80px; animation: ring-spin 2s linear infinite; }
+                .central-gear { position: absolute; width: 60px; height: 60px; animation: gear-rotate 4s linear infinite; }
+                .central-gear svg { width: 100%; height: 100%; filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.6)); }
+                .scan-line { position: absolute; width: 180px; height: 2px; background: linear-gradient(90deg, transparent, #06B6D4, transparent); top: 50%; left: 50%; transform: translateX(-50%) translateY(-50%); animation: scan 2s ease-in-out infinite; box-shadow: 0 0 20px rgba(6, 182, 212, 0.8); }
+                .loading-text-wrapper { text-align: center; }
+                .loading-title { font-size: 1.8rem; font-weight: 700; color: #06B6D4; margin-bottom: 8px; letter-spacing: 1px; text-shadow: 0 0 30px rgba(6, 182, 212, 0.5); }
+                .loading-subtitle { font-size: 0.95rem; color: #94a3b8; margin-bottom: 20px; }
+                .loading-dots { display: flex; gap: 12px; justify-content: center; }
+                .dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg, #06B6D4, #0891b2); animation: dot-pulse 1.5s ease-in-out infinite; box-shadow: 0 0 15px rgba(6, 182, 212, 0.6); }
+                .dot-1 { animation-delay: 0s; } .dot-2 { animation-delay: 0.2s; } .dot-3 { animation-delay: 0.4s; }
+            </style>
+            <div style="position: absolute; width: 100%; height: 100%; z-index: 0;">
+                <div style="position: absolute; width: 200%; height: 200%; background-image: linear-gradient(rgba(6, 182, 212, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(6, 182, 212, 0.1) 1px, transparent 1px); background-size: 50px 50px; animation: grid-flow 8s linear infinite;"></div>
+                <div style="position: absolute; width: 400px; height: 400px; background: linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(8, 145, 178, 0.15) 100%); border-radius: 50%; filter: blur(80px); animation: orb-pulse 8s ease-in-out infinite; top: -200px; left: -200px;"></div>
+                <div style="position: absolute; width: 500px; height: 500px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%); border-radius: 50%; filter: blur(80px); animation: orb-pulse 8s ease-in-out infinite 2s; bottom: -250px; right: -250px;"></div>
+            </div>
+            <div class="loading-wrapper">
+                <div class="cyber-loader">
+                    <div class="loader-ring outer-ring"></div>
+                    <div class="loader-ring middle-ring"></div>
+                    <div class="loader-ring inner-ring"></div>
+                    <div class="central-gear">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="gear-gradient-overlay" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#06B6D4;stop-opacity:0.8" />
+                                    <stop offset="100%" style="stop-color:#0891b2;stop-opacity:0.6" />
+                                </linearGradient>
+                            </defs>
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="url(#gear-gradient-overlay)" stroke-width="1.5" opacity="0.6"/>
+                            <circle cx="50" cy="50" r="30" fill="none" stroke="url(#gear-gradient-overlay)" stroke-width="1" opacity="0.4"/>
+                            <g stroke="url(#gear-gradient-overlay)" stroke-width="2" opacity="0.7">
+                                <line x1="50" y1="10" x2="50" y2="20"/>
+                                <line x1="85.36" y1="14.64" x2="81.82" y2="23.64"/>
+                                <line x1="90" y1="50" x2="80" y2="50"/>
+                                <line x1="85.36" y1="85.36" x2="76.36" y2="78.18"/>
+                                <line x1="50" y1="90" x2="50" y2="80"/>
+                                <line x1="14.64" y1="85.36" x2="23.64" y2="78.18"/>
+                                <line x1="10" y1="50" x2="20" y2="50"/>
+                                <line x1="14.64" y1="14.64" x2="23.64" y2="23.64"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="scan-line"></div>
+                </div>
+                <div class="loading-text-wrapper">
+                    <h2 class="loading-title">Processing Login</h2>
+                    <p class="loading-subtitle">Authenticating your credentials...</p>
+                    <div class="loading-dots">
+                        <span class="dot dot-1"></span>
+                        <span class="dot dot-2"></span>
+                        <span class="dot dot-3"></span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(loadingOverlay);
+    }
+</script>
 {% endblock %}
