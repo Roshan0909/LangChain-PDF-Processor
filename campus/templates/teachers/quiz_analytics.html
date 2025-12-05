@@ -231,6 +231,18 @@
     .badge-cyan { background: rgba(6,182,212,0.12); color: #0f172a; border: 1px solid rgba(6,182,212,0.25); }
     .student-table thead th { background: #f8fafc; color: #0f172a; font-weight: 700; border-bottom: 1px solid #e2e8f0; }
     .student-table td, .student-table th { padding: 0.65rem 0.75rem; vertical-align: middle; }
+    /* Proctoring filters */
+    .snapshot-filter-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .filter-chip { border: 1px solid #e2e8f0; border-radius: 999px; padding: 0.35rem 0.75rem; background: #fff; color: #0f172a; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .filter-chip.active { background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%); color: #fff; border-color: transparent; box-shadow: 0 8px 18px rgba(6,182,212,0.2); }
+    .filter-chip:hover { transform: translateY(-2px); }
+    /* Analytics filters */
+    .filter-bar { background: #fff; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+    .filter-bar label { font-weight: 700; color: #0f172a; margin: 0; font-size: 0.85rem; }
+    .filter-bar select, .filter-bar input { border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.45rem 0.65rem; font-size: 0.85rem; color: #0f172a; }
+    .filter-bar select:focus, .filter-bar input:focus { border-color: var(--chat-cyan); outline: none; box-shadow: 0 0 0 3px rgba(6,182,212,0.1); }
+    .filter-reset-btn { background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 0.45rem 0.85rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; }
+    .filter-reset-btn:hover { background: var(--chat-cyan); color: #fff; border-color: var(--chat-cyan); }
     /* Quiz Details styles */
     .detail-card {
         border: none;
@@ -383,6 +395,35 @@
 
 <div style="padding: 0 1rem;">
     {% if quiz_stats %}
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="d-flex align-items-center gap-2">
+                <label for="filterSubject"><i class="bi bi-book"></i> Subject:</label>
+                <select id="filterSubject" onchange="applyFilters()">
+                    <option value="all">All Subjects</option>
+                    {% regroup quiz_stats by quiz.subject.name as subjects_grouped %}
+                    {% for subject in subjects_grouped %}
+                        <option value="{{ subject.grouper }}">{{ subject.grouper }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <label for="filterDate"><i class="bi bi-calendar"></i> Date:</label>
+                <input type="date" id="filterDate" onchange="applyFilters()">
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <label for="filterStatus"><i class="bi bi-check-circle"></i> Status:</label>
+                <select id="filterStatus" onchange="applyFilters()">
+                    <option value="all">All</option>
+                    <option value="pass">Pass (≥50%)</option>
+                    <option value="fail">Fail (<50%)</option>
+                </select>
+            </div>
+            <button class="filter-reset-btn" onclick="resetFilters()">
+                <i class="bi bi-x-circle"></i> Reset
+            </button>
+        </div>
+
         <!-- Overview Tab -->
         <div id="overviewTab" class="analytics-tab">
             <div class="stats-grid">
@@ -406,7 +447,7 @@
             
             <div class="quiz-cards-grid">
                 {% for stat in quiz_stats %}
-                    <div class="quiz-card">
+                    <div class="quiz-card" data-subject="{{ stat.quiz.subject.name }}" data-date="{{ stat.quiz.created_at|date:'Y-m-d' }}" data-avg="{{ stat.avg_percentage }}">
                         <div class="quiz-card-header">
                             <i class="bi bi-clipboard-check me-2"></i>
                             {{ stat.quiz.title }}
@@ -452,7 +493,7 @@
         <!-- Quiz Details Tab -->
         <div id="detailsTab" class="analytics-tab" style="display: none;">
             {% for stat in quiz_stats %}
-                <div class="detail-card mb-4">
+                <div class="detail-card mb-4" data-subject="{{ stat.quiz.subject.name }}" data-date="{{ stat.quiz.created_at|date:'Y-m-d' }}" data-avg="{{ stat.avg_percentage }}">
                     <div class="detail-header">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -552,7 +593,7 @@
         <div id="studentsTab" class="analytics-tab" style="display: none;">
             <div class="row g-3">
                 {% for stat in quiz_stats %}
-                    <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="col-md-6 col-lg-4 mb-3 student-card-col" data-subject="{{ stat.quiz.subject.name }}" data-date="{{ stat.quiz.created_at|date:'Y-m-d' }}" data-avg="{{ stat.avg_percentage }}">
                         <div class="student-card h-100" data-bs-toggle="modal" data-bs-target="#studentModal{{ stat.quiz.id }}">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
@@ -684,27 +725,31 @@
             {% if proctoring_data %}
                 <div class="row">
                     {% for item in proctoring_data %}
-                        <div class="col-12 mb-5">
-                            <div class="card shadow-lg border-0">
-                                <div class="card-header text-white" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        {% for stat in quiz_stats %}
+                            {% if stat.quiz.id == item.quiz.id %}
+                        <div class="col-12 mb-5 proctoring-card-col" data-subject="{{ item.quiz.subject.name }}" data-date="{{ item.quiz.created_at|date:'Y-m-d' }}" data-avg="{{ stat.avg_percentage }}">
+                            <div class="card shadow-lg border-0" style="border-left: 3px solid var(--chat-cyan);">
+                            {% endif %}
+                        {% endfor %}
+                                <div class="card-header text-white" style="background: linear-gradient(135deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%);">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             <h4 class="mb-1"><i class="bi bi-clipboard-check"></i> {{ item.quiz.title }}</h4>
                                             <div>
-                                                <span class="badge bg-white text-dark me-2">
+                                                <span class="badge bg-white text-dark me-2" style="border: 1px solid rgba(6,182,212,0.25); color: #0f172a;">
                                                     <i class="bi bi-book"></i> {{ item.quiz.subject.name }}
                                                 </span>
-                                                <span class="badge bg-white text-dark">
+                                                <span class="badge bg-white text-dark" style="border: 1px solid rgba(6,182,212,0.25); color: #0f172a;">
                                                     <i class="bi bi-people"></i> {{ item.attempts_with_violations.count }} Student{{ item.attempts_with_violations.count|pluralize }}
                                                 </span>
                                             </div>
                                         </div>
-                                        <span class="badge bg-white text-danger fs-4 px-3 py-2">
+                                        <span class="badge bg-white text-danger fs-4 px-3 py-2" style="border: 1px solid rgba(239,68,68,0.25);">
                                             <i class="bi bi-exclamation-triangle-fill"></i> {{ item.total_violations }} Violation{{ item.total_violations|pluralize }}
                                         </span>
                                     </div>
                                 </div>
-                                <div class="card-body p-4">
+                                <div class="card-body p-4" style="background: #f8fafc;">
                                     {% for attempt in item.attempts_with_violations %}
                                         <div class="violation-section mb-4 p-3 {% if attempt.completed_at %}bg-light{% else %}bg-warning bg-opacity-10{% endif %}" 
                                              style="border-left: 4px solid {% if attempt.completed_at %}#198754{% else %}#ffc107{% endif %}; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
@@ -737,9 +782,15 @@
                                             </div>
                                             
                                             {% if attempt.snapshots.all %}
-                                                <div class="row g-3 mt-2">
+                                                <div class="snapshot-filter-bar" data-grid="grid-{{ attempt.id }}">
+                                                    <span class="filter-chip active" onclick="filterSnapshots('grid-{{ attempt.id }}', 'all', this)">All</span>
+                                                    <span class="filter-chip" onclick="filterSnapshots('grid-{{ attempt.id }}', 'no_person', this)">No Person</span>
+                                                    <span class="filter-chip" onclick="filterSnapshots('grid-{{ attempt.id }}', 'multiple_persons', this)">Multiple Persons</span>
+                                                    <span class="filter-chip" onclick="filterSnapshots('grid-{{ attempt.id }}', 'phone', this)">Phone</span>
+                                                </div>
+                                                <div class="row g-3 mt-2 snapshot-grid" id="grid-{{ attempt.id }}">
                                                     {% for snapshot in attempt.snapshots.all %}
-                                                        <div class="col-md-3">
+                                                        <div class="col-md-3 snapshot-item" data-type="{{ snapshot.violation_type }}">
                                                             <div class="snapshot-thumb position-relative">
                                                                 <img src="{{ snapshot.image.url }}" class="img-fluid rounded shadow-sm" alt="Violation" style="width: 100%; height: 150px; object-fit: cover; cursor: pointer;" onclick="viewFullSnapshot('{{ snapshot.image.url }}', '{{ snapshot.violation_type }}', '{{ snapshot.timestamp|date:"M d, g:i A" }}')">
                                                                 <span class="badge position-absolute top-0 start-0 m-2
@@ -769,7 +820,6 @@
                             </div>
                         </div>
                     {% endfor %}
-                </div>
             {% else %}
                 <div class="text-center py-5">
                     <i class="bi bi-check-circle text-success" style="font-size: 5rem;"></i>
@@ -861,6 +911,71 @@
         document.getElementById('snapshotTitle').textContent = violationType + ' - Violation Snapshot';
         document.getElementById('snapshotTime').textContent = 'Captured: ' + timestamp;
         modal.show();
+    }
+
+    function filterSnapshots(gridId, type, chip) {
+        const grid = document.getElementById(gridId);
+        if (!grid) return;
+        const items = grid.querySelectorAll('.snapshot-item');
+        items.forEach(item => {
+            const match = type === 'all' || item.dataset.type === type;
+            item.style.display = match ? '' : 'none';
+        });
+        if (chip) {
+            const bar = chip.parentElement;
+            bar.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+        }
+    }
+
+    // Analytics filters
+    function applyFilters() {
+        const subject = document.getElementById('filterSubject').value;
+        const date = document.getElementById('filterDate').value;
+        const status = document.getElementById('filterStatus').value;
+
+        // Filter overview and details cards
+        document.querySelectorAll('.quiz-card, .detail-card').forEach(card => {
+            const subjectMatch = subject === 'all' || card.dataset.subject === subject;
+            const dateMatch = !date || card.dataset.date === date;
+            let statusMatch = true;
+            if (status !== 'all' && card.dataset.avg) {
+                const avg = parseFloat(card.dataset.avg);
+                statusMatch = (status === 'pass' && avg >= 50) || (status === 'fail' && avg < 50);
+            }
+            card.style.display = (subjectMatch && dateMatch && statusMatch) ? '' : 'none';
+        });
+        
+        // Filter student cards (hide parent column to avoid gaps)
+        document.querySelectorAll('.student-card-col').forEach(col => {
+            const subjectMatch = subject === 'all' || col.dataset.subject === subject;
+            const dateMatch = !date || col.dataset.date === date;
+            let statusMatch = true;
+            if (status !== 'all' && col.dataset.avg) {
+                const avg = parseFloat(col.dataset.avg);
+                statusMatch = (status === 'pass' && avg >= 50) || (status === 'fail' && avg < 50);
+            }
+            col.style.display = (subjectMatch && dateMatch && statusMatch) ? '' : 'none';
+        });
+        
+        // Filter proctoring cards
+        document.querySelectorAll('.proctoring-card-col').forEach(col => {
+            const subjectMatch = subject === 'all' || col.dataset.subject === subject;
+            const dateMatch = !date || col.dataset.date === date;
+            let statusMatch = true;
+            if (status !== 'all' && col.dataset.avg) {
+                const avg = parseFloat(col.dataset.avg);
+                statusMatch = (status === 'pass' && avg >= 50) || (status === 'fail' && avg < 50);
+            }
+            col.style.display = (subjectMatch && dateMatch && statusMatch) ? '' : 'none';
+        });
+    }
+
+    function resetFilters() {
+        document.getElementById('filterSubject').value = 'all';
+        document.getElementById('filterDate').value = '';
+        document.getElementById('filterStatus').value = 'all';
+        applyFilters();
     }
 
     // Toggle quiz active/inactive
