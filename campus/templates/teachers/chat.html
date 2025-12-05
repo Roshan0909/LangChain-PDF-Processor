@@ -3,45 +3,227 @@
 {% block title %}Chat - Teacher{% endblock %}
 
 {% block teacher_content %}
-<div class="container">
-    <h2 class="mb-4"><i class="bi bi-chat-dots"></i> Messages</h2>
-    
-    {% if conversations %}
-        <div class="row">
-            <div class="col-12">
-                <div class="card shadow-lg">
-                    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                        <h5 class="mb-0">Student Conversations</h5>
-                    </div>
-                    <div class="list-group list-group-flush">
-                        {% for conv in conversations %}
-                            <a href="{% url 'teacher_chat_with' conv.user.id %}" class="list-group-item list-group-item-action">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex align-items-center">
-                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
-                                                 style="width: 50px; height: 50px; font-size: 20px; font-weight: bold;">
-                                                {{ conv.user.username|slice:":1"|upper }}
-                                            </div>
-                                            <div class="ms-3">
-                                                <h6 class="mb-0">{{ conv.user.username }}</h6>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% if conv.unread_count > 0 %}
-                                        <span class="badge bg-danger rounded-pill">{{ conv.unread_count }}</span>
-                                    {% endif %}
-                                </div>
-                            </a>
-                        {% endfor %}
-                    </div>
+<style>
+    :root {
+        --chat-cyan: #06B6D4;
+        --chat-cyan-strong: #0891b2;
+        --chat-dark: #0f172a;
+    }
+    .chat-list-page {
+        min-height: calc(100vh - 56px);
+        background: linear-gradient(135deg, #f0fbff 0%, #e0f7fb 50%, #f8fdff 100%);
+        padding: 24px 12px 40px;
+        position: relative;
+        overflow: hidden;
+    }
+    .chat-list-page::before {
+        content: '';
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, transparent 70%);
+        top: -200px;
+        right: -200px;
+        border-radius: 50%;
+        animation: float-bubble 8s ease-in-out infinite;
+    }
+    .chat-list-page::after {
+        content: '';
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(8, 145, 178, 0.1) 0%, transparent 70%);
+        bottom: -150px;
+        left: -150px;
+        border-radius: 50%;
+        animation: float-bubble 10s ease-in-out infinite reverse;
+    }
+    @keyframes float-bubble {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(20px, -20px) scale(1.05); }
+    }
+    .chat-list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+        color: var(--chat-dark);
+        position: relative;
+        z-index: 1;
+    }
+    .chat-list-header h2 { 
+        font-weight: 800; 
+        letter-spacing: 0.2px;
+        background: linear-gradient(135deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 2px 12px rgba(6, 182, 212, 0.3);
+    }
+    .chat-card {
+        background: rgba(255,255,255,0.95);
+        border: 1px solid #e4f3f7;
+        border-radius: 18px;
+        box-shadow: 0 16px 40px rgba(6, 182, 212, 0.15), 0 0 0 1px rgba(255,255,255,0.8) inset;
+        overflow: hidden;
+        backdrop-filter: blur(12px);
+        position: relative;
+        z-index: 1;
+        animation: slide-up 0.5s ease-out;
+    }
+    @keyframes slide-up {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .chat-card .card-header {
+        background: linear-gradient(135deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%);
+        color: white;
+        padding: 16px 20px;
+        box-shadow: 0 4px 16px rgba(6, 182, 212, 0.25);
+        position: relative;
+    }
+    .chat-card .card-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%);
+        pointer-events: none;
+    }
+    .chat-card .card-header h5 { 
+        margin: 0; 
+        font-weight: 800; 
+        letter-spacing: 0.3px;
+        position: relative;
+        z-index: 1;
+    }
+    .conversation-item {
+        padding: 16px 18px;
+        border: none;
+        border-bottom: 1px solid #eef7fa;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: transparent;
+        text-decoration: none;
+        position: relative;
+    }
+    .conversation-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(135deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%);
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+    .conversation-item:last-child { border-bottom: none; }
+    .conversation-item:hover {
+        background: linear-gradient(135deg, rgba(6,182,212,0.12) 0%, rgba(8,145,178,0.12) 100%);
+        transform: translateX(8px);
+        box-shadow: 0 8px 24px rgba(6, 182, 212, 0.15);
+    }
+    .conversation-item:hover::before {
+        transform: scaleY(1);
+    }
+    .avatar-badge {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.2rem;
+        box-shadow: 0 10px 24px rgba(16,185,129,0.3);
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    .conversation-item:hover .avatar-badge {
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 12px 32px rgba(16,185,129,0.4);
+    }
+    .status-dot {
+        position: absolute;
+        right: 4px;
+        bottom: 4px;
+        width: 10px;
+        height: 10px;
+        background: #22c55e;
+        border: 2px solid white;
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px rgba(34,197,94,0.2);
+        animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+        0%, 100% { box-shadow: 0 0 0 4px rgba(34,197,94,0.2); }
+        50% { box-shadow: 0 0 0 8px rgba(34,197,94,0.1); }
+    }
+    .conversation-meta h6 { margin: 0; font-weight: 700; color: var(--chat-dark); }
+    .unread-pill {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        font-weight: 700;
+        padding: 6px 12px;
+        border-radius: 14px;
+        min-width: 32px;
+        text-align: center;
+        box-shadow: 0 6px 16px rgba(239,68,68,0.3);
+        animation: bounce-subtle 2s ease-in-out infinite;
+    }
+    @keyframes bounce-subtle {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-3px); }
+    }
+    .empty-state {
+        text-align: center;
+        color: #64748b;
+        padding: 32px;
+        background: white;
+        border: 1px dashed #cbd5e1;
+        border-radius: 12px;
+    }
+</style>
+
+<div class="chat-list-page">
+    <div class="container">
+        <div class="chat-list-header">
+            <h2 class="mb-0"><i class="bi bi-chat-dots me-2"></i> Messages</h2>
+        </div>
+        {% if conversations %}
+            <div class="chat-card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Student Conversations</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for conv in conversations %}
+                        <a href="{% url 'teacher_chat_with' conv.user.id %}" class="conversation-item list-group-item-action">
+                            <div class="avatar-badge">
+                                {{ conv.user.username|slice:":1"|upper }}
+                                <span class="status-dot"></span>
+                            </div>
+                            <div class="conversation-meta flex-grow-1">
+                                <h6>{{ conv.user.username }}</h6>
+                            </div>
+                            {% if conv.unread_count > 0 %}
+                                <span class="unread-pill">{{ conv.unread_count }}</span>
+                            {% endif %}
+                        </a>
+                    {% endfor %}
                 </div>
             </div>
-        </div>
-    {% else %}
-        <div class="text-muted text-center p-3">
-            <i class="bi bi-info-circle"></i> No students available to chat with yet.
-        </div>
-    {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <i class="bi bi-info-circle me-1"></i> No students available to chat with yet.
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
