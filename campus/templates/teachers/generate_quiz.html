@@ -3,79 +3,357 @@
 {% block title %}Generate Quiz - {{ pdf_note.title }}{% endblock %}
 
 {% block teacher_content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-lg">
-                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                    <h4 class="mb-0"><i class="bi bi-robot"></i> Generate AI Quiz</h4>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i> <strong>AI will automatically generate quiz questions from this PDF</strong>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <h5><i class="bi bi-file-pdf-fill text-danger"></i> {{ pdf_note.title }}</h5>
-                        <p class="text-muted mb-0"><i class="bi bi-book"></i> Subject: {{ pdf_note.subject.name }}</p>
-                    </div>
-                    
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label for="num_questions" class="form-label">Number of Questions</label>
-                            <select class="form-select" id="num_questions" name="num_questions" required>
-                                <option value="5">5 Questions</option>
-                                <option value="10" selected>10 Questions</option>
-                                <option value="15">15 Questions</option>
-                                <option value="20">20 Questions</option>
-                            </select>
-                            <small class="text-muted">More questions will take longer to generate</small>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="duration" class="form-label">Quiz Duration (minutes)</label>
-                            <input type="number" class="form-control" id="duration" name="duration" value="30" min="5" max="120" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="topics" class="form-label">Specific Topics (Optional)</label>
-                            <textarea class="form-control" id="topics" name="topics" rows="3" placeholder="Enter specific topics separated by commas (e.g., Functions, Classes, Inheritance, Polymorphism)&#10;&#10;Leave empty to generate questions from the entire document"></textarea>
-                            <small class="text-muted"><i class="bi bi-info-circle"></i> If topics are specified, questions will be generated only from those topics. Otherwise, questions will be generated from the entire file.</small>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="difficulty" class="form-label">Difficulty Level</label>
-                            <select class="form-select" id="difficulty" name="difficulty" required>
-                                <option value="easy">Easy - Basic concepts and simple questions</option>
-                                <option value="medium" selected>Medium - Moderate complexity</option>
-                                <option value="hard">Hard - Advanced and challenging questions</option>
-                            </select>
-                        </div>
-                        
-                        <div class="alert alert-warning">
-                            <i class="bi bi-clock"></i> <strong>Note:</strong> Quiz generation may take 30-60 seconds depending on the PDF size and number of questions.
-                        </div>
-                        
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn" style="background-color: #667eea; color: white;">
-                                <i class="bi bi-stars"></i> Generate Quiz with AI
-                            </button>
-                            <a href="{% url 'create_quiz' %}" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
+<style>
+    :root {
+        --chat-cyan: #06B6D4;
+        --chat-cyan-strong: #0891b2;
+        --chat-dark: #0f172a;
+    }
+    body { overflow: hidden !important; }
+    .main-content {
+        overflow: hidden !important;
+        height: calc(100vh - 56px);
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 2rem 1rem 1rem 1rem !important;
+        margin: 0 !important;
+        background: linear-gradient(135deg, #e0f7fb 0%, #f0fbff 50%, #f8fdff 100%);
+        position: relative;
+    }
+    .main-content::before {
+        content: '';
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, transparent 70%);
+        top: -250px;
+        left: -250px;
+        border-radius: 50%;
+        animation: float-particle 12s ease-in-out infinite;
+    }
+    .main-content::after {
+        content: '';
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(8, 145, 178, 0.1) 0%, transparent 70%);
+        bottom: -200px;
+        right: -200px;
+        border-radius: 50%;
+        animation: float-particle 10s ease-in-out infinite reverse;
+    }
+    @keyframes float-particle {
+        0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+        50% { transform: translate(30px, -30px) scale(1.1); opacity: 1; }
+    }
+    .modal-window {
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 18px;
+        box-shadow: 0 30px 80px rgba(6, 182, 212, 0.25), 0 0 0 1px rgba(6, 182, 212, 0.1) inset;
+        border: 1px solid rgba(229, 244, 248, 0.8);
+        backdrop-filter: blur(20px);
+        max-width: 600px;
+        width: 90%;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+        position: relative;
+        z-index: 10;
+        animation: scale-in 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes scale-in {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    .modal-header {
+        background: linear-gradient(135deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%);
+        color: white;
+        padding: 1.75rem;
+        border-radius: 18px 18px 0 0;
+        position: relative;
+        overflow: hidden;
+        border-bottom: none;
+    }
+    .modal-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        animation: shimmer 3s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 200%; }
+    }
+    .modal-header h4 {
+        margin: 0;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.4rem;
+        position: relative;
+        z-index: 2;
+    }
+    .modal-header i {
+        font-size: 1.6rem;
+    }
+    .modal-body {
+        padding: 1.75rem;
+    }
+    .pdf-info-box {
+        background: linear-gradient(135deg, #E0F2FE 0%, #CFFAFE 100%);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    .pdf-info-box h5 {
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .pdf-info-box i {
+        color: #dc2626;
+        font-size: 1.2rem;
+    }
+    .pdf-info-box p {
+        color: #64748B;
+        margin: 0;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-label {
+        display: block;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.6rem;
+        font-size: 0.95rem;
+    }
+    .form-label i {
+        color: var(--chat-cyan);
+        margin-right: 0.4rem;
+    }
+    .form-control, .form-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.6rem;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+        background: #f8fafc;
+    }
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: var(--chat-cyan);
+        background: white;
+        box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.15);
+    }
+    .form-text {
+        display: block;
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: #64748B;
+        font-weight: 600;
+    }
+    .alert-info {
+        background: linear-gradient(135deg, #E0F2FE 0%, #CFFAFE 100%);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        color: #0f172a;
+        border-radius: 0.8rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        font-weight: 600;
+    }
+    .alert-info i {
+        color: var(--chat-cyan);
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        margin-top: 0.2rem;
+    }
+    .alert-warning {
+        background: linear-gradient(135deg, #FEF08A 0%, #FDE047 100%);
+        border: 1px solid rgba(212, 175, 0, 0.2);
+        color: #92400e;
+        border-radius: 0.8rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        font-weight: 600;
+    }
+    .alert-warning i {
+        color: #d97706;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        margin-top: 0.2rem;
+    }
+    .modal-footer {
+        padding: 1.75rem;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        gap: 1rem;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%);
+        color: white;
+        border: none;
+        padding: 0.85rem 2rem;
+        font-weight: 700;
+        border-radius: 0.6rem;
+        transition: all 0.35s;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        font-size: 0.95rem;
+    }
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 28px rgba(6, 182, 212, 0.4);
+    }
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .btn-secondary {
+        background: #f1f5f9;
+        color: #475569;
+        border: 2px solid #e2e8f0;
+        padding: 0.85rem 2rem;
+        font-weight: 700;
+        border-radius: 0.6rem;
+        transition: all 0.3s;
+        cursor: pointer;
+        text-decoration: none;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        font-size: 0.95rem;
+    }
+    .btn-secondary:hover {
+        background: #e2e8f0;
+        color: #334155;
+        border-color: #cbd5e1;
+        transform: translateY(-2px);
+    }
+</style>
+
+<div class="modal-window">
+    <div class="modal-header">
+        <h4>
+            <i class="bi bi-stars"></i>
+            Generate AI Quiz
+        </h4>
+    </div>
+    <div class="modal-body">
+        <div class="alert-info">
+            <i class="bi bi-info-circle"></i>
+            <span>AI will automatically generate quiz questions from this PDF</span>
         </div>
+        
+        <div class="pdf-info-box">
+            <h5><i class="bi bi-file-pdf-fill"></i> {{ pdf_note.title }}</h5>
+            <p><i class="bi bi-book"></i> Subject: {{ pdf_note.subject.name }}</p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="num_questions" class="form-label">
+                    <i class="bi bi-list-check"></i>Number of Questions
+                </label>
+                <select class="form-select" id="num_questions" name="num_questions" required>
+                    <option value="5">5 Questions</option>
+                    <option value="10" selected>10 Questions</option>
+                    <option value="15">15 Questions</option>
+                    <option value="20">20 Questions</option>
+                </select>
+                <small class="form-text">More questions will take longer to generate</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="duration" class="form-label">
+                    <i class="bi bi-clock"></i>Quiz Duration (minutes)
+                </label>
+                <input type="number" class="form-control" id="duration" name="duration" value="30" min="5" max="120" required>
+                <small class="form-text">Set the time limit for students to complete the quiz</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="topics" class="form-label">
+                    <i class="bi bi-tag"></i>Specific Topics (Optional)
+                </label>
+                <textarea class="form-control" id="topics" name="topics" rows="3" placeholder="Enter specific topics separated by commas&#10;e.g., Functions, Classes, Inheritance&#10;&#10;Leave empty to generate from entire document"></textarea>
+                <small class="form-text">If topics are specified, questions will focus on those areas only</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="difficulty" class="form-label">
+                    <i class="bi bi-lightning"></i>Difficulty Level
+                </label>
+                <select class="form-select" id="difficulty" name="difficulty" required>
+                    <option value="easy">Easy - Basic concepts and simple questions</option>
+                    <option value="medium" selected>Medium - Moderate complexity</option>
+                    <option value="hard">Hard - Advanced and challenging questions</option>
+                </select>
+            </div>
+            
+            <div class="alert-warning">
+                <i class="bi bi-clock-history"></i>
+                <span><strong>Note:</strong> Quiz generation may take 30-60 seconds depending on PDF size and question count.</span>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <form method="post" style="display: contents;">
+            {% csrf_token %}
+            <input type="hidden" name="num_questions" id="hidden_num_questions">
+            <input type="hidden" name="duration" id="hidden_duration">
+            <input type="hidden" name="topics" id="hidden_topics">
+            <input type="hidden" name="difficulty" id="hidden_difficulty">
+            <button type="submit" class="btn-primary" id="generateBtn" onclick="prepareSubmit(event)">
+                <i class="bi bi-stars"></i>
+                Generate Quiz
+            </button>
+        </form>
+        <a href="{% url 'create_quiz' %}" class="btn-secondary">
+            <i class="bi bi-x-circle"></i>
+            Cancel
+        </a>
     </div>
 </div>
 
 <script>
-    document.querySelector('form').addEventListener('submit', function() {
-        const submitBtn = this.querySelector('button[type="submit"]');
+    function prepareSubmit(e) {
+        document.getElementById('hidden_num_questions').value = document.getElementById('num_questions').value;
+        document.getElementById('hidden_duration').value = document.getElementById('duration').value;
+        document.getElementById('hidden_topics').value = document.getElementById('topics').value;
+        document.getElementById('hidden_difficulty').value = document.getElementById('difficulty').value;
+        
+        const submitBtn = document.getElementById('generateBtn');
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating Quiz...';
-    });
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+    }
 </script>
 {% endblock %}

@@ -3,42 +3,175 @@
 {% block title %}Create Quiz - Teacher{% endblock %}
 
 {% block teacher_content %}
-<div class="container">
-    <h2 class="mb-4">Create AI-Generated Quiz</h2>
-    <p class="lead text-muted mb-4">Select a subject and PDF to automatically generate a quiz using AI</p>
+<style>
+    :root {
+        --chat-cyan: #06B6D4;
+        --chat-cyan-strong: #0891b2;
+        --chat-dark: #0f172a;
+    }
+    body { overflow: hidden !important; }
+    .main-content {
+        overflow: auto;
+        height: calc(100vh - 56px);
+        padding: 2rem 1rem;
+        background: linear-gradient(135deg, #e0f7fb 0%, #f0fbff 50%, #f8fdff 100%);
+    }
+    .page-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .page-title i {
+        color: var(--chat-cyan);
+        font-size: 2rem;
+    }
+    .page-subtitle {
+        color: #64748B;
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 2rem;
+    }
+    .subject-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 16px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid var(--chat-cyan);
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .subject-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 10px 28px rgba(6, 182, 212, 0.18);
+    }
+    .subject-header {
+        background: linear-gradient(135deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%);
+        color: white;
+        padding: 1.25rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .subject-header i {
+        font-size: 1.4rem;
+    }
+    .subject-header h4 {
+        margin: 0;
+        font-size: 1.1rem;
+    }
+    .pdf-item {
+        padding: 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s;
+    }
+    .pdf-item:last-child {
+        border-bottom: none;
+    }
+    .pdf-item:hover {
+        background: #f8fdff;
+    }
+    .pdf-info h6 {
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .pdf-info i {
+        color: #dc2626;
+    }
+    .pdf-info small {
+        color: #64748B;
+        font-weight: 600;
+    }
+    .btn-generate {
+        background: linear-gradient(135deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%);
+        color: white;
+        border: none;
+        padding: 0.65rem 1.5rem;
+        font-weight: 700;
+        border-radius: 0.6rem;
+        transition: all 0.3s;
+        white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+    }
+    .btn-generate:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(6, 182, 212, 0.4);
+        color: white;
+    }
+    .empty-state {
+        background: linear-gradient(135deg, #E0F2FE 0%, #CFFAFE 100%);
+        border: 2px solid rgba(6, 182, 212, 0.3);
+        border-radius: 1rem;
+        padding: 3rem 2rem;
+        text-align: center;
+    }
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--chat-cyan);
+        margin-bottom: 1rem;
+        opacity: 0.8;
+    }
+    .empty-state p {
+        color: #0f172a;
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    .container-narrow {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+</style>
+
+<div class="container-narrow">
+    <h2 class="page-title">
+        <i class="bi bi-robot"></i>
+        Create AI-Generated Quiz
+    </h2>
+    <p class="page-subtitle">Select a PDF to automatically generate quiz questions using AI</p>
     
     {% if subjects %}
         {% for subject in subjects %}
             {% if subject.notes.all %}
-                <div class="card shadow-lg mb-4">
-                    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                        <h4 class="mb-0"><i class="bi bi-book"></i> {{ subject.name }}</h4>
+                <div class="subject-card">
+                    <div class="subject-header">
+                        <i class="bi bi-book"></i>
+                        <h4>{{ subject.name }}</h4>
                     </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            {% for note in subject.notes.all %}
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1"><i class="bi bi-file-pdf-fill text-danger"></i> {{ note.title }}</h6>
-                                            <small class="text-muted">Uploaded on {{ note.created_at|date:"M d, Y" }}</small>
-                                        </div>
-                                        <div>
-                                            <a href="{% url 'generate_quiz' note.id %}" class="btn btn-sm" style="background-color: #667eea; color: white;">
-                                                <i class="bi bi-robot"></i> Generate Quiz
-                                            </a>
-                                        </div>
-                                    </div>
+                    <div>
+                        {% for note in subject.notes.all %}
+                            <div class="pdf-item">
+                                <div class="pdf-info">
+                                    <h6>
+                                        <i class="bi bi-file-pdf-fill"></i> {{ note.title }}
+                                    </h6>
+                                    <small><i class="bi bi-calendar"></i> Uploaded on {{ note.created_at|date:"M d, Y" }}</small>
                                 </div>
-                            {% endfor %}
-                        </div>
+                                <a href="{% url 'generate_quiz' note.id %}" class="btn btn-generate">
+                                    <i class="bi bi-stars"></i> Generate Quiz
+                                </a>
+                            </div>
+                        {% endfor %}
                     </div>
                 </div>
             {% endif %}
         {% endfor %}
     {% else %}
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> No subjects or PDFs available. Please create a subject and upload PDFs first.
+        <div class="empty-state">
+            <i class="bi bi-cloud-upload"></i>
+            <p>No subjects or PDFs available. Please create a subject and upload PDFs first.</p>
         </div>
     {% endif %}
 </div>
