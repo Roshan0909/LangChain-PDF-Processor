@@ -30,6 +30,8 @@
         [class*="btn"] {
             text-decoration: none !important;
         }
+
+        body {
             background: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
             min-height: 100vh;
             padding-top: 56px;
@@ -106,7 +108,7 @@
             border-radius: 0.75rem;
             box-shadow: 0 12px 40px rgba(6, 182, 212, 0.3);
             min-width: 200px;
-            z-index: 1051;
+            z-index: 10000;
             display: none;
             overflow: hidden;
         }
@@ -484,7 +486,7 @@
     <!-- Sidebar Overlay for Mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
     
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <button class="hamburger-btn" onclick="toggleSidebar()" type="button">
                 <i class="bi bi-list"></i>
