@@ -446,28 +446,28 @@
 <!-- Delete Subject Modal -->
 <div class="modal fade" id="deleteSubjectModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Delete Subject</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-content" style="background: rgba(15,23,42,0.95); border: 1px solid #e5f4f8; border-radius: 16px; box-shadow: 0 20px 60px rgba(6, 182, 212, 0.15);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border: none; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title" style="color: white; font-weight: 800;"><i class="bi bi-exclamation-triangle me-2"></i>Delete Subject</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="filter: brightness(1.2);"></button>
             </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete <strong>{{ subject.name }}</strong>?</p>
-                <p class="text-danger mb-0">
+            <div class="modal-body" style="color: #f1f5f9; padding: 24px;">
+                <p style="margin-bottom: 16px; color: #f1f5f9;">Are you sure you want to delete <strong style="color: #fecaca;">{{ subject.name }}</strong>?</p>
+                <p style="margin-bottom: 12px; color: #fee2e2;">
                     <i class="bi bi-warning me-1"></i>This will permanently delete:
                 </p>
-                <ul class="text-danger">
+                <ul style="color: #fee2e2; margin-bottom: 16px;">
                     <li>All {{ notes.count }} document(s)</li>
                     <li>All quizzes and questions</li>
                     <li>All student progress data</li>
                 </ul>
-                <p class="text-danger"><strong>This action cannot be undone!</strong></p>
+                <p style="color: #fecaca; font-weight: 700; margin: 0;"><strong><i class="bi bi-exclamation-circle me-1"></i>This action cannot be undone!</strong></p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <div class="modal-footer" style="border-top: 1px solid rgba(6, 182, 212, 0.2); background: transparent;">
+                <button type="button" class="btn" style="background: #334155; color: white; border: none; font-weight: 700; border-radius: 8px;" data-bs-dismiss="modal">Cancel</button>
                 <form method="post" action="{% url 'delete_subject' subject.id %}" style="display: inline;">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">
+                    <button type="submit" class="btn" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; border: none; font-weight: 700; border-radius: 8px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
                         <i class="bi bi-trash me-1"></i>Yes, Delete Subject
                     </button>
                 </form>
@@ -479,20 +479,20 @@
 <!-- Delete Document Modal -->
 <div class="modal fade" id="deleteDocumentModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Delete Document</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-content" style="background: rgba(15,23,42,0.95); border: 1px solid #e5f4f8; border-radius: 16px; box-shadow: 0 20px 60px rgba(6, 182, 212, 0.15);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border: none; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title" style="color: white; font-weight: 800;"><i class="bi bi-exclamation-triangle me-2"></i>Delete Document</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="filter: brightness(1.2);"></button>
             </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete <strong id="documentTitle"></strong>?</p>
-                <p class="text-danger"><i class="bi bi-warning me-1"></i>This will permanently delete the document and any associated quizzes.</p>
+            <div class="modal-body" style="color: #f1f5f9; padding: 24px;">
+                <p style="margin-bottom: 16px; color: #f1f5f9;">Are you sure you want to delete <strong id="documentTitle" style="color: #fecaca;"></strong>?</p>
+                <p style="color: #fee2e2;"><i class="bi bi-warning me-1"></i>This will permanently delete the document and any associated quizzes.</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <div class="modal-footer" style="border-top: 1px solid rgba(6, 182, 212, 0.2); background: transparent;">
+                <button type="button" class="btn" style="background: #334155; color: white; border: none; font-weight: 700; border-radius: 8px;" data-bs-dismiss="modal">Cancel</button>
                 <form method="post" id="deleteDocumentForm" style="display: inline;">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">
+                    <button type="submit" class="btn" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; border: none; font-weight: 700; border-radius: 8px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
                         <i class="bi bi-trash me-1"></i>Yes, Delete Document
                     </button>
                 </form>
