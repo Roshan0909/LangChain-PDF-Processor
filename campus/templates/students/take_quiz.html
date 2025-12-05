@@ -1272,7 +1272,11 @@
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 },
-                body: JSON.stringify({ answers: answers })
+                body: JSON.stringify({ 
+                    answers: answers,
+                    tab_switch_count: tabSwitchCount,
+                    fullscreen_exit_count: fullscreenExitCount
+                })
             });
             
             const data = await response.json();

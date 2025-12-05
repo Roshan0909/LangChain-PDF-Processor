@@ -354,6 +354,10 @@ def submit_quiz(request, quiz_id):
             
             question_details.append(question_detail)
         
+        # Get proctoring counts from request
+        tab_switch_count = data.get('tab_switch_count', 0)
+        fullscreen_exit_count = data.get('fullscreen_exit_count', 0)
+        
         # Update existing attempt or create new one
         attempt, created = QuizAttempt.objects.update_or_create(
             quiz=quiz,
@@ -363,7 +367,9 @@ def submit_quiz(request, quiz_id):
                 'completed_at': timezone.now(),
                 'score': score,
                 'total_points': total_questions,
-                'answers': answers
+                'answers': answers,
+                'tab_switch_count': tab_switch_count,
+                'fullscreen_exit_count': fullscreen_exit_count
             }
         )
         
@@ -374,6 +380,8 @@ def submit_quiz(request, quiz_id):
             attempt.score = score
             attempt.total_points = total_questions
             attempt.answers = answers
+            attempt.tab_switch_count = tab_switch_count
+            attempt.fullscreen_exit_count = fullscreen_exit_count
             attempt.save()
         
         percentage = (score / total_questions * 100) if total_questions > 0 else 0
