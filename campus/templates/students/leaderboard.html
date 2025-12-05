@@ -3,6 +3,9 @@
 {% block title %}Leaderboard - Student Campus{% endblock %}
 
 {% block student_content %}
+<!-- Lottie Animation Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+
 <div class="leaderboard-container">
     
     <!-- Floating Background Elements -->
@@ -47,16 +50,11 @@
         <div class="podium-stage-3d">
             <!-- 2nd Place - Silver -->
             <div class="podium-position-3d second-place">
-                <div class="trophy-3d silver-trophy">
-                    <div class="trophy-cup">
-                        <div class="trophy-handles">
-                            <div class="handle left"></div>
-                            <div class="handle right"></div>
-                        </div>
-                        <div class="trophy-body silver-gradient">
-                            <div class="trophy-shine"></div>
-                            <div class="trophy-number">2</div>
-                        </div>
+                <div class="lottie-award-container silver-award">
+                    <div id="silver-trophy-animation" class="lottie-animation"></div>
+                    <div class="award-badge silver-badge">
+                        <span class="badge-rank">2nd</span>
+                        <span class="badge-label">Place</span>
                     </div>
                 </div>
                 <div class="pedestal-3d silver-pedestal">
@@ -72,17 +70,12 @@
             
             <!-- 1st Place - Gold -->
             <div class="podium-position-3d first-place">
-                <div class="trophy-3d gold-trophy">
-                    <div class="trophy-cup champion-cup">
-                        <div class="trophy-handles">
-                            <div class="handle left"></div>
-                            <div class="handle right"></div>
-                        </div>
-                        <div class="trophy-body gold-gradient">
-                            <div class="trophy-shine"></div>
-                            <div class="trophy-crown">👑</div>
-                            <div class="trophy-number">1</div>
-                        </div>
+                <div class="lottie-award-container gold-award champion-award">
+                    <div class="champion-crown">👑</div>
+                    <div id="gold-trophy-animation" class="lottie-animation champion-animation"></div>
+                    <div class="award-badge gold-badge">
+                        <span class="badge-rank">1st</span>
+                        <span class="badge-label">Champion</span>
                     </div>
                 </div>
                 <div class="pedestal-3d gold-pedestal">
@@ -98,16 +91,11 @@
             
             <!-- 3rd Place - Bronze -->
             <div class="podium-position-3d third-place">
-                <div class="trophy-3d bronze-trophy">
-                    <div class="trophy-cup">
-                        <div class="trophy-handles">
-                            <div class="handle left"></div>
-                            <div class="handle right"></div>
-                        </div>
-                        <div class="trophy-body bronze-gradient">
-                            <div class="trophy-shine"></div>
-                            <div class="trophy-number">3</div>
-                        </div>
+                <div class="lottie-award-container bronze-award">
+                    <div id="bronze-trophy-animation" class="lottie-animation"></div>
+                    <div class="award-badge bronze-badge">
+                        <span class="badge-rank">3rd</span>
+                        <span class="badge-label">Place</span>
                     </div>
                 </div>
                 <div class="pedestal-3d bronze-pedestal">
@@ -222,7 +210,7 @@
         position: relative;
         min-height: 100vh;
         padding: 2rem;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
         overflow: hidden;
     }
     
@@ -247,7 +235,7 @@
     .shape-1 {
         width: 200px;
         height: 200px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        background: linear-gradient(135deg, #06B6D4, #0891b2);
         top: 10%;
         left: 10%;
         animation-delay: 0s;
@@ -265,7 +253,7 @@
     .shape-3 {
         width: 100px;
         height: 100px;
-        background: linear-gradient(135deg, #00D9FF, #667eea);
+        background: linear-gradient(135deg, #67e8f9, #06B6D4);
         bottom: 20%;
         left: 20%;
         animation-delay: 5s;
@@ -274,7 +262,7 @@
     .shape-4 {
         width: 180px;
         height: 180px;
-        background: linear-gradient(135deg, #FF6584, #FFD700);
+        background: linear-gradient(135deg, #a5f3fc, #FFD700);
         top: 30%;
         right: 25%;
         animation-delay: 7s;
@@ -283,7 +271,7 @@
     .shape-5 {
         width: 120px;
         height: 120px;
-        background: linear-gradient(135deg, #764ba2, #667eea);
+        background: linear-gradient(135deg, #0891b2, #06B6D4);
         bottom: 40%;
         right: 10%;
         animation-delay: 10s;
@@ -319,18 +307,18 @@
     .page-title {
         font-size: 3.5rem;
         font-weight: 800;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #FFD700 100%);
+        background: linear-gradient(135deg, #06B6D4 0%, #0891b2 50%, #FFD700 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
         margin-bottom: 0.5rem;
-        text-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        text-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
         animation: title-glow 3s ease-in-out infinite;
     }
     
     @keyframes title-glow {
         0%, 100% {
-            filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.5));
+            filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.5));
         }
         50% {
             filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.7));
@@ -354,7 +342,7 @@
     
     .subtitle {
         font-size: 1.3rem;
-        color: #667eea;
+        color: #0891b2;
         font-weight: 600;
     }
     
@@ -377,7 +365,7 @@
     }
     
     .insights-content h3 {
-        color: #667eea;
+        color: #06B6D4;
         margin-bottom: 0.5rem;
         font-weight: 700;
     }
@@ -405,21 +393,21 @@
     .winners-podium {
         position: relative;
         z-index: 1;
-        max-width: 1100px;
-        margin: 2rem auto;
+        max-width: 800px;
+        margin: 1.2rem auto;
         background: white;
-        border-radius: 25px;
-        padding: 2.5rem 2rem 1rem;
+        border-radius: 18px;
+        padding: 1.2rem 1.2rem 0.6rem;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     }
     
     .podium-header {
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
     }
     
     .podium-header h2 {
-        font-size: 2rem;
+        font-size: 1.3rem;
         color: #2c3e50;
         font-weight: 700;
     }
@@ -428,9 +416,9 @@
         display: flex;
         justify-content: center;
         align-items: flex-end;
-        gap: 2rem;
+        gap: 1.1rem;
         perspective: 1000px;
-        padding-bottom: 1rem;
+        padding-bottom: 0.6rem;
     }
     
     .podium-position-3d {
@@ -460,131 +448,325 @@
         animation-delay: 0.3s;
     }
     
-    /* 3D Trophy Cup */
-    .trophy-3d {
+    /* 3D Animated Award Stars */
+    .award-3d {
         position: relative;
-        margin-bottom: -20px;
+        margin-bottom: -30px;
         z-index: 2;
-        animation: trophy-float 3s ease-in-out infinite;
+        animation: award-float 4s ease-in-out infinite;
     }
     
-    @keyframes trophy-float {
+    @keyframes award-float {
         0%, 100% {
-            transform: translateY(0) rotateY(0deg);
+            transform: translateY(0) rotate(0deg) scale(1);
         }
         50% {
-            transform: translateY(-15px) rotateY(10deg);
+            transform: translateY(-20px) rotate(5deg) scale(1.05);
         }
     }
     
-    .trophy-cup {
-        position: relative;
-        width: 100px;
+    .champion-award {
+        animation: champion-float 3s ease-in-out infinite;
+    }
+    
+    @keyframes champion-float {
+        0%, 100% {
+            transform: translateY(0) rotate(0deg) scale(1.1);
+        }
+        50% {
+            transform: translateY(-25px) rotate(-5deg) scale(1.15);
+        }
+    }
+    
+    /* Crown Float Animation for Champion */
+    .award-crown-float {
+        position: absolute;
+        top: -60px;
+        left: 50%;
+        transform: translateX(-50%);
+        animation: crown-float 2s ease-in-out infinite;
+        z-index: 3;
+    }
+    
+    @keyframes crown-float {
+        0%, 100% {
+            transform: translateX(-50%) translateY(0) rotate(-10deg);
+        }
+        50% {
+            transform: translateX(-50%) translateY(-15px) rotate(10deg);
+        }
+    }
+    
+    .crown-icon {
+        font-size: 3rem;
+        filter: drop-shadow(0 5px 15px rgba(255, 215, 0, 0.6));
+        animation: crown-glow 2s ease-in-out infinite;
+    }
+    
+    @keyframes crown-glow {
+        0%, 100% {
+            filter: drop-shadow(0 5px 15px rgba(255, 215, 0, 0.6));
+        }
+        50% {
+            filter: drop-shadow(0 8px 25px rgba(255, 215, 0, 0.9));
+        }
+    }
+    
+    .crown-sparkles {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 120px;
         height: 120px;
+    }
+    
+    .crown-sparkles .sparkle {
+        position: absolute;
+        font-size: 1.2rem;
+        animation: sparkle-orbit 3s linear infinite;
+    }
+    
+    .crown-sparkles .sparkle:nth-child(1) {
+        animation-delay: 0s;
+    }
+    
+    .crown-sparkles .sparkle:nth-child(2) {
+        animation-delay: 1s;
+    }
+    
+    .crown-sparkles .sparkle:nth-child(3) {
+        animation-delay: 2s;
+    }
+    
+    @keyframes sparkle-orbit {
+        0% {
+            transform: translate(-50%, -50%) rotate(0deg) translateX(40px) rotate(0deg);
+            opacity: 0;
+        }
+        10% {
+            opacity: 1;
+        }
+        90% {
+            opacity: 1;
+        }
+        100% {
+            transform: translate(-50%, -50%) rotate(360deg) translateX(40px) rotate(-360deg);
+            opacity: 0;
+        }
+    }
+    
+    /* Star Container */
+    .award-star {
+        position: relative;
+        width: 140px;
+        height: 140px;
         display: flex;
         justify-content: center;
         align-items: center;
-        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+        filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.3));
     }
     
-    .champion-cup {
-        width: 120px;
-        height: 140px;
+    .champion-star {
+        width: 170px;
+        height: 170px;
     }
     
-    .trophy-handles {
+    /* Rotating Star Rays */
+    .star-rays {
         position: absolute;
         width: 100%;
-        height: 80px;
-        top: 20px;
+        height: 100%;
+        animation: rotate-rays 8s linear infinite;
     }
     
-    .handle {
+    .star-rays::before,
+    .star-rays::after {
+        content: '';
         position: absolute;
-        width: 30px;
-        height: 60px;
-        border: 5px solid;
-        border-radius: 50%;
-        opacity: 0.6;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
     }
     
-    .handle.left {
-        left: -15px;
-        border-right: none;
-        border-color: rgba(255, 255, 255, 0.4);
+    .star-rays::after {
+        transform: translate(-50%, -50%) rotate(90deg);
     }
     
-    .handle.right {
-        right: -15px;
-        border-left: none;
-        border-color: rgba(255, 255, 255, 0.4);
+    .champion-rays::before,
+    .champion-rays::after {
+        height: 5px;
+        background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.9), transparent);
     }
     
-    .champion-cup .handle {
-        width: 35px;
-        height: 70px;
+    @keyframes rotate-rays {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
     }
     
-    .trophy-body {
-        width: 80px;
-        height: 100px;
-        background: linear-gradient(135deg, #FFD700, #FFA500);
-        border-radius: 10px 10px 40% 40%;
+    /* Star Inner Shape */
+    .star-inner {
         position: relative;
+        width: 100px;
+        height: 100px;
+        clip-path: polygon(
+            50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 
+            50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%
+        );
         display: flex;
-        flex-direction: column;
-        align-items: center;
         justify-content: center;
-        box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.2), 
-                    inset 0 10px 20px rgba(255, 255, 255, 0.3);
+        align-items: center;
+        box-shadow: inset 0 5px 20px rgba(255, 255, 255, 0.4),
+                    inset 0 -5px 20px rgba(0, 0, 0, 0.2);
     }
     
-    .champion-cup .trophy-body {
-        width: 100px;
+    .champion-star .star-inner {
+        width: 120px;
         height: 120px;
     }
     
-    .trophy-shine {
+    /* Award Sparkles */
+    .award-sparkle {
         position: absolute;
+        font-size: 1.5rem;
+        animation: sparkle-twinkle 1.5s ease-in-out infinite;
+    }
+    
+    .sparkle-1 {
         top: 10%;
+        right: 10%;
+        animation-delay: 0s;
+    }
+    
+    .sparkle-2 {
+        bottom: 10%;
+        left: 10%;
+        animation-delay: 0.5s;
+    }
+    
+    .sparkle-3 {
+        top: 20%;
         left: 15%;
-        width: 30%;
-        height: 40%;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), transparent);
-        border-radius: 50%;
-        filter: blur(8px);
+        animation-delay: 1s;
     }
     
-    .trophy-crown {
-        position: absolute;
-        top: -15px;
-        font-size: 2rem;
-        animation: crown-bounce 2s ease-in-out infinite;
-    }
-    
-    @keyframes crown-bounce {
+    @keyframes sparkle-twinkle {
         0%, 100% {
-            transform: translateY(0) rotate(-5deg);
+            opacity: 0.3;
+            transform: scale(0.8) rotate(0deg);
         }
         50% {
-            transform: translateY(-8px) rotate(5deg);
+            opacity: 1;
+            transform: scale(1.2) rotate(180deg);
         }
     }
     
-    .trophy-number {
-        font-size: 2.5rem;
+    /* Medal in Center */
+    .award-medal {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .champion-medal {
+        transform: scale(1.15);
+    }
+    
+    .medal-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        border: 3px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        animation: medal-pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes medal-pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+    }
+    
+    .medal-shine {
+        position: absolute;
+        top: 15%;
+        left: 20%;
+        width: 40%;
+        height: 40%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.8), transparent);
+        border-radius: 50%;
+        filter: blur(3px);
+    }
+    
+    .medal-number {
+        font-size: 2rem;
         font-weight: 900;
         color: white;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
         z-index: 1;
     }
     
-    .champion-cup .trophy-number {
-        font-size: 3rem;
-        margin-top: 10px;
+    /* Medal Ribbon */
+    .medal-ribbon {
+        position: absolute;
+        top: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 60px;
+        display: flex;
+        gap: 4px;
     }
     
-    /* Trophy Color Gradients */
+    .ribbon-left,
+    .ribbon-right {
+        width: 18px;
+        height: 100%;
+        position: relative;
+        animation: ribbon-wave 2s ease-in-out infinite;
+    }
+    
+    .ribbon-left::after,
+    .ribbon-right::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        width: 0;
+        height: 0;
+        border-style: solid;
+    }
+    
+    .ribbon-left {
+        animation-delay: 0s;
+    }
+    
+    .ribbon-right {
+        animation-delay: 0.3s;
+    }
+    
+    @keyframes ribbon-wave {
+        0%, 100% {
+            transform: translateY(0) rotate(0deg);
+        }
+        50% {
+            transform: translateY(5px) rotate(3deg);
+        }
+    }
+    
+    /* Color Gradients */
     .gold-gradient {
         background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFED4E 100%) !important;
     }
@@ -597,10 +779,67 @@
         background: linear-gradient(135deg, #E6A873 0%, #CD7F32 50%, #F4A460 100%) !important;
     }
     
+    .gold-medal-bg {
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+    }
+    
+    .silver-medal-bg {
+        background: linear-gradient(135deg, #E8E8E8, #C0C0C0);
+    }
+    
+    .bronze-medal-bg {
+        background: linear-gradient(135deg, #E6A873, #CD7F32);
+    }
+    
+    .gold-ribbon .ribbon-left,
+    .gold-ribbon .ribbon-right {
+        background: linear-gradient(180deg, #FFD700, #FFA500);
+    }
+    
+    .gold-ribbon .ribbon-left::after {
+        border-width: 0 9px 15px 9px;
+        border-color: transparent transparent #CC8400 transparent;
+    }
+    
+    .gold-ribbon .ribbon-right::after {
+        border-width: 0 9px 15px 9px;
+        border-color: transparent transparent #CC8400 transparent;
+    }
+    
+    .silver-ribbon .ribbon-left,
+    .silver-ribbon .ribbon-right {
+        background: linear-gradient(180deg, #E8E8E8, #C0C0C0);
+    }
+    
+    .silver-ribbon .ribbon-left::after {
+        border-width: 0 9px 15px 9px;
+        border-color: transparent transparent #999999 transparent;
+    }
+    
+    .silver-ribbon .ribbon-right::after {
+        border-width: 0 9px 15px 9px;
+        border-color: transparent transparent #999999 transparent;
+    }
+    
+    .bronze-ribbon .ribbon-left,
+    .bronze-ribbon .ribbon-right {
+        background: linear-gradient(180deg, #E6A873, #CD7F32);
+    }
+    
+    .bronze-ribbon .ribbon-left::after {
+        border-width: 0 9px 15px 9px;
+        border-color: transparent transparent #A0522D transparent;
+    }
+    
+    .bronze-ribbon .ribbon-right::after {
+        border-width: 0 9px 15px 9px;
+        border-color: transparent transparent #A0522D transparent;
+    }
+    
     /* 3D Pedestals */
     .pedestal-3d {
-        width: 180px;
-        border-radius: 15px 15px 0 0;
+        width: 140px;
+        border-radius: 12px 12px 0 0;
         position: relative;
         transition: all 0.3s ease;
     }
@@ -617,7 +856,7 @@
     }
     
     .pedestal-body {
-        padding: 1.5rem 1rem;
+        padding: 0.8rem 0.7rem;
         border-radius: 0 0 10px 10px;
         position: relative;
         overflow: hidden;
@@ -636,21 +875,21 @@
     
     /* Pedestal Colors & Heights */
     .gold-pedestal .pedestal-body {
-        background: linear-gradient(135deg, #7CFC00 0%, #32CD32 100%);
-        height: 200px;
-        box-shadow: 0 10px 30px rgba(50, 205, 50, 0.4);
+        background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
+        height: 150px;
+        box-shadow: 0 10px 30px rgba(6, 182, 212, 0.4);
     }
     
     .silver-pedestal .pedestal-body {
-        background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%);
-        height: 160px;
-        box-shadow: 0 10px 30px rgba(255, 105, 180, 0.3);
+        background: linear-gradient(135deg, #67e8f9 0%, #22d3ee 100%);
+        height: 120px;
+        box-shadow: 0 10px 30px rgba(34, 211, 238, 0.3);
     }
     
     .bronze-pedestal .pedestal-body {
-        background: linear-gradient(135deg, #FF8C94 0%, #FF6B6B 100%);
-        height: 130px;
-        box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+        background: linear-gradient(135deg, #a5f3fc 0%, #67e8f9 100%);
+        height: 95px;
+        box-shadow: 0 10px 30px rgba(103, 232, 249, 0.3);
     }
     
     .student-info-3d {
@@ -660,43 +899,43 @@
     }
     
     .student-info-3d h3 {
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         color: white;
         font-weight: 700;
-        margin-bottom: 0.8rem;
+        margin-bottom: 0.6rem;
         text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         word-break: break-word;
     }
     
     .gold-pedestal h3 {
-        font-size: 1.3rem;
+        font-size: 1.1rem;
     }
     
     .score-3d {
-        font-size: 2rem;
+        font-size: 1.4rem;
         font-weight: 900;
         color: white;
         text-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
         background: rgba(255, 255, 255, 0.2);
-        padding: 0.5rem 1rem;
-        border-radius: 15px;
+        padding: 0.35rem 0.7rem;
+        border-radius: 10px;
         display: inline-block;
         backdrop-filter: blur(10px);
     }
     
     .gold-pedestal .score-3d {
-        font-size: 2.3rem;
+        font-size: 1.6rem;
     }
     
     /* Your Stats Bar - Compact */
     .your-stats-bar {
         position: relative;
         z-index: 1;
-        max-width: 1200px;
-        margin: 2rem auto;
+        max-width: 800px;
+        margin: 1.2rem auto;
         background: white;
-        border-radius: 20px;
-        padding: 1.5rem;
+        border-radius: 18px;
+        padding: 1rem;
         box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
     }
     
@@ -705,8 +944,8 @@
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: 1rem;
+        gap: 0.8rem;
+        margin-bottom: 0.8rem;
     }
     
     .your-position {
@@ -716,13 +955,13 @@
     }
     
     .position-icon {
-        width: 50px;
-        height: 50px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
+        font-size: 1.2rem;
         color: white;
         box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
     }
@@ -734,12 +973,13 @@
     
     .position-text strong {
         font-size: 1.1rem;
-        color: #2c3e50;
+        color: #0b3b57;
     }
     
     .position-text span {
         font-size: 0.9rem;
         font-weight: 600;
+        color: #0ea5e9;
     }
     
     .quick-stats {
@@ -747,7 +987,7 @@
         gap: 1.5rem;
         font-size: 1rem;
         font-weight: 600;
-        color: #667eea;
+        color: #0c4a6e;
     }
     
     .quick-stats span {
@@ -758,41 +998,43 @@
     .leaderboard-list {
         position: relative;
         z-index: 1;
-        max-width: 1200px;
-        margin: 2rem auto;
+        max-width: 800px;
+        margin: 1.2rem auto;
     }
     
     .list-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 1.5rem;
-        padding: 0 1rem;
+        margin-bottom: 0.8rem;
+        padding: 0 0.6rem;
     }
     
     .list-header h2 {
-        font-size: 2rem;
+        font-size: 1.3rem;
         color: #2c3e50;
         font-weight: 700;
     }
     
     .total-count {
-        background: #667eea;
+        background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
         color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
+        padding: 0.35rem 0.7rem;
+        border-radius: 18px;
         font-weight: 600;
+        font-size: 0.85rem;
+        box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
     }
     
     /* Leaderboard Item */
     .leaderboard-item {
         background: white;
-        border-radius: 20px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
+        border-radius: 12px;
+        padding: 0.8rem;
+        margin-bottom: 0.6rem;
         display: flex;
         align-items: center;
-        gap: 1.5rem;
+        gap: 0.8rem;
         box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
         transition: all 0.3s ease;
         animation: slide-in 0.5s ease forwards;
@@ -809,7 +1051,7 @@
     
     .leaderboard-item:hover {
         transform: translateX(10px) scale(1.02);
-        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.2);
+        box-shadow: 0 10px 40px rgba(6, 182, 212, 0.2);
     }
     
     .top-three {
@@ -818,16 +1060,17 @@
     }
     
     .current-user {
-        border: 3px solid #667eea;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        border: 3px solid #06B6D4;
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, rgba(8, 145, 178, 0.05) 100%);
+        box-shadow: 0 5px 20px rgba(6, 182, 212, 0.15);
     }
     
     /* Rank Badge */
     .item-rank {
         flex-shrink: 0;
-        width: 80px;
-        height: 80px;
-        border-radius: 20px;
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -838,29 +1081,29 @@
     }
     
     .rank-icon {
-        font-size: 2rem;
+        font-size: 1.3rem;
     }
     
     .rank-num {
-        font-size: 1.2rem;
+        font-size: 0.9rem;
     }
     
     /* Student Info */
     .student-info {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.8rem;
         flex: 1;
     }
     
     .student-avatar {
-        width: 60px;
-        height: 60px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.8rem;
+        font-size: 1.3rem;
         font-weight: 800;
         color: white;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
@@ -871,33 +1114,34 @@
     }
     
     .student-name {
-        font-size: 1.3rem;
+        font-size: 1rem;
         color: #2c3e50;
-        margin-bottom: 0.3rem;
+        margin-bottom: 0.25rem;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.4rem;
     }
     
     .you-badge {
-        background: #667eea;
+        background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
         color: white;
         padding: 0.2rem 0.8rem;
         border-radius: 10px;
         font-size: 0.8rem;
         font-weight: 600;
+        box-shadow: 0 2px 6px rgba(6, 182, 212, 0.3);
     }
     
     .student-tier {
         font-weight: 700;
-        font-size: 1rem;
+        font-size: 0.85rem;
         margin: 0;
     }
     
     /* Performance Metrics */
     .performance-metrics {
         display: flex;
-        gap: 1.5rem;
+        gap: 0.8rem;
         flex-shrink: 0;
     }
     
@@ -907,17 +1151,20 @@
     
     .metric-label {
         display: block;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         color: #6c757d;
-        margin-bottom: 0.3rem;
+        margin-bottom: 0.25rem;
         font-weight: 600;
     }
     
     .metric-value {
         display: block;
-        font-size: 1.3rem;
+        font-size: 1rem;
         font-weight: 800;
-        color: #667eea;
+        background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     
     /* Progress Bar */
@@ -1097,7 +1344,171 @@
             padding: 1rem;
         }
     }
+    
+    /* Lottie Animation Styles */
+    .lottie-award-container {
+        position: relative;
+        margin-bottom: 12px;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 160px;
+    }
+    
+    .lottie-animation {
+        width: 110px;
+        height: 110px;
+        filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.3));
+        animation: lottie-float 3s ease-in-out infinite;
+    }
+    
+    .champion-animation {
+        width: 130px;
+        height: 130px;
+        animation: champion-lottie-float 2.5s ease-in-out infinite;
+    }
+    
+    @keyframes lottie-float {
+        0%, 100% {
+            transform: translateY(0) scale(1);
+        }
+        50% {
+            transform: translateY(-15px) scale(1.05);
+        }
+    }
+    
+    @keyframes champion-lottie-float {
+        0%, 100% {
+            transform: translateY(0) scale(1.1);
+        }
+        50% {
+            transform: translateY(-20px) scale(1.15);
+        }
+    }
+    
+    .champion-crown {
+        position: absolute;
+        top: -35px;
+        font-size: 2.2rem;
+        animation: crown-bounce 2s ease-in-out infinite;
+        filter: drop-shadow(0 5px 15px rgba(255, 215, 0, 0.8));
+        z-index: 3;
+    }
+    
+    @keyframes crown-bounce {
+        0%, 100% {
+            transform: translateY(0) rotate(-10deg);
+        }
+        50% {
+            transform: translateY(-15px) rotate(10deg);
+        }
+    }
+    
+    .award-badge {
+        position: absolute;
+        bottom: 0;
+        background: white;
+        padding: 0.35rem 0.9rem;
+        border-radius: 50px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 4;
+        animation: badge-glow 2s ease-in-out infinite;
+    }
+    
+    .gold-badge {
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        border: 3px solid #FFED4E;
+    }
+    
+    .silver-badge {
+        background: linear-gradient(135deg, #E8E8E8, #C0C0C0);
+        border: 3px solid #F5F5F5;
+    }
+    
+    .bronze-badge {
+        background: linear-gradient(135deg, #E6A873, #CD7F32);
+        border: 3px solid #F4A460;
+    }
+    
+    @keyframes badge-glow {
+        0%, 100% {
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+        50% {
+            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.5);
+        }
+    }
+    
+    .badge-rank {
+        font-size: 0.9rem;
+        font-weight: 900;
+        color: white;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        line-height: 1;
+    }
+    
+    .static-trophy {
+        font-size: 4rem;
+        filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+    }
+    
+    .badge-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.9);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
 </style>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load Lottie animations for trophy awards
+    
+    // Gold Trophy Animation (1st Place) - Using working Lottie URL
+    const goldAnimation = lottie.loadAnimation({
+        container: document.getElementById('gold-trophy-animation'),
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: 'https://assets10.lottiefiles.com/packages/lf20_touohxv0.json' // Trophy animation
+    });
+    
+    // Silver Trophy Animation (2nd Place)
+    const silverAnimation = lottie.loadAnimation({
+        container: document.getElementById('silver-trophy-animation'),
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: 'https://assets10.lottiefiles.com/packages/lf20_touohxv0.json' // Trophy animation (same as gold)
+    });
+    
+    // Bronze Trophy Animation (3rd Place)
+    const bronzeAnimation = lottie.loadAnimation({
+        container: document.getElementById('bronze-trophy-animation'),
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: 'https://assets10.lottiefiles.com/packages/lf20_touohxv0.json' // Trophy animation (same as others)
+    });
+    
+    // Add sparkle effects on hover
+    document.querySelectorAll('.lottie-award-container').forEach(container => {
+        container.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.1) rotate(5deg)';
+            this.style.transition = 'all 0.3s ease';
+        });
+        
+        container.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1) rotate(0deg)';
+            this.style.transition = 'all 0.3s ease';
+        });
+    });
+});
+</script>
 
 {% endblock %}
