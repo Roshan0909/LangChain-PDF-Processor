@@ -285,7 +285,7 @@
                     </div>
                     <div>
                         <div class="stat-label">Total Attempts</div>
-                        <div class="stat-value">{% for quiz in recent_quizzes %}{{ quiz.attempt_count|default:0 }}{% if not forloop.last %}+{% endif %}{% endfor %}</div>
+                        <div class="stat-value">{{ total_attempts|default:0 }}</div>
                     </div>
                 </div>
             </div>

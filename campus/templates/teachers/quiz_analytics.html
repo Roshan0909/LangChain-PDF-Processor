@@ -243,6 +243,11 @@
     .filter-bar select:focus, .filter-bar input:focus { border-color: var(--chat-cyan); outline: none; box-shadow: 0 0 0 3px rgba(6,182,212,0.1); }
     .filter-reset-btn { background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 0.45rem 0.85rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; }
     .filter-reset-btn:hover { background: var(--chat-cyan); color: #fff; border-color: var(--chat-cyan); }
+    /* Snapshot image styling */
+    .snapshot-thumb { min-height: 140px; display: flex; align-items: center; justify-content: center; background: #fafbfc; border: 1px solid #e2e8f0; border-radius: 0.5rem; overflow: hidden; }
+    .snapshot-item { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .snapshot-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(6,182,212,0.15); }
+    .snapshot-item img { height: 140px; object-fit: contain; padding: 0.5rem; background: white; }
     /* Quiz Details styles */
     .detail-card {
         border: none;
@@ -727,14 +732,14 @@
                     {% for item in proctoring_data %}
                         {% for stat in quiz_stats %}
                             {% if stat.quiz.id == item.quiz.id %}
-                        <div class="col-12 mb-5 proctoring-card-col" data-subject="{{ item.quiz.subject.name }}" data-date="{{ item.quiz.created_at|date:'Y-m-d' }}" data-avg="{{ stat.avg_percentage }}">
-                            <div class="card shadow-lg border-0" style="border-left: 3px solid var(--chat-cyan);">
+                        <div class="col-12 mb-3 proctoring-card-col" data-subject="{{ item.quiz.subject.name }}" data-date="{{ item.quiz.created_at|date:'Y-m-d' }}" data-avg="{{ stat.avg_percentage }}">
+                            <div class="card shadow-sm border-0" style="border-left: 2px solid var(--chat-cyan);">
                             {% endif %}
                         {% endfor %}
                                 <div class="card-header text-white" style="background: linear-gradient(135deg, var(--chat-cyan) 0%, var(--chat-cyan-strong) 100%);">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <h4 class="mb-1"><i class="bi bi-clipboard-check"></i> {{ item.quiz.title }}</h4>
+                                            <h5 class="mb-0" style="font-size: 0.95rem; font-weight: 600;\"><i class="bi bi-clipboard-check"></i> {{ item.quiz.title }}</h5>
                                             <div>
                                                 <span class="badge bg-white text-dark me-2" style="border: 1px solid rgba(6,182,212,0.25); color: #0f172a;">
                                                     <i class="bi bi-book"></i> {{ item.quiz.subject.name }}
@@ -749,55 +754,49 @@
                                         </span>
                                     </div>
                                 </div>
-                                <div class="card-body p-4" style="background: #f8fafc;">
+                                <div class="card-body p-2" style="background: #f8fafc;">
                                     {% for attempt in item.attempts_with_violations %}
-                                        <div class="violation-section mb-4 p-3 {% if attempt.completed_at %}bg-light{% else %}bg-warning bg-opacity-10{% endif %}" 
-                                             style="border-left: 4px solid {% if attempt.completed_at %}#198754{% else %}#ffc107{% endif %}; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                                <div>
-                                                    <h6 class="mb-1">
-                                                        <i class="bi bi-person-circle"></i> {{ attempt.student.get_full_name|default:attempt.student.username }}
-                                                    </h6>
-                                                    <small class="text-muted">
-                                                        {% if attempt.completed_at %}
-                                                            <i class="bi bi-clock"></i> Completed: {{ attempt.completed_at|date:"M d, Y g:i A" }}
-                                                            | <i class="bi bi-trophy"></i> Score: <strong>{{ attempt.score }}/{{ item.quiz.questions.count }}</strong>
-                                                            ({{ attempt.score|floatformat:0 }}{% widthratio attempt.score item.quiz.questions.count 100 %}%)
-                                                        {% else %}
-                                                            <i class="bi bi-clock"></i> Started: {{ attempt.started_at|date:"M d, Y g:i A" }}
-                                                        {% endif %}
-                                                    </small>
-                                                </div>
-                                                <div class="text-end">
-                                                    <span class="badge bg-danger me-1 px-2 py-1">
-                                                        <i class="bi bi-camera"></i> {{ attempt.snapshots.count }} Snapshot{{ attempt.snapshots.count|pluralize }}
-                                                    </span>
-                                                    <span class="badge bg-info me-1 px-2 py-1">
-                                                        <i class="bi bi-arrow-left-right"></i> {{ attempt.tab_switch_count }} Tab Switch{{ attempt.tab_switch_count|pluralize:"es" }}
-                                                    </span>
-                                                    <span class="badge bg-secondary px-2 py-1">
-                                                        <i class="bi bi-fullscreen-exit"></i> {{ attempt.fullscreen_exit_count }} FS Exit{{ attempt.fullscreen_exit_count|pluralize }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            
-                                            {% if attempt.snapshots.all %}
+                        <div class="violation-section mb-3 p-2 {% if attempt.completed_at %}bg-light{% else %}bg-warning bg-opacity-10{% endif %}" 
+                             style="border-left: 3px solid {% if attempt.completed_at %}#198754{% else %}#ffc107{% endif %}; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1 small" style="font-weight: 600;">
+                                        <i class="bi bi-person-circle"></i> {{ attempt.student.get_full_name|default:attempt.student.username }}
+                                    </h6>
+                                    <small class="text-muted" style="font-size: 0.75rem;">
+                                        {% if attempt.completed_at %}
+                                            <i class="bi bi-clock"></i> Completed: {{ attempt.completed_at|date:"M d g:i A" }}
+                                            | <i class="bi bi-trophy"></i> Score: <strong>{{ attempt.score }}/{{ item.quiz.questions.count }}</strong>
+                                            ({{ attempt.score|floatformat:0 }}{% widthratio attempt.score item.quiz.questions.count 100 %}%)
+                                        {% else %}
+                                            <i class="bi bi-clock"></i> Started: {{ attempt.started_at|date:"M d g:i A" }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-danger me-1 px-1" style="font-size: 0.7rem; padding: 0.25rem 0.5rem !important;">
+                                        <i class="bi bi-camera"></i> {{ attempt.snapshots.count }}
+                                    </span>
+                                    <span class="badge bg-info me-1 px-1" style="font-size: 0.7rem; padding: 0.25rem 0.5rem !important;">
+                                        <i class="bi bi-arrow-left-right"></i> {{ attempt.tab_switch_count }}
+                                    </span>
+                                    <span class="badge bg-secondary px-1" style="font-size: 0.7rem; padding: 0.25rem 0.5rem !important;">
+                                        <i class="bi bi-fullscreen-exit"></i> {{ attempt.fullscreen_exit_count }}
+                                    </span>
+                                </div>
+                            </div>                                            {% if attempt.snapshots.all %}
                                                 <div class="snapshot-filter-bar" data-grid="grid-{{ attempt.id }}">
                                                     <span class="filter-chip active" onclick="filterSnapshots('grid-{{ attempt.id }}', 'all', this)">All</span>
                                                     <span class="filter-chip" onclick="filterSnapshots('grid-{{ attempt.id }}', 'no_person', this)">No Person</span>
                                                     <span class="filter-chip" onclick="filterSnapshots('grid-{{ attempt.id }}', 'multiple_persons', this)">Multiple Persons</span>
                                                     <span class="filter-chip" onclick="filterSnapshots('grid-{{ attempt.id }}', 'phone', this)">Phone</span>
                                                 </div>
-                                                <div class="row g-3 mt-2 snapshot-grid" id="grid-{{ attempt.id }}">
+                                                <div class="row g-2 mt-2 snapshot-grid" id="grid-{{ attempt.id }}">
                                                     {% for snapshot in attempt.snapshots.all %}
-                                                        <div class="col-md-3 snapshot-item" data-type="{{ snapshot.violation_type }}">
-                                                            <div class="snapshot-thumb position-relative">
-                                                                <img src="{{ snapshot.image.url }}" class="img-fluid rounded shadow-sm" alt="Violation" style="width: 100%; height: 150px; object-fit: cover; cursor: pointer;" onclick="viewFullSnapshot('{{ snapshot.image.url }}', '{{ snapshot.violation_type }}', '{{ snapshot.timestamp|date:"M d, g:i A" }}')">
-                                                                <span class="badge position-absolute top-0 start-0 m-2
-                                                                    {% if snapshot.violation_type == 'no_person' %}bg-warning
-                                                                    {% elif snapshot.violation_type == 'multiple_persons' %}bg-danger
-                                                                    {% else %}bg-info
-                                                                    {% endif %}">
+                                                        <div class="col-md-3 col-sm-4 col-6 snapshot-item" data-type="{{ snapshot.violation_type }}">
+                                                            <div class="snapshot-thumb position-relative" style="background: #f8fafc; border-radius: 0.5rem; overflow: hidden;">
+                                                                <img src="{{ snapshot.image.url }}" class="img-fluid rounded shadow-sm" alt="Violation" style="width: 100%; height: 140px; object-fit: contain; padding: 0.5rem; cursor: pointer; background: white;" onclick="viewFullSnapshot('{{ snapshot.image.url }}', '{{ snapshot.violation_type }}', '{{ snapshot.timestamp|date:'g:i A' }}')">
+                                                                <span class="badge position-absolute top-0 start-0 m-1" style="font-size: 0.7rem; background: #1e293b; color: #fff;" title="{% if snapshot.violation_type == 'no_person' %}No Person{% elif snapshot.violation_type == 'multiple_persons' %}{{ snapshot.person_count }} Persons{% else %}Phone Detected{% endif %}">
                                                                     {% if snapshot.violation_type == 'no_person' %}
                                                                         <i class="bi bi-person-x"></i> No Person
                                                                     {% elif snapshot.violation_type == 'multiple_persons' %}

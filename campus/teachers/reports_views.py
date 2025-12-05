@@ -65,9 +65,6 @@ def filter_quiz_reports(request):
         if data.get('difficulty'):
             report_filter.set_difficulty_filter(data['difficulty'])
         
-        if data.get('completed_only'):
-            report_filter.set_completion_filter(bool(data['completed_only']))
-        
         # Date range
         if data.get('start_date'):
             start_date = timezone.datetime.fromisoformat(data['start_date'])
@@ -101,13 +98,20 @@ def filter_quiz_reports(request):
         # Format attempts for JSON
         attempts_data = []
         for attempt in attempts[:100]:  # Limit to 100 for JSON response
-            percentage = (attempt.score / attempt.total_points * 100) if attempt.total_points else 0
+            # Safely calculate percentage - handle None and zero cases
+            score = attempt.score if attempt.score else 0
+            total = attempt.total_points if attempt.total_points else 0
+            if total and total > 0:
+                percentage = (score / total * 100)
+            else:
+                percentage = 0
+            
             attempts_data.append({
                 'id': attempt.id,
                 'quiz_title': attempt.quiz.title,
                 'student_name': f"{attempt.student.first_name} {attempt.student.last_name}",
-                'score': attempt.score,
-                'total': attempt.total_points,
+                'score': score,
+                'total': total,
                 'percentage': round(percentage, 2),
                 'completed_at': attempt.completed_at.strftime('%Y-%m-%d %H:%M') if attempt.completed_at else 'N/A',
                 'status': 'Completed' if attempt.completed_at else 'In Progress'
@@ -145,9 +149,6 @@ def download_quiz_report_pdf(request):
         
         if request.GET.get('difficulty'):
             report_filter.set_difficulty_filter(request.GET['difficulty'])
-        
-        if request.GET.get('completed_only') == 'true':
-            report_filter.set_completion_filter(True)
         
         # Date range
         if request.GET.get('start_date') and request.GET.get('end_date'):

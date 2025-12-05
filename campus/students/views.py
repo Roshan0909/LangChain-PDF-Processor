@@ -825,9 +825,13 @@ def practice_quiz(request):
     # Get recent practice quizzes
     recent_quizzes = PracticeQuiz.objects.filter(student=request.user).prefetch_related('attempts')[:10]
     
+    # Calculate total attempts across all quizzes
+    total_attempts = 0
+    
     # Add attempt statistics to each quiz
     for quiz in recent_quizzes:
         quiz.attempt_count = quiz.attempts.count()
+        total_attempts += quiz.attempt_count
         if quiz.attempt_count > 0:
             latest_attempt = quiz.attempts.first()
             quiz.latest_score = latest_attempt.score
@@ -841,7 +845,8 @@ def practice_quiz(request):
     
     return render(request, 'students/practice_quiz.html', {
         'recent_quizzes': recent_quizzes,
-        'subjects': subjects
+        'subjects': subjects,
+        'total_attempts': total_attempts
     })
 
 @login_required

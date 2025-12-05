@@ -8,23 +8,23 @@
     .dashboard-header {
         background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
         color: white;
-        padding: 2rem 2.5rem;
-        border-radius: 0.875rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 8px 24px rgba(6, 182, 212, 0.12);
+        padding: 1.25rem 1.5rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.12);
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
-        gap: 1.5rem;
+        gap: 1rem;
         border: 1px solid rgba(6, 182, 212, 0.2);
     }
     
     .dashboard-header-content h1 {
-        font-size: 2rem;
-        font-weight: 800;
-        margin: 0 0 0.5rem 0;
-        letter-spacing: -0.5px;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 0.25rem 0;
+        letter-spacing: -0.3px;
         background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -32,7 +32,7 @@
     }
     
     .dashboard-header-content p {
-        font-size: 1rem;
+        font-size: 0.9rem;
         opacity: 0.9;
         margin: 0;
         color: #cbd5e1;
@@ -60,19 +60,19 @@
     /* Stats Cards Row */
     .stats-row {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 1.25rem;
-        margin-bottom: 2rem;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
     }
     
     .stat-card {
         background: white;
-        padding: 1.25rem 1rem;
-        border-radius: 1rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.08);
+        padding: 0.9rem 0.75rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.08);
         border-top: 3px solid #06B6D4;
         border-left: 0;
-        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
     }
     
@@ -87,17 +87,17 @@
     }
     
     .stat-card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 10px 28px rgba(6, 182, 212, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(6, 182, 212, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     
     .stat-number {
-        font-size: 1.8rem;
-        font-weight: 900;
+        font-size: 1.5rem;
+        font-weight: 700;
         color: #06B6D4;
         line-height: 1;
-        margin-bottom: 0.5rem;
-        letter-spacing: -0.5px;
+        margin-bottom: 0.4rem;
+        letter-spacing: -0.3px;
     }
     
     .stat-label {
@@ -160,9 +160,9 @@
     .subject-card {
         background: white;
         border: 0;
-        border-radius: 1rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.08);
-        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         overflow: hidden;
         height: 100%;
         display: flex;
@@ -172,14 +172,14 @@
     }
     
     .subject-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 10px 28px rgba(6, 182, 212, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-4px);
+        box-shadow: 0 6px 16px rgba(6, 182, 212, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     
     .subject-card-header {
         background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
         color: white;
-        padding: 1.25rem 1.25rem;
+        padding: 0.9rem 1rem;
         border-bottom: 0;
         border-left: 0;
         position: relative;
@@ -196,16 +196,16 @@
     }
     
     .subject-card-title {
-        font-size: 1rem;
-        font-weight: 800;
+        font-size: 0.95rem;
+        font-weight: 700;
         margin: 0;
         line-height: 1.3;
-        letter-spacing: -0.3px;
+        letter-spacing: -0.2px;
         color: white;
     }
     
     .subject-card-body {
-        padding: 1.25rem 1.25rem 1rem;
+        padding: 1rem 1rem 0.75rem;
         flex-grow: 1;
         display: flex;
         flex-direction: column;
@@ -213,9 +213,9 @@
     
     .subject-description {
         color: #64748B;
-        font-size: 0.85rem;
-        line-height: 1.5;
-        margin-bottom: 1rem;
+        font-size: 0.8rem;
+        line-height: 1.4;
+        margin-bottom: 0.75rem;
         flex-grow: 1;
         font-weight: 500;
     }
@@ -223,20 +223,20 @@
     .subject-meta {
         display: flex;
         flex-direction: column;
-        gap: 0.6rem;
-        margin-bottom: 1rem;
-        padding-top: 0.75rem;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        padding-top: 0.6rem;
         border-top: 1px solid #f1f5f9;
     }
     
     .subject-meta-item {
         display: flex;
         align-items: center;
-        gap: 0.6rem;
-        font-size: 0.8rem;
+        gap: 0.5rem;
+        font-size: 0.75rem;
         color: #334155;
         font-weight: 600;
-        padding: 0.2rem 0;
+        padding: 0.15rem 0;
     }
     
     .subject-meta-item i {

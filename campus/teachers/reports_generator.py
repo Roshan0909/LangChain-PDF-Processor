@@ -139,8 +139,11 @@ class QuizReportFilter:
             stats['max_score'] = agg['max_score']
             stats['min_score'] = agg['min_score']
             
-            if agg['avg_total'] and agg['avg_total'] > 0:
+            # Only calculate percentage if both values are available
+            if agg['avg_score'] and agg['avg_total'] and agg['avg_total'] > 0:
                 stats['avg_percentage'] = round((agg['avg_score'] / agg['avg_total']) * 100, 2)
+            else:
+                stats['avg_percentage'] = 0
         
         return stats
 
@@ -159,7 +162,7 @@ class QuizReportGenerator:
             name='CustomTitle',
             parent=self.styles['Heading1'],
             fontSize=16,
-            textColor=colors.HexColor('#667eea'),
+            textColor=colors.HexColor('#06B6D4'),
             spaceAfter=12,
             alignment=TA_CENTER
         ))
@@ -168,7 +171,7 @@ class QuizReportGenerator:
             name='CustomHeading',
             parent=self.styles['Heading2'],
             fontSize=12,
-            textColor=colors.HexColor('#764ba2'),
+            textColor=colors.HexColor('#0891b2'),
             spaceAfter=8
         ))
         
@@ -235,15 +238,15 @@ class QuizReportGenerator:
         
         stats_table = Table(stats_data, colWidths=[3.5*inch, 2*inch])
         stats_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#667eea')),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#06B6D4')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 11),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 14),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f8f9ff')),
-            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9ff')]),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f0fbff')),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#cffafe')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0fbff')]),
             ('FONTSIZE', (0, 1), (-1, -1), 10),
             ('TOPPADDING', (0, 1), (-1, -1), 10),
             ('BOTTOMPADDING', (0, 1), (-1, -1), 10),
@@ -275,7 +278,9 @@ class QuizReportGenerator:
         table_data = [header]
         
         for attempt in attempts:
-            percentage = round((attempt.score / attempt.total_points * 100), 2) if attempt.total_points else 0
+            score = attempt.score if attempt.score else 0
+            total = attempt.total_points if attempt.total_points else 0
+            percentage = round((score / total * 100), 2) if total and total > 0 else 0
             
             # Get student name - fallback to username if first/last names are empty
             student_name = attempt.student.get_full_name().strip() if attempt.student.get_full_name() else attempt.student.username
@@ -285,7 +290,7 @@ class QuizReportGenerator:
             row = [
                 Paragraph(str(attempt.quiz.title)[:30], self.styles['Normal']),
                 Paragraph(str(student_name)[:35], self.styles['Normal']),
-                Paragraph(str(f"{attempt.score}/{attempt.total_points}"), self.styles['Normal']),
+                Paragraph(str(f"{score}/{total}"), self.styles['Normal']),
                 Paragraph(str(f"{percentage}%"), self.styles['Normal']),
                 Paragraph(str(attempt.completed_at.strftime('%d-%m-%Y')) if attempt.completed_at else 'N/A', self.styles['Normal']),
             ]
@@ -294,15 +299,15 @@ class QuizReportGenerator:
         if len(table_data) > 1:
             attempts_table = Table(table_data, colWidths=[1.5*inch, 2.2*inch, 0.9*inch, 1*inch, 1.4*inch])
             attempts_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#764ba2')),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0891b2')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                 ('FONTSIZE', (0, 0), (-1, 0), 10),
                 ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d1d5db')),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')]),
+                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#a5f3fc')),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#e0f7fb')]),
                 ('FONTSIZE', (0, 1), (-1, -1), 9),
                 ('TOPPADDING', (0, 1), (-1, -1), 10),
                 ('BOTTOMPADDING', (0, 1), (-1, -1), 10),
@@ -371,14 +376,16 @@ class QuizAnalytics:
         
         progress_data = []
         for attempt in query:
-            percentage = (attempt.score / attempt.total_points * 100) if attempt.total_points else 0
+            score = attempt.score if attempt.score else 0
+            total = attempt.total_points if attempt.total_points else 0
+            percentage = (score / total * 100) if total and total > 0 else 0
             progress_data.append({
                 'quiz_title': attempt.quiz.title,
-                'score': attempt.score,
-                'total': attempt.total_points,
+                'score': score,
+                'total': total,
                 'percentage': round(percentage, 2),
                 'completed_at': attempt.completed_at,
-                'time_taken_minutes': int((attempt.completed_at - attempt.started_at).total_seconds() / 60)
+                'time_taken_minutes': int((attempt.completed_at - attempt.started_at).total_seconds() / 60) if (attempt.completed_at and attempt.started_at) else 0
             })
         
         return progress_data
