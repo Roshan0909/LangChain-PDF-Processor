@@ -9,6 +9,7 @@ from .utils import get_answer_for_pdf
 from authentication.models import User
 import json
 import requests
+import re
 
 @login_required
 def student_dashboard(request):
@@ -526,7 +527,7 @@ def search_wikipedia(query):
         
         # Use Gemini AI to extract the main search topic from the question
         genai.configure(api_key=os.getenv('API_KEY'))
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         
         topic_prompt = f"""Extract the main topic/concept that should be searched on Wikipedia from this question.
 Return ONLY the search term(s) that would find the most relevant Wikipedia article.
@@ -1029,3 +1030,159 @@ def practice_quiz_history(request):
         'total_attempts': total_attempts,
         'overall_percentage': overall_percentage
     })
+
+
+@login_required
+def flashcards(request, pdf_id):
+    """Flashcards page for a specific PDF note"""
+    if not request.user.is_student():
+        return HttpResponseForbidden("You don't have permission to access this page.")
+
+    note = get_object_or_404(PDFNote, id=pdf_id)
+
+    return render(request, 'students/flashcards.html', {
+        'note': note,
+    })
+
+
+@login_required
+@require_POST
+def generate_flashcards(request, pdf_id):
+    """Generate flashcards from a PDF/Doc/PPT using Gemini"""
+    if not request.user.is_student():
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    try:
+        note = get_object_or_404(PDFNote, id=pdf_id)
+        num_cards = int(request.POST.get('num_cards', 10))
+        num_cards = max(3, min(num_cards, 30))
+
+        from teachers.quiz_generator import extract_text_from_file
+        import os
+        from dotenv import load_dotenv
+        import google.generativeai as genai
+
+        load_dotenv()
+
+        # Extract text from the note file
+        file_text = extract_text_from_file(note.pdf_file.path)
+        if not file_text or len(file_text.strip()) < 100:
+            return JsonResponse({'error': 'Could not extract sufficient text from the document'}, status=400)
+
+        # Trim text for token safety
+        max_chars = 15000
+        if len(file_text) > max_chars:
+            file_text = file_text[:max_chars]
+
+        genai.configure(api_key=os.getenv('API_KEY'))
+
+        prompt = f"""Create {num_cards} high-quality study flashcards from the provided content.
+
+Return ONLY valid JSON array with this exact shape (no extra text):
+[
+  {{"front": "Concise question or term", "back": "Clear answer in 1-3 sentences"}}
+]
+
+Guidelines:
+- Front: short question/term. Back: concise answer, 1-3 sentences max.
+- Cover diverse, important concepts from the text.
+- Keep language simple and precise.
+- No markdown, no numbering, no code fences, JSON only.
+
+CONTENT:
+{file_text}
+"""
+
+        # Try preferred model with graceful fallback on rate limits/quota
+        model_preferences = [
+            os.getenv('GENAI_FLASHCARDS_MODEL'),
+            'gemini-2.5-flash',
+            'gemini-1.5-flash'
+        ]
+        model_candidates = [m for m in model_preferences if m]
+
+        response = None
+        last_error = None
+        for idx, model_name in enumerate(model_candidates):
+            try:
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(prompt)
+                break
+            except Exception as ai_err:
+                last_error = ai_err
+                err_text = str(ai_err).lower()
+                is_quota = ('quota' in err_text) or ('rate limit' in err_text) or ('429' in err_text)
+                is_last = idx == len(model_candidates) - 1
+                if is_quota and not is_last:
+                    # Try next model if available
+                    continue
+                status_code = 429 if is_quota else 500
+                return JsonResponse({'error': f'AI generation failed ({model_name}): {ai_err}'}, status=status_code)
+
+        if response is None:
+            return JsonResponse({'error': f'AI generation failed: {last_error}'}, status=500)
+
+        # Safely extract text from Gemini response
+        response_text = ''
+        if hasattr(response, 'text') and response.text:
+            response_text = response.text.strip()
+        elif getattr(response, 'candidates', None):
+            for cand in response.candidates:
+                if getattr(cand, 'content', None) and getattr(cand.content, 'parts', None):
+                    for part in cand.content.parts:
+                        if getattr(part, 'text', None):
+                            response_text += part.text
+            response_text = response_text.strip()
+
+        # Remove markdown fences if present
+        if "```" in response_text:
+            lines = response_text.split('\n')
+            json_lines = []
+            in_code = False
+            for line in lines:
+                if line.strip().startswith('```'):
+                    in_code = not in_code
+                    continue
+                if in_code or line.strip().startswith('['):
+                    json_lines.append(line)
+            response_text = '\n'.join(json_lines).strip()
+
+        response_text = response_text.replace('```json', '').replace('```', '').strip()
+
+        if not response_text:
+            return JsonResponse({'error': 'AI returned empty content for flashcards.'}, status=500)
+
+        import json
+        try:
+            flashcards = json.loads(response_text)
+        except json.JSONDecodeError:
+            # Fallback: try to extract JSON array between first [ and last ]
+            start = response_text.find('[')
+            end = response_text.rfind(']')
+            if start != -1 and end != -1 and end > start:
+                try:
+                    flashcards = json.loads(response_text[start:end+1])
+                except Exception as e:
+                    return JsonResponse({'error': f'Failed to parse AI response: {str(e)}', 'raw': response_text[:500]}, status=500)
+            else:
+                return JsonResponse({'error': 'Failed to parse AI response (no JSON array found).', 'raw': response_text[:500]}, status=500)
+
+        # Validate structure
+        cleaned = []
+        if isinstance(flashcards, list):
+            for card in flashcards:
+                if isinstance(card, dict) and 'front' in card and 'back' in card:
+                    cleaned.append({
+                        'front': str(card['front']).strip(),
+                        'back': str(card['back']).strip(),
+                    })
+
+        if not cleaned:
+            return JsonResponse({'error': 'Failed to generate valid flashcards'}, status=500)
+
+        return JsonResponse({'success': True, 'flashcards': cleaned[:num_cards]})
+
+    except json.JSONDecodeError as e:
+        return JsonResponse({'error': f'Failed to parse AI response: {str(e)}'}, status=500)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
