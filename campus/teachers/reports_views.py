@@ -1,0 +1,221 @@
+"""
+Views for quiz reports module - separate from main views to avoid collision
+"""
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
+from django.views.decorators.http import require_POST
+from django.db.models import Q
+from teachers.models import Quiz, QuizAttempt, Subject
+from teachers.reports_generator import QuizReportFilter, QuizReportGenerator, QuizAnalytics
+from authentication.models import User
+from django.utils import timezone
+from datetime import timedelta
+import json
+
+
+@login_required
+def quiz_reports(request):
+    """Main reports page with filters"""
+    if not request.user.is_teacher():
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    # Get teacher's quizzes and subjects
+    subjects = Subject.objects.filter(teacher=request.user)
+    quizzes = Quiz.objects.filter(created_by=request.user)
+    students = User.objects.filter(role='student')
+    
+    # Get initial data
+    recent_attempts = QuizAttempt.objects.filter(
+        quiz__created_by=request.user
+    ).select_related('quiz', 'student').order_by('-completed_at')[:10]
+    
+    return render(request, 'teachers/quiz_reports.html', {
+        'subjects': subjects,
+        'quizzes': quizzes,
+        'students': students,
+        'recent_attempts': recent_attempts,
+        'difficulty_choices': [('easy', 'Easy'), ('medium', 'Medium'), ('hard', 'Hard')],
+    })
+
+
+@login_required
+@require_POST
+def filter_quiz_reports(request):
+    """Apply filters and return filtered data"""
+    if not request.user.is_teacher():
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    try:
+        data = json.loads(request.body)
+        
+        # Initialize filter
+        report_filter = QuizReportFilter(request.user)
+        
+        # Apply filters
+        if data.get('quiz_id'):
+            report_filter.set_quiz_filter(data['quiz_id'])
+        
+        if data.get('subject_id'):
+            report_filter.set_subject_filter(data['subject_id'])
+        
+        if data.get('student_id'):
+            report_filter.set_student_filter(data['student_id'])
+        
+        if data.get('difficulty'):
+            report_filter.set_difficulty_filter(data['difficulty'])
+        
+        if data.get('completed_only'):
+            report_filter.set_completion_filter(bool(data['completed_only']))
+        
+        # Date range
+        if data.get('start_date'):
+            start_date = timezone.datetime.fromisoformat(data['start_date'])
+            report_filter.set_date_range_filter(start_date, None)
+        
+        if data.get('end_date'):
+            end_date = timezone.datetime.fromisoformat(data['end_date'])
+            if data.get('start_date'):
+                start_date = timezone.datetime.fromisoformat(data['start_date'])
+                report_filter.set_date_range_filter(start_date, end_date)
+            else:
+                report_filter.set_date_range_filter(None, end_date)
+        
+        # Score range
+        if data.get('min_score') and data.get('min_score') != '':
+            try:
+                min_score = int(data.get('min_score', 0))
+                max_score = int(data.get('max_score', 1000)) if data.get('max_score') and data.get('max_score') != '' else 1000
+                report_filter.set_score_range_filter(min_score, max_score)
+            except (ValueError, TypeError):
+                pass  # Skip if conversion fails
+        
+        # Search
+        if data.get('search'):
+            report_filter.set_search_filter(data['search'])
+        
+        # Get filtered data
+        attempts = report_filter.get_attempts()
+        stats = report_filter.get_statistics()
+        
+        # Format attempts for JSON
+        attempts_data = []
+        for attempt in attempts[:100]:  # Limit to 100 for JSON response
+            percentage = (attempt.score / attempt.total_points * 100) if attempt.total_points else 0
+            attempts_data.append({
+                'id': attempt.id,
+                'quiz_title': attempt.quiz.title,
+                'student_name': f"{attempt.student.first_name} {attempt.student.last_name}",
+                'score': attempt.score,
+                'total': attempt.total_points,
+                'percentage': round(percentage, 2),
+                'completed_at': attempt.completed_at.strftime('%Y-%m-%d %H:%M') if attempt.completed_at else 'N/A',
+                'status': 'Completed' if attempt.completed_at else 'In Progress'
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'statistics': stats,
+            'attempts': attempts_data,
+            'total_records': attempts.count()
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def download_quiz_report_pdf(request):
+    """Download filtered data as PDF"""
+    if not request.user.is_teacher():
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    try:
+        # Get filter parameters from GET request
+        report_filter = QuizReportFilter(request.user)
+        
+        if request.GET.get('quiz_id'):
+            report_filter.set_quiz_filter(request.GET['quiz_id'])
+        
+        if request.GET.get('subject_id'):
+            report_filter.set_subject_filter(request.GET['subject_id'])
+        
+        if request.GET.get('student_id'):
+            report_filter.set_student_filter(request.GET['student_id'])
+        
+        if request.GET.get('difficulty'):
+            report_filter.set_difficulty_filter(request.GET['difficulty'])
+        
+        if request.GET.get('completed_only') == 'true':
+            report_filter.set_completion_filter(True)
+        
+        # Date range
+        if request.GET.get('start_date') and request.GET.get('end_date'):
+            start_date = timezone.datetime.fromisoformat(request.GET['start_date'])
+            end_date = timezone.datetime.fromisoformat(request.GET['end_date'])
+            report_filter.set_date_range_filter(start_date, end_date)
+        
+        # Score range
+        if request.GET.get('min_score') and request.GET.get('min_score') != '':
+            try:
+                min_score = int(request.GET['min_score'])
+                max_score = int(request.GET.get('max_score', 1000)) if request.GET.get('max_score') and request.GET.get('max_score') != '' else 1000
+                report_filter.set_score_range_filter(min_score, max_score)
+            except (ValueError, TypeError):
+                pass  # Skip if conversion fails
+        
+        # Generate PDF
+        generator = QuizReportGenerator(report_filter)
+        pdf_buffer, filename = generator.generate_pdf()
+        
+        # Return PDF response
+        response = HttpResponse(pdf_buffer, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+        
+    except Exception as e:
+        return HttpResponse(f"Error generating PDF: {str(e)}", status=500)
+
+
+@login_required
+def question_performance(request, quiz_id):
+    """Get performance metrics for each question"""
+    if not request.user.is_teacher():
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    try:
+        quiz = get_object_or_404(Quiz, id=quiz_id, created_by=request.user)
+        performance_data = QuizAnalytics.get_performance_by_question(quiz_id)
+        
+        return JsonResponse({
+            'success': True,
+            'quiz_title': quiz.title,
+            'performance': performance_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def student_progress(request, student_id):
+    """Get student progress across quizzes"""
+    if not request.user.is_teacher():
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    try:
+        student = get_object_or_404(User, id=student_id, role='student')
+        
+        # Get quizzes created by teacher
+        quiz_ids = Quiz.objects.filter(created_by=request.user).values_list('id', flat=True)
+        
+        progress_data = QuizAnalytics.get_student_progress(student_id, quiz_ids)
+        
+        return JsonResponse({
+            'success': True,
+            'student_name': f"{student.first_name} {student.last_name}",
+            'progress': progress_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

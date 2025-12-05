@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import reports_views
 
 urlpatterns = [
     path('dashboard/', views.teacher_dashboard, name='teacher_dashboard'),
@@ -18,4 +19,11 @@ urlpatterns = [
     path('chat/send/<int:user_id>/', views.send_message, name='send_message'),
     path('chat/get/<int:user_id>/', views.get_messages, name='get_messages'),
     path('proctoring/<int:attempt_id>/', views.proctoring_report, name='proctoring_report'),
+    
+    # Reports module
+    path('reports/', reports_views.quiz_reports, name='quiz_reports'),
+    path('reports/filter/', reports_views.filter_quiz_reports, name='filter_quiz_reports'),
+    path('reports/download-pdf/', reports_views.download_quiz_report_pdf, name='download_quiz_report_pdf'),
+    path('reports/question-performance/<int:quiz_id>/', reports_views.question_performance, name='question_performance'),
+    path('reports/student-progress/<int:student_id>/', reports_views.student_progress, name='student_progress'),
 ]

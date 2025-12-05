@@ -369,6 +369,9 @@
                         <a class="nav-link {% if request.resolver_match.url_name == 'quiz_analytics' %}active{% endif %}" href="{% url 'quiz_analytics' %}">
                             <i class="bi bi-bar-chart"></i> Quiz Analytics
                         </a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'quiz_reports' %}active{% endif %}" href="{% url 'quiz_reports' %}">
+                            <i class="bi bi-file-earmark-pdf"></i> Reports
+                        </a>
                         <a class="nav-link {% if request.resolver_match.url_name == 'teacher_chat' or request.resolver_match.url_name == 'teacher_chat_with' %}active{% endif %}" href="{% url 'teacher_chat' %}">
                             <i class="bi bi-chat-dots"></i> Messages
                         </a>
