@@ -77,6 +77,76 @@
             border-radius: 25px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(6, 182, 212, 0.3);
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-info:hover {
+            background: rgba(6, 182, 212, 0.25);
+            border-color: rgba(6, 182, 212, 0.5);
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border: 2px solid rgba(6, 182, 212, 0.4);
+            border-radius: 0.75rem;
+            box-shadow: 0 12px 40px rgba(6, 182, 212, 0.3);
+            min-width: 200px;
+            z-index: 1051;
+            display: none;
+            overflow: hidden;
+        }
+
+        .user-dropdown.show {
+            display: block;
+            animation: slideDown 0.25s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.85rem 1rem;
+            color: #e0f2fe;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(6, 182, 212, 0.2);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .user-dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-dropdown-item:hover {
+            background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
+            color: white;
+            padding-left: 1.15rem;
+        }
+
+        .user-dropdown-item i {
+            font-size: 1.05rem;
+            width: 20px;
+            text-align: center;
         }
         
         .navbar-brand:hover {
@@ -416,9 +486,22 @@
                 <i class="bi bi-mortarboard-fill me-2"></i>Student Campus
             </a>
             <div class="ms-auto d-flex align-items-center gap-3">
-                <div class="user-info">
-                    <i class="bi bi-person-circle me-2"></i>
+                <div class="user-info" id="userInfoBtn" style="text-decoration: none; color: inherit;">
+                    <i class="bi bi-person-circle"></i>
                     <span>{{ user.username }}</span>
+                    <i class="bi bi-chevron-down" style="font-size: 0.8rem; margin-left: 4px;"></i>
+                    
+                    <!-- Dropdown Menu -->
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="{% url 'student_profile' %}" class="user-dropdown-item">
+                            <i class="bi bi-person"></i>
+                            <span>View Profile</span>
+                        </a>
+                        <a href="{% url 'logout' %}" class="user-dropdown-item">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -546,6 +629,32 @@
                         toggleSidebar();
                     }
                 });
+            });
+        });
+
+        // User Dropdown Menu Toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const userInfoBtn = document.getElementById('userInfoBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            // Toggle dropdown on click
+            userInfoBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userDropdown.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!userInfoBtn.contains(e.target)) {
+                    userDropdown.classList.remove('show');
+                }
+            });
+            
+            // Close dropdown when pressing Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    userDropdown.classList.remove('show');
+                }
             });
         });
     </script>

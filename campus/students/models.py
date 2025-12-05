@@ -68,3 +68,23 @@ class PracticeQuizAttempt(models.Model):
     
     class Meta:
         ordering = ['-completed_at']
+
+class StudentProfile(models.Model):
+    """Extended student profile with essential details"""
+    student = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    full_name = models.CharField(max_length=200, blank=True)
+    class_name = models.CharField(max_length=100, blank=True)
+    roll_number = models.CharField(max_length=50, blank=True)
+    registration_number = models.CharField(max_length=100, blank=True)
+    department = models.CharField(max_length=100, blank=True)
+    phone_number = models.CharField(max_length=20, blank=True)
+    email_id = models.EmailField(blank=True)
+    address = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.student.username} - Profile"
+    
+    class Meta:
+        verbose_name_plural = "Student Profiles"
