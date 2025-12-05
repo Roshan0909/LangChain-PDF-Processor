@@ -20,4 +20,9 @@ urlpatterns = [
     path('knowledge-bot/', views.knowledge_bot, name='knowledge_bot'),
     path('knowledge-bot/ask/', views.knowledge_bot_ask, name='knowledge_bot_ask'),
     path('leaderboard/', views.leaderboard, name='leaderboard'),
+    path('practice-quiz/', views.practice_quiz, name='practice_quiz'),
+    path('practice-quiz/generate/', views.generate_practice_quiz, name='generate_practice_quiz'),
+    path('practice-quiz/take/<int:quiz_id>/', views.take_practice_quiz, name='take_practice_quiz'),
+    path('practice-quiz/submit/<int:quiz_id>/', views.submit_practice_quiz, name='submit_practice_quiz'),
+    path('practice-quiz/history/', views.practice_quiz_history, name='practice_quiz_history'),
 ]

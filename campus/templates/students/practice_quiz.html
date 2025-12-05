@@ -1,0 +1,353 @@
+{% extends 'students/base_student.html' %}
+{% load static %}
+
+{% block title %}Practice Quiz - Student Portal{% endblock %}
+
+{% block student_content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="bi bi-pencil-square me-2"></i>Practice Quiz</h2>
+                    <p class="text-muted mb-0">Create custom quizzes on any topic and test your knowledge</p>
+                </div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createQuizModal">
+                    <i class="bi bi-plus-circle me-2"></i>Create New Quiz
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-file-text fs-4 text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-0">Total Quizzes</h6>
+                            <h3 class="mb-0">{{ recent_quizzes|length }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-check-circle fs-4 text-success"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-0">Attempts</h6>
+                            <h3 class="mb-0">{% for quiz in recent_quizzes %}{{ quiz.attempt_count|default:0 }}{% if not forloop.last %}+{% endif %}{% endfor %}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-graph-up fs-4 text-info"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-0">View History</h6>
+                            <a href="{% url 'practice_quiz_history' %}" class="btn btn-sm btn-info">
+                                <i class="bi bi-clock-history me-1"></i>View All
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Practice Quizzes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Your Practice Quizzes</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_quizzes %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Source File</th>
+                                        <th>Topic</th>
+                                        <th>Difficulty</th>
+                                        <th>Questions</th>
+                                        <th>Latest Score</th>
+                                        <th>Attempts</th>
+                                        <th>Created</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for quiz in recent_quizzes %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ quiz.title }}</strong>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-file-earmark-pdf me-1"></i>
+                                                    {{ quiz.get_file_name }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                {% if quiz.topic %}
+                                                    <span class="badge bg-secondary">{{ quiz.topic }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">General</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if quiz.difficulty == 'easy' %}
+                                                    <span class="badge bg-success">Easy</span>
+                                                {% elif quiz.difficulty == 'medium' %}
+                                                    <span class="badge bg-warning">Medium</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Hard</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ quiz.num_questions }}</td>
+                                            <td>
+                                                {% if quiz.latest_score is not None %}
+                                                    <span class="badge {% if quiz.latest_percentage >= 80 %}bg-success{% elif quiz.latest_percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %}">
+                                                        {{ quiz.latest_score }}/{{ quiz.num_questions }} ({{ quiz.latest_percentage }}%)
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-muted">Not attempted</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ quiz.attempt_count }}</td>
+                                            <td>{{ quiz.created_at|date:"M d, Y" }}</td>
+                                            <td>
+                                                <a href="{% url 'take_practice_quiz' quiz.id %}" class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-play-circle me-1"></i>
+                                                    {% if quiz.attempt_count > 0 %}Retake{% else %}Start{% endif %}
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-journal-text display-1 text-muted"></i>
+                            <h5 class="mt-3 text-muted">No practice quizzes yet</h5>
+                            <p class="text-muted">Create your first practice quiz to get started!</p>
+                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#createQuizModal">
+                                <i class="bi bi-plus-circle me-2"></i>Create Practice Quiz
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Quiz Modal -->
+<div class="modal fade" id="createQuizModal" tabindex="-1" aria-labelledby="createQuizModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createQuizModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>Create Practice Quiz from Document
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createQuizForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Source Selection -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Select Document Source <span class="text-danger">*</span></label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="source_type" id="sourceCourse" value="course" checked onchange="toggleSource('course')">
+                            <label class="btn btn-outline-primary" for="sourceCourse">
+                                <i class="bi bi-book me-2"></i>Course Materials
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="source_type" id="sourceUpload" value="upload" onchange="toggleSource('upload')">
+                            <label class="btn btn-outline-primary" for="sourceUpload">
+                                <i class="bi bi-upload me-2"></i>Upload File
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Course Materials Selection -->
+                    <div id="courseSection" class="mb-3">
+                        <label for="pdf_note_id" class="form-label">Select Course Document</label>
+                        <select class="form-select" id="pdf_note_id" name="pdf_note_id">
+                            <option value="">-- Select a document --</option>
+                            {% for subject in subjects %}
+                                <optgroup label="{{ subject.name }}">
+                                    {% for note in subject.notes.all %}
+                                        <option value="{{ note.id }}">{{ note.title }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Choose from available course materials</small>
+                    </div>
+
+                    <!-- File Upload Section -->
+                    <div id="uploadSection" class="mb-3" style="display: none;">
+                        <label for="file" class="form-label">Upload Your Document</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx">
+                        <small class="text-muted">Supported: PDF, DOC, DOCX, PPT, PPTX (Max 50MB)</small>
+                    </div>
+
+                    <hr>
+
+                    <!-- Quiz Settings -->
+                    <div class="mb-3">
+                        <label for="topics" class="form-label">Specific Topics (Optional)</label>
+                        <input type="text" class="form-control" id="topics" name="topics" 
+                               placeholder="e.g., Functions, Arrays, Loops">
+                        <small class="text-muted">Leave blank to generate from entire document</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="difficulty" class="form-label">Difficulty Level</label>
+                            <select class="form-select" id="difficulty" name="difficulty">
+                                <option value="easy">Easy - Basic concepts</option>
+                                <option value="medium" selected>Medium - Moderate challenge</option>
+                                <option value="hard">Hard - Advanced topics</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="num_questions" class="form-label">Number of Questions</label>
+                            <input type="number" class="form-control" id="num_questions" name="num_questions" 
+                                   min="3" max="20" value="5">
+                            <small class="text-muted">3-20 questions</small>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <small><strong>Note:</strong> AI will extract content from your document and generate relevant multiple choice questions. This may take 10-30 seconds depending on document size.</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="generateQuiz()">
+                    <i class="bi bi-magic me-2"></i>Generate Quiz
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleSource(type) {
+    const courseSection = document.getElementById('courseSection');
+    const uploadSection = document.getElementById('uploadSection');
+    
+    if (type === 'course') {
+        courseSection.style.display = 'block';
+        uploadSection.style.display = 'none';
+        document.getElementById('file').removeAttribute('required');
+        document.getElementById('pdf_note_id').setAttribute('required', 'required');
+    } else {
+        courseSection.style.display = 'none';
+        uploadSection.style.display = 'block';
+        document.getElementById('pdf_note_id').removeAttribute('required');
+        document.getElementById('file').setAttribute('required', 'required');
+    }
+}
+
+function generateQuiz() {
+    const form = document.getElementById('createQuizForm');
+    const formData = new FormData(form);
+    const sourceType = document.querySelector('input[name="source_type"]:checked').value;
+    
+    // Validation
+    if (sourceType === 'course') {
+        const pdfNoteId = document.getElementById('pdf_note_id').value;
+        if (!pdfNoteId) {
+            alert('Please select a course document');
+            return;
+        }
+    } else {
+        const file = document.getElementById('file').files[0];
+        if (!file) {
+            alert('Please upload a file');
+            return;
+        }
+        // Check file size (50MB)
+        if (file.size > 50 * 1024 * 1024) {
+            alert('File size must be less than 50MB');
+            return;
+        }
+    }
+
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+
+    fetch("{% url 'generate_practice_quiz' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✓ ${data.message}\n\nRedirecting to quiz...`);
+            window.location.href = `/student/practice-quiz/take/${data.quiz_id}/`;
+        } else {
+            alert('Error: ' + (data.error || 'Failed to generate quiz'));
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error generating quiz: ' + error.message);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+</script>
+
+<style>
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+</style>
+{% endblock %}

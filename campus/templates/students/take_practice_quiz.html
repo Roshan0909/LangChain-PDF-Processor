@@ -1,0 +1,316 @@
+{% extends 'students/base_student.html' %}
+{% load static %}
+
+{% block title %}{{ quiz.title }} - Practice Quiz{% endblock %}
+
+{% block student_content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Quiz Header -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h3><i class="bi bi-pencil-square me-2"></i>{{ quiz.title }}</h3>
+                            <div class="mt-2">
+                                <span class="badge bg-secondary me-2">{{ quiz.topic }}</span>
+                                {% if quiz.difficulty == 'easy' %}
+                                    <span class="badge bg-success">Easy</span>
+                                {% elif quiz.difficulty == 'medium' %}
+                                    <span class="badge bg-warning">Medium</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Hard</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <h4 class="mb-0">{{ questions|length }} Questions</h4>
+                            <small class="text-muted">Practice Mode - No Timer</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span><i class="bi bi-list-check me-2"></i>Progress</span>
+                        <span id="progressText">0 / {{ questions|length }} answered</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div id="progressBar" class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questions -->
+            <form id="quizForm">
+                {% for question in questions %}
+                    <div class="card border-0 shadow-sm mb-4 question-card">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="badge bg-primary me-3" style="font-size: 1rem; padding: 0.5rem 0.75rem;">
+                                    {{ forloop.counter }}
+                                </div>
+                                <h5 class="mb-0 flex-grow-1">{{ question.question }}</h5>
+                            </div>
+
+                            <div class="options-container">
+                                {% for option in question.options %}
+                                    <div class="form-check option-box p-3 mb-2">
+                                        <input class="form-check-input" type="radio" 
+                                               name="question_{{ forloop.parentloop.counter0 }}" 
+                                               id="q{{ forloop.parentloop.counter0 }}_opt{{ forloop.counter0 }}" 
+                                               value="{{ forloop.counter0 }}"
+                                               onchange="updateProgress()">
+                                        <label class="form-check-label w-100 ms-2" 
+                                               for="q{{ forloop.parentloop.counter0 }}_opt{{ forloop.counter0 }}">
+                                            <strong>{{ forloop.counter|upper|slice:":1" }}.</strong> {{ option }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </form>
+
+            <!-- Submit Button -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <button type="button" class="btn btn-primary btn-lg px-5" onclick="submitQuiz()">
+                        <i class="bi bi-check-circle me-2"></i>Submit Answers
+                    </button>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            You can review and change your answers before submitting
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Modal -->
+<div class="modal fade" id="resultsModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-clipboard-check me-2"></i>Quiz Results</h5>
+            </div>
+            <div class="modal-body" id="resultsContent">
+                <!-- Results will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <a href="{% url 'practice_quiz' %}" class="btn btn-secondary">Back to Practice Quizzes</a>
+                <button type="button" class="btn btn-primary" onclick="window.location.reload()">
+                    <i class="bi bi-arrow-repeat me-2"></i>Retake Quiz
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const totalQuestions = {{ questions|length }};
+
+function updateProgress() {
+    let answered = 0;
+    for (let i = 0; i < totalQuestions; i++) {
+        const radios = document.getElementsByName(`question_${i}`);
+        for (let radio of radios) {
+            if (radio.checked) {
+                answered++;
+                break;
+            }
+        }
+    }
+    
+    const percentage = (answered / totalQuestions) * 100;
+    document.getElementById('progressBar').style.width = percentage + '%';
+    document.getElementById('progressText').textContent = `${answered} / ${totalQuestions} answered`;
+}
+
+function submitQuiz() {
+    // Check if all questions are answered
+    let answered = 0;
+    for (let i = 0; i < totalQuestions; i++) {
+        const radios = document.getElementsByName(`question_${i}`);
+        for (let radio of radios) {
+            if (radio.checked) {
+                answered++;
+                break;
+            }
+        }
+    }
+    
+    if (answered < totalQuestions) {
+        if (!confirm(`You have only answered ${answered} out of ${totalQuestions} questions.\n\nDo you want to submit anyway?`)) {
+            return;
+        }
+    }
+    
+    // Collect answers
+    const answers = {};
+    for (let i = 0; i < totalQuestions; i++) {
+        const radios = document.getElementsByName(`question_${i}`);
+        for (let radio of radios) {
+            if (radio.checked) {
+                answers[i] = radio.value;
+                break;
+            }
+        }
+    }
+    
+    // Disable submit button
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+    
+    // Submit to server
+    fetch("{% url 'submit_practice_quiz' quiz.id %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ answers: answers })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayResults(data);
+        } else {
+            alert('Error: ' + (data.error || 'Failed to submit quiz'));
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error submitting quiz: ' + error.message);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+
+function displayResults(data) {
+    const percentage = data.percentage;
+    let resultClass = 'success';
+    let resultIcon = 'check-circle';
+    let resultMessage = 'Excellent Work!';
+    
+    if (percentage < 50) {
+        resultClass = 'danger';
+        resultIcon = 'x-circle';
+        resultMessage = 'Keep Practicing!';
+    } else if (percentage < 70) {
+        resultClass = 'warning';
+        resultIcon = 'exclamation-circle';
+        resultMessage = 'Good Effort!';
+    }
+    
+    let html = `
+        <div class="text-center mb-4">
+            <i class="bi bi-${resultIcon} display-1 text-${resultClass}"></i>
+            <h3 class="mt-3">${resultMessage}</h3>
+            <h2 class="text-${resultClass}">Score: ${data.score}/${data.total} (${percentage}%)</h2>
+        </div>
+        
+        <hr>
+        
+        <h5 class="mb-3"><i class="bi bi-list-check me-2"></i>Detailed Review</h5>
+    `;
+    
+    data.results.forEach((result, index) => {
+        const isCorrect = result.is_correct;
+        const statusClass = isCorrect ? 'success' : 'danger';
+        const statusIcon = isCorrect ? 'check-circle-fill' : 'x-circle-fill';
+        
+        html += `
+            <div class="card mb-3 border-${statusClass}">
+                <div class="card-header bg-${statusClass} bg-opacity-10">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-${statusIcon} text-${statusClass} me-2"></i>
+                        <strong>Question ${index + 1}</strong>
+                        <span class="badge bg-${statusClass} ms-auto">${isCorrect ? 'Correct' : 'Wrong'}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3"><strong>${result.question}</strong></p>
+                    
+                    <div class="options-review">
+                        ${result.options.map((option, optIdx) => {
+                            let optionClass = '';
+                            let optionIcon = '';
+                            
+                            if (optIdx === result.correct_answer) {
+                                optionClass = 'border-success bg-success bg-opacity-10';
+                                optionIcon = '<i class="bi bi-check-circle-fill text-success me-2"></i>';
+                            } else if (optIdx === result.student_answer && !isCorrect) {
+                                optionClass = 'border-danger bg-danger bg-opacity-10';
+                                optionIcon = '<i class="bi bi-x-circle-fill text-danger me-2"></i>';
+                            }
+                            
+                            return `
+                                <div class="p-2 mb-2 rounded border ${optionClass}">
+                                    ${optionIcon}${String.fromCharCode(65 + optIdx)}. ${option}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    
+                    ${result.explanation ? `
+                        <div class="alert alert-info mt-3 mb-0">
+                            <strong><i class="bi bi-lightbulb me-2"></i>Explanation:</strong>
+                            <p class="mb-0 mt-2">${result.explanation}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    document.getElementById('resultsContent').innerHTML = html;
+    const modal = new bootstrap.Modal(document.getElementById('resultsModal'));
+    modal.show();
+}
+</script>
+
+<style>
+.option-box {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.option-box:hover {
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
+}
+
+.option-box input[type="radio"]:checked + .form-check-label {
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+.option-box:has(input[type="radio"]:checked) {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+.question-card {
+    transition: transform 0.2s;
+}
+
+.question-card:hover {
+    transform: translateX(5px);
+}
+</style>
+{% endblock %}
