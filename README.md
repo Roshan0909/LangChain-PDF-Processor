@@ -1,216 +1,164 @@
-# Student Campus - AI-Powered Learning Management System
+# Smart Campus (Student Campus) – AI-Powered Learning Management System
 
-A comprehensive Django-based learning management system that integrates AI capabilities for enhanced educational experiences.
+A Django-based learning platform that layers Google Gemini-powered search, summarization, and quiz generation on top of PDF/Docx/PPT course materials. It supports teacher workflows (content upload, quiz creation, messaging) and student learning tools (PDF chat, summaries, knowledge bot, quizzes, chat).
+
+## Prerequisites
+- Python 3.11+ (Django 5.2.x)
+- Build tools (gcc/clang on Linux/Mac, Build Tools for Visual Studio on Windows) for some wheels if binaries are unavailable.
+- External binaries for document processing:
+  - **Poppler** (for `pdf2image`): install via `choco install poppler` on Windows or your package manager.
+  - **Tesseract OCR** (for `pytesseract`): install via `choco install tesseract` on Windows or your package manager; ensure `tesseract` is on PATH.
+  - **Ghostscript** (for some PDF conversions) recommended but not strictly required.
+
+## Quick Start (local)
+1. Clone and enter the repo:
+   ```bash
+   git clone https://github.com/Roshan0909/LangChain-PDF-Processor.git
+   cd LangChain-PDF-Processor/campus
+   ```
+2. Create and activate a virtualenv (Windows PowerShell example):
+   ```bash
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   ```
+3. Install Python deps (requirements file lives one level up):
+   ```bash
+   pip install -r ../requirements.txt
+   ```
+4. Create a `.env` in the `campus/` folder (same place as `manage.py`):
+   ```env
+   API_KEY=your_gemini_api_key                      # Required for AI (quiz, PDF chat, summarizer, knowledge bot)
+   WIKIPEDIA_CLIENT_ID=your_wikipedia_client_id     # Optional, improves Knowledge Bot headers
+   WIKIPEDIA_CLIENT_SECRET=your_wikipedia_client_secret
+   ```
+   For production, also set `SECRET_KEY`, `DEBUG=False`, and `ALLOWED_HOSTS=yourdomain.com` in `student_campus/settings.py` or via environment.
+5. Initialize the database and admin user:
+   ```bash
+   python manage.py migrate
+   python manage.py createsuperuser
+   ```
+6. Run the app:
+   ```bash
+   python manage.py runserver
+   ```
+   Visit http://localhost:8000 and log in with the superuser you created.
 
 ## Features
+- **Teacher tools**: subject management, PDF/Docx/PPT uploads, Gemini-powered quiz generator, quiz analytics, messaging with attachments.
+- **Student tools**: dashboard, AI PDF chat (vector search + Gemini), document summarizer, timed quizzes with review, knowledge bot (Wikipedia + Gemini), messaging with teachers.
+- **Storage**: uploaded files in `media/`, FAISS indexes for PDFs in `faiss_index*` directories (hashed per file).
 
-### For Teachers
-- **Dashboard**: Manage subjects, students, and course materials
-- **Subject Management**: Create and organize subjects with PDF notes
-- **AI Quiz Generator**: Automatically generate quizzes from PDF content using Gemini AI
-- **Quiz Analytics**: Track student performance with detailed analytics
-- **Chat System**: Direct messaging with students, share files and notes
-
-### For Students
-- **Dashboard**: Access all subjects and learning materials
-- **Magnify Learning**: AI-powered PDF chat for asking questions about course materials
-- **Summarizer**: Generate AI summaries of uploaded documents
-- **Quiz System**: 
-  - Take quizzes with timer
-  - Progress tracker (attempted/remaining questions)
-  - Detailed results with answer review
-- **Knowledge Bot**: Wikipedia-powered chatbot for general knowledge questions
-- **Chat System**: Communicate with teachers, receive files and notes
-
-## Technology Stack
-
-- **Backend**: Django
-- **Frontend**: Bootstrap 5.3.0 with Bootstrap Icons
-- **AI**: Google Gemini AI (Generative AI)
-- **Database**: SQLite (development)
-- **PDF Processing**: PyPDF2, LangChain, FAISS
-- **Vector Store**: FAISS for document embeddings
-- **APIs**: Wikipedia API for Knowledge Bot
-
-## Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/Roshan0909/LangChain-PDF-Processor.git
-cd smart_campus
+## Project Layout (key paths)
+```
+README.md
+requirements.txt
+campus/
+├── manage.py
+├── app.py
+├── authentication/   # Auth models, forms, views, urls
+├── students/         # PDF chat, summaries, knowledge bot, quizzes
+├── teachers/         # Quiz generation, subjects, reports, messaging
+├── templates/        # Django templates (base, auth, teachers, students)
+├── media/            # Uploads: notes/, chat_files/, proctoring/
+├── faiss_index/      # Default FAISS store + hashed per-PDF stores
+└── student_campus/   # Django settings, urls, wsgi
 ```
 
-2. Create a virtual environment:
-```bash
-python -m venv venv
-venv\Scripts\activate  # Windows
-# Or on Linux/Mac: source venv/bin/activate
+## Full Directory Reference (trimmed)
+```
+.
+├── README.md
+├── requirements.txt
+└── campus/
+   ├── app.py
+   ├── db.sqlite3
+   ├── manage.py
+   ├── authentication/
+   │   ├── __init__.py
+   │   ├── admin.py
+   │   ├── apps.py
+   │   ├── forms.py
+   │   ├── models.py
+   │   ├── tests.py
+   │   ├── urls.py
+   │   └── views.py
+   ├── students/
+   │   ├── __init__.py
+   │   ├── admin.py
+   │   ├── apps.py
+   │   ├── leaderboard_utils.py
+   │   ├── models.py
+   │   ├── summarizer_utils.py
+   │   ├── tests.py
+   │   ├── urls.py
+   │   ├── utils.py
+   │   └── views.py
+   ├── teachers/
+   │   ├── __init__.py
+   │   ├── admin.py
+   │   ├── apps.py
+   │   ├── forms.py
+   │   ├── models.py
+   │   ├── quiz_generator.py
+   │   ├── reports_generator.py
+   │   ├── reports_views.py
+   │   ├── tests.py
+   │   ├── urls.py
+   │   └── views.py
+   ├── student_campus/
+   │   ├── __init__.py
+   │   ├── asgi.py
+   │   ├── settings.py
+   │   ├── urls.py
+   │   └── wsgi.py
+   ├── templates/
+   │   ├── base.html
+   │   ├── authentication/
+   │   │   ├── loading.html
+   │   │   ├── login.html
+   │   │   └── signup.html
+   │   ├── students/
+   │   │   └── ...
+   │   └── teachers/
+   │       └── ...
+   ├── media/
+   │   ├── chat_files/
+   │   │   ├── 2025/
+   │   │   └── notes/
+   │   ├── notes/
+   │   │   └── 2025/
+   │   └── proctoring/
+   │       └── 2025/
+   ├── faiss_index/
+   │   ├── index.faiss
+   │   ├── faiss_index_<hash>/
+   │   │   └── index.faiss
+   │   └── ...
+   └── tests/
+      ├── files.py
+      └── test_proctoring.py
 ```
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+## Configuration Notes
+- `API_KEY` is required; without it quiz generation, PDF chat, summarization, and Knowledge Bot will fail.
+- Wikipedia credentials are optional but recommended to provide better headers for the Knowledge Bot requests.
+- Static/media paths default to local storage; adjust in `student_campus/settings.py` for production (add `STATIC_ROOT`, configure media/CDN as needed).
+- Logging for Django server requests is set to `ERROR` only (see `student_campus/settings.py`).
 
-4. Create a `.env` file in the project root:
-```env
-API_KEY="your_gemini_api_key"
-WIKIPEDIA_CLIENT_ID="your_wikipedia_client_id"
-WIKIPEDIA_CLIENT_SECRET="your_wikipedia_client_secret"
-```
+## Operating the App
+- Run tests: `python manage.py test`
+- Rebuild a PDF’s FAISS index: delete its `faiss_index_<pdf_hash>/` directory; the next PDF chat request will recreate it.
+- Large PDFs: text is split into 15k-character chunks with 2k overlap for retrieval (see `students/utils.py`).
+- File locations: course notes under `media/notes/YYYY/MM/DD/`, chat uploads under `media/chat_files/YYYY/MM/DD/`, proctoring assets under `media/proctoring/`.
 
-5. Run migrations:
-```bash
-python manage.py migrate
-```
+## Troubleshooting
+- **AI features returning errors**: ensure `API_KEY` is set and valid; verify outbound network access.
+- **PDF chat returns empty/irrelevant answers**: delete the corresponding `faiss_index_<pdf_hash>/` folder to force re-indexing; confirm the PDF has extractable text (scans need Tesseract OCR).
+- **OCR/`pdf2image` errors**: confirm Poppler and Tesseract are installed and on PATH; restart the shell after install.
+- **Static files in production**: set `DEBUG=False`, define `ALLOWED_HOSTS`, add `STATIC_ROOT`, and run `python manage.py collectstatic`.
 
-6. Create a superuser:
-```bash
-python manage.py createsuperuser
-```
+## License & Contributions
+- MIT License. Contributions via pull requests are welcome.
 
-7. Run the development server:
-```bash
-python manage.py runserver
-```
-
-8. Access the application at `http://localhost:8000`
-
-## Project Structure
-
-```
-smart_campus/
-├── authentication/          # User authentication and management
-│   ├── models.py           # User models
-│   ├── views.py            # Login, signup, logout views
-│   ├── forms.py            # Authentication forms
-│   └── urls.py             # Authentication routes
-├── teachers/               # Teacher functionalities
-│   ├── models.py          # Subject, Quiz, Question, ChatMessage models
-│   ├── views.py           # Teacher views and logic
-│   ├── quiz_generator.py  # AI quiz generation
-│   ├── forms.py           # Teacher forms
-│   └── urls.py            # Teacher routes
-├── students/              # Student functionalities
-│   ├── models.py         # Student models
-│   ├── views.py          # Student views and logic
-│   ├── utils.py          # PDF processing utilities
-│   ├── summarizer_utils.py # Document summarization
-│   └── urls.py           # Student routes
-├── templates/            # HTML templates
-│   ├── base.html        # Base template
-│   ├── authentication/  # Auth templates
-│   ├── teachers/        # Teacher templates
-│   └── students/        # Student templates
-├── media/               # User uploads
-│   ├── chat_files/     # Chat file uploads
-│   └── notes/          # PDF course materials
-├── faiss_index/         # Vector embeddings for PDF search
-├── student_campus/      # Django project settings
-│   ├── settings.py     # Main settings
-│   ├── urls.py         # URL configuration
-│   └── wsgi.py         # WSGI config
-├── manage.py           # Django management script
-├── app.py              # Application entry point
-└── db.sqlite3          # SQLite database
-```
-
-## Key Features Explained
-
-### AI Quiz Generation
-- Upload PDF course materials
-- AI automatically generates multiple-choice questions
-- Customizable number of questions and duration
-- Questions test key concepts from the material
-
-### PDF Chat (Magnify Learning)
-- Upload any PDF document
-- Ask questions about the content
-- AI retrieves relevant sections and provides answers
-- Maintains chat history per document
-
-### Knowledge Bot
-- Wikipedia-powered Q&A system
-- Search and display information from Wikipedia articles
-- Includes source citations
-- Clean chat interface
-
-### Chat System
-- Real-time messaging between teachers and students
-- File sharing (images, documents)
-- PDF note attachments from course materials
-- Non-scrollable page with scrollable messages area
-
-### Quiz Taking Experience
-- Timed quizzes with countdown
-- Real-time progress tracking (attempted/remaining)
-- Progress bar showing completion percentage
-- Detailed results with correct/incorrect answers
-- Option to review all questions and explanations
-
-## User Roles
-
-### Teacher
-- Create and manage subjects
-- Upload PDF course materials
-- Generate AI-powered quizzes
-- View student performance analytics
-- Chat with students
-- Share files and notes
-
-### Student
-- Access all subjects and materials
-- Take quizzes with timer
-- Use AI PDF chat for learning
-- Generate document summaries
-- Ask general knowledge questions
-- Chat with teachers
-
-## Configuration
-
-### Logging
-Server request logging is configured to ERROR level only in `student_campus/settings.py`:
-```python
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'level': 'ERROR',
-        },
-    },
-    'loggers': {
-        'django.server': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-    },
-}
-```
-
-### Media Files
-- Course PDFs: `media/notes/YYYY/MM/DD/`
-- Chat files: `media/chat_files/YYYY/MM/DD/`
-- Vector embeddings: `faiss_index/` (multiple indices with hashed names)
-
-## API Keys Required
-
-1. **Google Gemini API**: For AI features (quiz generation, PDF chat, summarization)
-   - Get from: https://makersuite.google.com/app/apikey
-
-2. **Wikipedia API** (Optional): For Knowledge Bot
-   - Client ID and Secret from Wikipedia API
-
-## License
-
-This project is open source and available under the MIT License.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Contact
-
-For questions or support, please open an issue on GitHub.
+## Support
+Open an issue on GitHub if you run into problems or have feature requests.
