@@ -441,14 +441,14 @@ function renderCards(cards) {
                 <div class="flashcard-face flashcard-front">
                     <div>
                         <span class="badge-topic">Q${idx + 1}</span>
-                        <small class="d-block mt-2 opacity-75">👆 Click to reveal</small>
+                        <small class="d-block mt-2 opacity-75"><i class="bi bi-arrow-repeat me-1" style="font-size: 0.8rem;"></i>Click to reveal</small>
                     </div>
                     <p class="mt-3">${escapeHtml(card.front)}</p>
                 </div>
                 <div class="flashcard-face flashcard-back">
                     <div>
                         <span class="badge badge-success">Answer</span>
-                        <small class="d-block mt-2 opacity-75">👆 Click to question</small>
+                        <small class="d-block mt-2 opacity-75"><i class="bi bi-arrow-repeat me-1" style="font-size: 0.8rem;"></i>Click to question</small>
                     </div>
                     <p class="mt-3">${escapeHtml(card.back)}</p>
                 </div>
