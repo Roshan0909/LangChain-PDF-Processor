@@ -276,7 +276,7 @@
             <p><i class="bi bi-book"></i> Subject: {{ pdf_note.subject.name }}</p>
         </div>
         
-        <form method="post">
+        <form method="post" id="quizForm">
             {% csrf_token %}
             
             <div class="form-group">
@@ -326,17 +326,10 @@
         </form>
     </div>
     <div class="modal-footer">
-        <form method="post" style="display: contents;">
-            {% csrf_token %}
-            <input type="hidden" name="num_questions" id="hidden_num_questions">
-            <input type="hidden" name="duration" id="hidden_duration">
-            <input type="hidden" name="topics" id="hidden_topics">
-            <input type="hidden" name="difficulty" id="hidden_difficulty">
-            <button type="submit" class="btn-primary" id="generateBtn" onclick="prepareSubmit(event)">
-                <i class="bi bi-stars"></i>
-                Generate Quiz
-            </button>
-        </form>
+        <button type="submit" class="btn-primary" id="generateBtn" form="quizForm" onclick="handleSubmit(event)">
+            <i class="bi bi-stars"></i>
+            Generate Quiz
+        </button>
         <a href="{% url 'create_quiz' %}" class="btn-secondary">
             <i class="bi bi-x-circle"></i>
             Cancel
@@ -345,15 +338,15 @@
 </div>
 
 <script>
-    function prepareSubmit(e) {
-        document.getElementById('hidden_num_questions').value = document.getElementById('num_questions').value;
-        document.getElementById('hidden_duration').value = document.getElementById('duration').value;
-        document.getElementById('hidden_topics').value = document.getElementById('topics').value;
-        document.getElementById('hidden_difficulty').value = document.getElementById('difficulty').value;
+    function handleSubmit(e) {
+        e.preventDefault();
         
         const submitBtn = document.getElementById('generateBtn');
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+        
+        // Submit the form
+        document.getElementById('quizForm').submit();
     }
 </script>
 {% endblock %}

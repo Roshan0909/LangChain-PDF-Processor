@@ -9,9 +9,15 @@ from typing import List
 from dotenv import load_dotenv
 import hashlib
 
-# Load environment variables
-load_dotenv()
+# Load .env from the campus directory
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+load_dotenv(env_path)
+
 API_KEY = os.getenv("API_KEY")
+
+# Validate API key
+if not API_KEY:
+    raise ValueError("API_KEY not found in environment variables. Please check your .env file at: " + env_path)
 
 # Configure the genai client
 client = genai.Client(api_key=API_KEY)

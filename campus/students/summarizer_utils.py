@@ -6,8 +6,14 @@ from docx import Document
 from pptx import Presentation
 import io
 
-load_dotenv()
+# Load .env from the campus directory
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+load_dotenv(env_path)
 API_KEY = os.getenv("API_KEY")
+
+if not API_KEY:
+    raise ValueError("API_KEY not found in environment variables. Please check your .env file at: " + env_path)
+
 client = genai.Client(api_key=API_KEY)
 
 def summarize_text(text, summary_type="concise"):

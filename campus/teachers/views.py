@@ -125,12 +125,37 @@ def generate_quiz(request, pdf_id):
             topics = request.POST.get('topics', '').strip()
             difficulty = request.POST.get('difficulty', 'medium')
             
+            # Validate input
+            if num_questions < 1 or num_questions > 100:
+                messages.error(request, 'Number of questions must be between 1 and 100.')
+                return render(request, 'teachers/generate_quiz.html', {
+                    'pdf_note': pdf_note,
+                    'subject': pdf_note.subject
+                })
+            
+            if duration < 5 or duration > 240:
+                messages.error(request, 'Duration must be between 5 and 240 minutes.')
+                return render(request, 'teachers/generate_quiz.html', {
+                    'pdf_note': pdf_note,
+                    'subject': pdf_note.subject
+                })
+            
             # Generate questions from PDF
             questions_data, error = generate_quiz_from_pdf(pdf_note.pdf_file.path, num_questions, topics, difficulty)
             
             if error:
-                messages.error(request, error)
-                return redirect('create_quiz')
+                messages.error(request, f'Error generating quiz: {error}')
+                return render(request, 'teachers/generate_quiz.html', {
+                    'pdf_note': pdf_note,
+                    'subject': pdf_note.subject
+                })
+            
+            if not questions_data:
+                messages.error(request, 'Could not generate quiz questions. Please ensure the document has sufficient content.')
+                return render(request, 'teachers/generate_quiz.html', {
+                    'pdf_note': pdf_note,
+                    'subject': pdf_note.subject
+                })
             
             # Create quiz
             quiz_description = f"Auto-generated quiz from {pdf_note.title}"
@@ -167,8 +192,15 @@ def generate_quiz(request, pdf_id):
             return redirect('quiz_detail', quiz_id=quiz.id)
             
         except Exception as e:
-            messages.error(request, f'Error generating quiz: {str(e)}')
-            return redirect('create_quiz')
+            import traceback
+            error_msg = str(e)
+            print(f"Quiz generation error: {error_msg}")
+            print(traceback.format_exc())
+            messages.error(request, f'Error generating quiz: {error_msg}')
+            return render(request, 'teachers/generate_quiz.html', {
+                'pdf_note': pdf_note,
+                'subject': pdf_note.subject
+            })
     
     return render(request, 'teachers/generate_quiz.html', {
         'pdf_note': pdf_note,

@@ -7,8 +7,16 @@ from dotenv import load_dotenv
 import json
 import re
 
-load_dotenv()
+# Load .env from the campus directory
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+load_dotenv(env_path)
+
 API_KEY = os.getenv("API_KEY")
+
+# Validate API key
+if not API_KEY:
+    raise ValueError("API_KEY not found in environment variables. Please check your .env file at: " + env_path)
+
 client = genai.Client(api_key=API_KEY)
 
 def extract_text_from_pdf(pdf_path, max_pages=20):
@@ -153,6 +161,11 @@ Rules:
         )
         
         response_text = response.text.strip()
+        
+        # Check if response is empty
+        if not response_text:
+            print("Error: Empty response from API")
+            return []
         
         # Try to extract JSON if wrapped in markdown
         if "```" in response_text:

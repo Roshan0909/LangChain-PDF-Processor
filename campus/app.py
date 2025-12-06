@@ -8,12 +8,13 @@ from langchain_community.vectorstores import FAISS
 from langchain.embeddings.base import Embeddings
 from typing import List
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from .env file in campus directory
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(env_path)
 API_KEY = os.getenv("API_KEY")
 
 if not API_KEY:
-    print("ERROR: API_KEY not found in .env file")
+    print("ERROR: API_KEY not found in .env file at: " + env_path)
     exit(1)
 
 # Configure the new genai client

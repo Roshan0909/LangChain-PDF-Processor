@@ -531,10 +531,15 @@ def search_wikipedia(query):
         from dotenv import load_dotenv
         import google.generativeai as genai
         
-        load_dotenv()
+        # Load .env from the campus directory
+        env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+        load_dotenv(env_path)
         
         # Use Gemini AI to extract the main search topic from the question
-        genai.configure(api_key=os.getenv('API_KEY'))
+        api_key = os.getenv('API_KEY')
+        if not api_key:
+            raise ValueError(f"API_KEY not found in .env file at: {env_path}")
+        genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')
         
         topic_prompt = f"""Extract the main topic/concept that should be searched on Wikipedia from this question.
@@ -654,13 +659,18 @@ def generate_knowledge_answer(question, wiki_context, history_context=""):
         from dotenv import load_dotenv
         import google.generativeai as genai
         
-        load_dotenv()
+        # Load .env from the campus directory
+        env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+        load_dotenv(env_path)
         
         context = wiki_context.get('context', '').strip()
         
         if context and len(context) > 50:
             # Use Gemini AI to format and improve the answer
-            genai.configure(api_key=os.getenv('API_KEY'))
+            api_key = os.getenv('API_KEY')
+            if not api_key:
+                raise ValueError(f"API_KEY not found in .env file at: {env_path}")
+            genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-2.0-flash-exp')
             
             prompt = f"""You are a knowledgeable educational assistant providing definitions, history, and informational content from Wikipedia.
@@ -1075,7 +1085,9 @@ def generate_flashcards(request, pdf_id):
         from dotenv import load_dotenv
         import google.generativeai as genai
 
-        load_dotenv()
+        # Load .env from the campus directory
+        env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+        load_dotenv(env_path)
 
         # Extract text from the note file
         file_text = extract_text_from_file(note.pdf_file.path)
@@ -1087,7 +1099,10 @@ def generate_flashcards(request, pdf_id):
         if len(file_text) > max_chars:
             file_text = file_text[:max_chars]
 
-        genai.configure(api_key=os.getenv('API_KEY'))
+        api_key = os.getenv('API_KEY')
+        if not api_key:
+            raise ValueError(f"API_KEY not found in .env file at: {env_path}")
+        genai.configure(api_key=api_key)
 
         prompt = f"""Create {num_cards} high-quality study flashcards from the provided content.
 

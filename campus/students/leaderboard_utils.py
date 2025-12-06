@@ -7,7 +7,13 @@ import google.generativeai as genai
 from django.db.models import Count, Sum, Avg, Q
 from teachers.models import QuizAttempt
 
-load_dotenv()
+# Load .env from the campus directory
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+load_dotenv(env_path)
+
+API_KEY = os.getenv("API_KEY")
+if not API_KEY:
+    raise ValueError("API_KEY not found in environment variables. Please check your .env file at: " + env_path)
 
 def get_leaderboard_data():
     """
